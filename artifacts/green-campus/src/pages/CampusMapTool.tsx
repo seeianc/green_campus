@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 export default function CampusMapTool() {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
@@ -430,6 +432,15 @@ function initMapTool() {
 
   Object.keys(MAPS).forEach(id => { placements[id] = []; cables[id] = []; });
 
+  // Preload satellite map images
+  const mapImages: Record<string, HTMLImageElement> = {};
+  Object.keys(MAPS).forEach(id => {
+    const img = new Image();
+    img.src = `${BASE_URL}maps/${id}.png`;
+    img.onload = () => { if (id === currentMap) drawAll(); };
+    mapImages[id] = img;
+  });
+
   function getEl<T extends HTMLElement>(id: string): T {
     return document.getElementById(id) as T;
   }
@@ -489,47 +500,153 @@ function initMapTool() {
     const ctx = canvas.getContext('2d')!;
     const m = MAPS[currentMap];
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#1a2810';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = '#ffffff08';
-    ctx.lineWidth = 0.5;
-    for (let x = 0; x < canvas.width; x += GRID) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
-    for (let y = 0; y < canvas.height; y += GRID) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+    const img = mapImages[currentMap];
+    const imgLoaded = img && img.complete && img.naturalWidth > 0;
 
-    m.features.forEach(f => drawFeature(ctx, f));
+    if (imgLoaded) {
+      // Draw satellite image scaled to fill the canvas
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    ctx.font = '9px JetBrains Mono,monospace';
-    ctx.fillStyle = '#ffffff20';
-    for (let x = 0; x < canvas.width; x += GRID * 5) {
-      ctx.fillText((x / GRID) + 'cm', x + 2, 9);
+      // Subtle dark vignette to improve overlay contrast
+      const vignette = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.8
+      );
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.22)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+      // Fallback: programmatic schematic map while image loads
+      ctx.fillStyle = '#1a2810';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#ffffff08';
+      ctx.lineWidth = 0.5;
+      for (let x = 0; x < canvas.width; x += GRID) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+      for (let y = 0; y < canvas.height; y += GRID) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+      m.features.forEach(f => drawFeature(ctx, f));
     }
 
+    // Grid scale ruler (always on top)
+    ctx.font = 'bold 10px JetBrains Mono,monospace';
+    ctx.fillStyle = imgLoaded ? 'rgba(255,255,255,0.7)' : '#ffffff30';
+    ctx.strokeStyle = imgLoaded ? 'rgba(0,0,0,0.5)' : 'transparent';
+    ctx.lineWidth = 2;
+    for (let x = 0; x < canvas.width; x += GRID * 5) {
+      const label = (x / GRID) + 'cm';
+      if (imgLoaded) ctx.strokeText(label, x + 2, 12);
+      ctx.fillText(label, x + 2, 12);
+    }
+
+    // Zone overlays on top of satellite image
+    if (imgLoaded) {
+      // Water bodies — blue tint
+      m.features.filter(f => f.type === 'water' || f.type === 'ocean').forEach(f => {
+        if (!f.rect) return;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = f.type === 'ocean' ? 'rgba(20,70,140,0.25)' : 'rgba(30,100,160,0.2)';
+        ctx.fillRect(rx, ry, rw, rh);
+        if (f.label) {
+          ctx.fillStyle = 'rgba(120,200,255,0.9)';
+          ctx.font = 'italic 11px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(f.label, rx + rw / 2, ry + rh / 2);
+          ctx.textAlign = 'left';
+        }
+      });
+
+      // Tidal zones
+      m.features.filter(f => f.type === 'tidal_zone').forEach(f => {
+        if (!f.rect) return;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = 'rgba(0,200,170,0.15)';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = 'rgba(0,200,170,0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.setLineDash([]);
+      });
+
+      // Pinch points
+      m.features.filter(f => f.type === 'pinch_point').forEach(f => {
+        if (f.cx == null || f.cy == null || f.r == null) return;
+        ctx.fillStyle = 'rgba(0,200,170,0.25)';
+        ctx.strokeStyle = 'rgba(0,200,170,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(f.cx, f.cy, f.r, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#00c8aa';
+        ctx.font = 'bold 9px Space Grotesk,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PINCH POINT', f.cx, f.cy + 4);
+        ctx.textAlign = 'left';
+      });
+
+      // No-build zones
+      m.features.filter(f => f.type === 'nobuild').forEach(f => {
+        if (!f.rect) return;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = 'rgba(248,81,73,0.2)';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = 'rgba(248,81,73,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.setLineDash([]);
+        if (f.label) {
+          ctx.fillStyle = 'rgba(248,81,73,1)';
+          ctx.font = 'bold 10px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⛔ ' + f.label, rx + rw / 2, ry + rh / 2);
+          ctx.textAlign = 'left';
+        }
+      });
+    }
+
+    // Property boundary (always visible, prominent)
     const boundary = m.features.find(f => f.type === 'boundary');
     if (boundary && boundary.points) {
-      ctx.strokeStyle = '#ff8c8c';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 3]);
+      ctx.strokeStyle = imgLoaded ? 'rgba(255,120,100,0.9)' : '#ff8c8c';
+      ctx.lineWidth = imgLoaded ? 2.5 : 2;
+      ctx.setLineDash([8, 4]);
+      ctx.shadowColor = imgLoaded ? 'rgba(0,0,0,0.6)' : 'transparent';
+      ctx.shadowBlur = imgLoaded ? 4 : 0;
       ctx.beginPath();
       boundary.points.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
       ctx.closePath();
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
     }
 
+    // Substation marker (always on top)
     const [sx, sy] = m.substationPx;
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = imgLoaded ? 6 : 0;
     ctx.fillStyle = '#ffd700';
-    ctx.strokeStyle = '#fff8';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(sx, sy, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(sx, sy, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur = 0;
     ctx.fillStyle = '#000';
-    ctx.font = 'bold 8px sans-serif';
+    ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('S', sx, sy + 3);
     ctx.fillStyle = '#ffd700';
-    ctx.font = '8px JetBrains Mono,monospace';
+    ctx.font = 'bold 9px JetBrains Mono,monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('Substation', sx + 11, sy + 4);
+    if (imgLoaded) {
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 4;
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+      ctx.lineWidth = 3;
+      ctx.strokeText('Substation', sx + 13, sy + 5);
+      ctx.shadowBlur = 0;
+    }
+    ctx.fillText('Substation', sx + 13, sy + 5);
+    ctx.textAlign = 'left';
   }
 
   function drawFeature(ctx: CanvasRenderingContext2D, f: Feature) {
