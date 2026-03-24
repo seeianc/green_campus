@@ -395,15 +395,15 @@ export default function EnergyGridSimulator() {
                   Select Federal Green Grant budget to unlock. Must purchase ≥1 to stay compliant.
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Green Hydrogen Electrolyzer</div><div class="e-input-sub">$2M each (grant price)</div></div>
+                  <div><div class="e-input-label">Green Hydrogen Electrolyzer</div><div class="e-input-sub">$2M each · +30% solar & wind output</div></div>
                   <input class="e-qty-input" type="number" id="hydrogen" value="0" min="0" max="5" disabled>
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">V2G Charging Hub</div><div class="e-input-sub">$2M each (grant price)</div></div>
+                  <div><div class="e-input-label">V2G Charging Hub</div><div class="e-input-sub">$100K fleet upgrade · caps peak at 4,750 kW</div></div>
                   <input class="e-qty-input" type="number" id="v2g" value="0" min="0" max="5" disabled>
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">AI-Grid Controller (SCADA)</div><div class="e-input-sub">$2M each (grant price)</div></div>
+                  <div><div class="e-input-label">AI-Grid Controller (SCADA)</div><div class="e-input-sub">$500K each · −15% demand</div></div>
                   <input class="e-qty-input" type="number" id="scada" value="0" min="0" max="5" disabled>
                 </div>
               </div>
@@ -646,8 +646,8 @@ export default function EnergyGridSimulator() {
       };
       const emergingCosts = isGrant ? {
         hydrogen: s.hydrogen * 2000000,
-        v2g: s.v2g * 2000000,
-        scada: s.scada * 2000000,
+        v2g: s.v2g * 100000,
+        scada: s.scada * 500000,
       } : { hydrogen: 0, v2g: 0, scada: 0 };
 
       const infraCosts = {
@@ -684,12 +684,17 @@ export default function EnergyGridSimulator() {
         let d = demandProfile[i];
         if (isAIHub) d += 1500;
         if (isPolar) d += s.thermal > 0 ? 500 : 2500;
-        if (isGrant) { d = d * 0.85; d = Math.min(d, 4750); }
+        // SCADA reduces total demand by 15%
+        if (isGrant && s.scada > 0) d = d * 0.85;
+        // V2G caps peak demand at 4,750 kW
+        if (isGrant && s.v2g > 0) d = Math.min(d, 4750);
         return Math.round(d);
       });
 
-      const windMult = (isGrant && s.scada > 0 ? 1.3 : 1) * (isMaint ? 0.75 : 1);
-      const solarMult = (isGrant ? 1.3 : 1) * (isPolar ? 0.1 : 1) * (isMaint ? 0.75 : 1);
+      // Hydrogen electrolyzer boosts solar & wind output by 30%
+      const hydrogenBoost = isGrant && s.hydrogen > 0 ? 1.3 : 1;
+      const windMult = hydrogenBoost * (isMaint ? 0.75 : 1);
+      const solarMult = hydrogenBoost * (isPolar ? 0.1 : 1) * (isMaint ? 0.75 : 1);
       const hasVarGen = s.solar > 0 || s.wind > 0;
       const storageDischarge = totalStorage / 4;
 
