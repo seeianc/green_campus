@@ -1,0 +1,1074 @@
+import { useEffect, useRef } from "react";
+
+export default function CampusMapTool() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+      .map-tool-root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --surface2: #1c2330;
+        --border: #30363d;
+        --text: #e6edf3;
+        --muted: #7d8590;
+        --accent: #3fb950;
+        --accent2: #58a6ff;
+        --warn: #d29922;
+        --danger: #f85149;
+        --solar: #f0b429;
+        --wind: #58a6ff;
+        --geo: #bc8cff;
+        --hydro: #39c8e8;
+        --tidal: #00c8aa;
+        --biomass: #7ee787;
+        --bess: #ff8c8c;
+        --cable: #ff6e40;
+        --substation: #ffd700;
+        font-family: 'Space Grotesk', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .map-tool-header {
+        height: 52px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 16px;
+        flex-shrink: 0;
+        z-index: 100;
+      }
+      .map-tool-header h1 { font-size: 14px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); margin: 0; }
+      .map-tabs { display: flex; gap: 4px; margin-left: 8px; }
+      .map-tab {
+        padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 500;
+        cursor: pointer; border: 1px solid var(--border); background: transparent;
+        color: var(--muted); transition: all .15s;
+      }
+      .map-tab:hover { color: var(--text); border-color: var(--muted); }
+      .map-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+      .map-header-stats { margin-left: auto; display: flex; gap: 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+      .map-stat { color: var(--muted); }
+      .map-stat span { color: var(--text); font-weight: 500; }
+      .map-stat.warn span { color: var(--warn); }
+      .map-stat.ok span { color: var(--accent); }
+      .map-stat.err span { color: var(--danger); }
+      .map-clear-btn {
+        padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: 600;
+        cursor: pointer; border: 1px solid var(--danger); background: transparent;
+        color: var(--danger); transition: all .15s; font-family: 'Space Grotesk',sans-serif;
+      }
+      .map-clear-btn:hover { background: var(--danger); color: #fff; }
+
+      .map-main { display: flex; flex: 1; overflow: hidden; }
+
+      .map-sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 12px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .map-sidebar-section { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 4px 4px 2px; }
+      .map-tech-btn {
+        display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 5px;
+        cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
+        color: var(--text); font-family: 'Space Grotesk',sans-serif; font-size: 11px;
+        font-weight: 500; transition: all .15s; text-align: left; width: 100%;
+      }
+      .map-tech-btn:hover { border-color: var(--accent2); background: #1f2a38; }
+      .map-tech-btn.active { border-color: currentColor; }
+      .map-tech-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+      .map-tech-meta { font-size: 9px; color: var(--muted); margin-top: 1px; font-family: 'JetBrains Mono',monospace; }
+      .map-tech-btn.active .map-tech-meta { color: inherit; }
+
+      .map-mode-row { display: flex; gap: 6px; }
+      .map-mode-btn {
+        flex: 1; padding: 6px; border-radius: 4px; font-size: 10px; font-weight: 600;
+        cursor: pointer; border: 1px solid var(--border); background: transparent;
+        color: var(--muted); transition: all .15s; font-family: 'Space Grotesk',sans-serif;
+        text-align: center;
+      }
+      .map-mode-btn.active { background: var(--accent2); color: #000; border-color: var(--accent2); }
+
+      .map-counts { padding: 6px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border); }
+      .map-count-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 10px; }
+      .map-count-label { color: var(--muted); }
+      .map-count-val { font-family: 'JetBrains Mono',monospace; font-weight: 600; }
+
+      .map-violations-panel {
+        padding: 6px; background: #1c1010; border-radius: 5px; border: 1px solid #3a1a1a;
+        max-height: 150px; overflow-y: auto;
+      }
+      .map-violation { font-size: 10px; color: var(--danger); padding: 2px 0; border-bottom: 1px solid #2a1010; }
+      .map-violation:last-child { border-bottom: none; }
+      .map-no-violations { font-size: 10px; color: var(--accent); }
+
+      .map-container {
+        flex: 1;
+        overflow: auto;
+        position: relative;
+        background: #0a1628;
+      }
+      .map-canvas-wrap {
+        position: relative;
+        display: inline-block;
+        cursor: crosshair;
+      }
+      .map-canvas-wrap.erase-mode { cursor: pointer; }
+
+      .map-tooltip {
+        position: fixed; background: var(--surface); border: 1px solid var(--border);
+        padding: 6px 10px; border-radius: 5px; font-size: 11px; pointer-events: none;
+        z-index: 999; max-width: 220px; line-height: 1.5;
+        font-family: 'JetBrains Mono',monospace;
+      }
+      .map-tooltip.hidden { display: none; }
+
+      .map-info-panel {
+        position: absolute; bottom: 12px; right: 12px;
+        background: rgba(22,27,34,.95); border: 1px solid var(--border);
+        padding: 10px 12px; border-radius: 6px; font-size: 10px;
+        font-family: 'JetBrains Mono',monospace; pointer-events: none; min-width: 160px;
+      }
+      .map-info-row { display: flex; justify-content: space-between; gap: 12px; padding: 1px 0; }
+      .map-info-key { color: var(--muted); }
+      .map-info-val { color: var(--text); }
+      .map-info-val.ok { color: var(--accent); }
+      .map-info-val.err { color: var(--danger); }
+
+      .map-legend { padding: 6px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border); }
+      .map-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); padding: 1px 0; }
+      .map-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    `;
+    document.head.appendChild(style);
+
+    container.innerHTML = `
+      <div class="map-tool-root" id="mapToolRoot">
+        <div class="map-tool-header">
+          <h1>⚡ Green Campus — Map Placer</h1>
+          <div class="map-tabs" id="mapToolTabs"></div>
+          <div class="map-header-stats">
+            <div class="map-stat" id="statPower">Power: <span>0 kW</span></div>
+            <div class="map-stat" id="statStorage">Storage: <span>0 kWh</span></div>
+            <div class="map-stat" id="statCable">Cable: <span>0 cm</span></div>
+            <div class="map-stat" id="statBudget">Budget: <span>$0</span></div>
+            <div class="map-stat" id="statIsland">Island: <span>0 h</span></div>
+          </div>
+          <button class="map-clear-btn" id="mapClearBtn">✕ Clear Map</button>
+        </div>
+
+        <div class="map-main">
+          <div class="map-sidebar">
+            <div class="map-sidebar-section">Mode</div>
+            <div class="map-mode-row">
+              <button class="map-mode-btn active" id="modPlace">Place</button>
+              <button class="map-mode-btn" id="modErase">Erase</button>
+              <button class="map-mode-btn" id="modCable">Cable</button>
+            </div>
+
+            <div class="map-sidebar-section">Generation</div>
+            <button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
+              <span class="map-tech-dot" style="background:#f0b429"></span>
+              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M · 5 sq</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
+              <span class="map-tech-dot" style="background:#58a6ff"></span>
+              <div><div>Wind</div><div class="map-tech-meta">3000kW · $2.5M · 5cm R</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
+              <span class="map-tech-dot" style="background:#bc8cff"></span>
+              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 13sq</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
+              <span class="map-tech-dot" style="background:#39c8e8"></span>
+              <div><div>Hydro (Low)</div><div class="map-tech-meta">500kW · $4M · water</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-hydroH" style="color:#0099cc">
+              <span class="map-tech-dot" style="background:#0099cc"></span>
+              <div><div>Hydro (High)</div><div class="map-tech-meta">2000kW · $4M · water</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-tidal" style="color:#00c8aa">
+              <span class="map-tech-dot" style="background:#00c8aa"></span>
+              <div><div>Tidal</div><div class="map-tech-meta">500kW · $1.5M · coast</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
+              <span class="map-tech-dot" style="background:#7ee787"></span>
+              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M · 13sq</div></div>
+            </button>
+
+            <div class="map-sidebar-section">Storage</div>
+            <button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
+              <span class="map-tech-dot" style="background:#ff8c8c"></span>
+              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
+              <span class="map-tech-dot" style="background:#ffb347"></span>
+              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
+              <span class="map-tech-dot" style="background:#da8fff"></span>
+              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K</div></div>
+            </button>
+            <button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
+              <span class="map-tech-dot" style="background:#84fab0"></span>
+              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M</div></div>
+            </button>
+
+            <div class="map-sidebar-section">Placements</div>
+            <div class="map-counts" id="countsPanel">
+              <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px">No placements yet</div>
+            </div>
+
+            <div class="map-sidebar-section">Legend</div>
+            <div class="map-legend">
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#ff6e4080;border:1px solid #ff6e40"></div>Cable line</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#ffd70060;border:1px solid #ffd700"></div>Substation</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#f8514940;border:1px dashed #f85149"></div>No-Build zone</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#58a6ff30;border:1px dashed #58a6ff"></div>Wind buffer</div>
+            </div>
+
+            <div class="map-sidebar-section">Violations</div>
+            <div class="map-violations-panel" id="violationsPanel">
+              <div class="map-no-violations">✓ No violations</div>
+            </div>
+          </div>
+
+          <div class="map-container" id="mapContainer">
+            <div class="map-canvas-wrap" id="canvasWrap">
+              <canvas id="bgCanvas"></canvas>
+              <canvas id="overlayCanvas" style="position:absolute;top:0;left:0"></canvas>
+            </div>
+            <div class="map-info-panel">
+              <div class="map-info-row"><span class="map-info-key">Cursor</span><span class="map-info-val" id="infoCursor">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Zone</span><span class="map-info-val" id="infoZone">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Distance to sub</span><span class="map-info-val" id="infoDist">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Cable cost</span><span class="map-info-val" id="infoCableCost">–</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-tooltip hidden" id="mapTooltip"></div>
+      </div>
+    `;
+
+    // Initialize the map tool logic
+    initMapTool();
+
+    return () => {
+      style.remove();
+    };
+  }, []);
+
+  return <div ref={containerRef} style={{ height: "100%", display: "flex", flexDirection: "column" }} />;
+}
+
+function initMapTool() {
+  const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferCm: number; squareFootprint: number }> = {
+    solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferCm:0,  squareFootprint:5 },
+    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferCm:5,  squareFootprint:0 },
+    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferCm:0,  squareFootprint:13 },
+    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferCm:0,  squareFootprint:1 },
+    hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferCm:0,  squareFootprint:1 },
+    tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferCm:0,  squareFootprint:1 },
+    biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferCm:0,  squareFootprint:13 },
+    bess:     { name:'BESS',         color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferCm:0,  squareFootprint:0 },
+    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferCm:0,  squareFootprint:0 },
+    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferCm:0,  squareFootprint:0 },
+    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferCm:0,  squareFootprint:0 },
+  };
+
+  type Feature = {
+    type: string;
+    rect?: number[];
+    points?: number[][];
+    label?: string;
+    density?: string;
+    cx?: number;
+    cy?: number;
+    r?: number;
+  };
+
+  type MapDef = {
+    name: string;
+    desc: string;
+    width: number;
+    height: number;
+    substationPx: [number, number];
+    features: Feature[];
+  };
+
+  const MAPS: Record<string, MapDef> = {
+    RLS: {
+      name: 'RLS — Inland School',
+      desc: 'Inland campus, forested south section, no water access',
+      width: 900, height: 780,
+      substationPx: [728, 162],
+      features: [
+        { type:'boundary', points:[[220,55],[810,55],[810,440],[680,440],[680,560],[810,560],[810,700],[260,700],[260,580],[220,580]] },
+        { type:'building', rect:[380,200,220,120], label:'Main Building' },
+        { type:'building', rect:[620,200,80,60], label:'Annex' },
+        { type:'building', rect:[380,330,120,40], label:'Wing' },
+        { type:'parking', rect:[290,200,80,100] },
+        { type:'parking', rect:[500,380,140,60] },
+        { type:'field', rect:[280,55,360,140], label:'Athletic Fields' },
+        { type:'field', rect:[640,60,160,140] },
+        { type:'forest', rect:[220,450,580,250] },
+        { type:'road', points:[[220,300],[280,300]] },
+        { type:'road', points:[[220,420],[810,420]] },
+        { type:'contour_zone', rect:[220,400,580,300], density:'high' },
+      ]
+    },
+    EDS: {
+      name: 'EDS — Penobscot Bay',
+      desc: 'Coastal campus on Penobscot Bay — tidal opportunities',
+      width: 950, height: 760,
+      substationPx: [820, 110],
+      features: [
+        { type:'ocean', rect:[0,0,950,230], label:'Penobscot Bay' },
+        { type:'boundary', points:[[430,230],[810,50],[950,50],[950,700],[430,700],[360,580],[290,520],[430,320]] },
+        { type:'building', rect:[580,520,180,100], label:'School' },
+        { type:'parking', rect:[560,460,120,55] },
+        { type:'forest', rect:[430,310,440,420] },
+        { type:'contour_zone', rect:[360,230,590,310], density:'extreme' },
+        { type:'road', points:[[580,700],[580,620]] },
+      ]
+    },
+    STG: {
+      name: 'STG — Marsh / Atlantic',
+      desc: 'Tidal river, marsh, Atlantic access — highest water potential',
+      width: 900, height: 900,
+      substationPx: [820, 120],
+      features: [
+        { type:'water', rect:[0,0,200,520], label:'The Marsh' },
+        { type:'ocean', rect:[0,780,900,120], label:'Atlantic Ocean' },
+        { type:'water', rect:[340,830,60,70] },
+        { type:'boundary', points:[[200,130],[280,100],[700,80],[810,240],[780,480],[680,480],[680,780],[220,780],[170,680],[140,480],[200,350],[170,210]] },
+        { type:'building', rect:[490,560,160,80], label:'School' },
+        { type:'building', rect:[490,660,120,40], label:'Wing' },
+        { type:'field', rect:[500,280,240,200], label:'Field' },
+        { type:'forest', rect:[200,130,250,350] },
+        { type:'forest', rect:[450,130,350,250] },
+        { type:'road', points:[[400,780],[600,780]] },
+        { type:'road', points:[[490,780],[490,640]] },
+        { type:'contour_zone', rect:[580,80,220,500], density:'medium' },
+        { type:'tidal_zone', rect:[0,150,200,370] },
+        { type:'pinch_point', cx:340, cy:850, r:30, label:'Tidal Pinch' },
+      ]
+    },
+    CES: {
+      name: 'CES — River / Tidal',
+      desc: 'River with 3+ contour lines = high hydro potential',
+      width: 950, height: 800,
+      substationPx: [850, 90],
+      features: [
+        { type:'water', rect:[740,0,210,800], label:'River' },
+        { type:'water', rect:[840,480,110,320], label:'Tidal River' },
+        { type:'boundary', points:[[100,290],[380,150],[720,200],[720,480],[720,530],[680,600],[140,740],[100,620]] },
+        { type:'building', rect:[100,380,140,100], label:'School' },
+        { type:'parking', rect:[115,300,100,75] },
+        { type:'field', rect:[100,290,620,450], label:'Open Fields' },
+        { type:'forest', rect:[200,0,540,200] },
+        { type:'contour_zone', rect:[650,0,100,400], density:'high' },
+        { type:'road', points:[[100,600],[700,600]] },
+        { type:'road', points:[[100,600],[100,400]] },
+        { type:'tidal_zone', rect:[800,480,150,320] },
+      ]
+    },
+    LCS: {
+      name: 'LCS — Woodland Pond',
+      desc: 'Dense forest with freshwater pond access to southwest',
+      width: 950, height: 760,
+      substationPx: [860, 90],
+      features: [
+        { type:'water', rect:[0,640,500,120], label:'Freshwater Pond' },
+        { type:'boundary', points:[[280,55],[820,55],[820,680],[500,730],[280,730],[200,620],[180,420],[280,200]] },
+        { type:'building', rect:[560,100,260,120], label:'School' },
+        { type:'building', rect:[580,230,200,80], label:'Gym/Hall' },
+        { type:'field', rect:[560,330,240,200] },
+        { type:'forest', rect:[180,55,400,700] },
+        { type:'parking', rect:[560,90,80,90] },
+        { type:'road', points:[[820,400],[820,680]] },
+        { type:'road', points:[[560,680],[820,680]] },
+        { type:'contour_zone', rect:[180,100,400,600], density:'high' },
+        { type:'nobuild', rect:[0,580,420,180], label:'Wetland Buffer' },
+      ]
+    }
+  };
+
+  const GRID = 18;
+  let currentMap = 'RLS';
+  let selectedTech = 'solar';
+  let mode = 'place';
+  type Placement = { tech: string; cx: number; cy: number; id: number; violations: string[] };
+  type Cable = { x1: number; y1: number; x2: number; y2: number };
+  const placements: Record<string, Placement[]> = {};
+  const cables: Record<string, Cable[]> = {};
+  let cableStart: { x: number; y: number } | null = null;
+  let mousePos = { x: 0, y: 0 };
+
+  Object.keys(MAPS).forEach(id => { placements[id] = []; cables[id] = []; });
+
+  function getEl<T extends HTMLElement>(id: string): T {
+    return document.getElementById(id) as T;
+  }
+
+  // Build tabs
+  const tabs = getEl('mapToolTabs');
+  if (tabs) {
+    Object.entries(MAPS).forEach(([id, m]) => {
+      const btn = document.createElement('button');
+      btn.className = 'map-tab' + (id === currentMap ? ' active' : '');
+      btn.textContent = id;
+      btn.title = m.name;
+      btn.onclick = () => switchMap(id);
+      tabs.appendChild(btn);
+    });
+  }
+
+  // Mode buttons
+  getEl('modPlace')?.addEventListener('click', () => setMode('place'));
+  getEl('modErase')?.addEventListener('click', () => setMode('erase'));
+  getEl('modCable')?.addEventListener('click', () => setMode('cable'));
+  getEl('mapClearBtn')?.addEventListener('click', clearAll);
+
+  // Tech buttons
+  Object.keys(TECHS).forEach(tech => {
+    getEl(`btn-${tech}`)?.addEventListener('click', () => selectTech(tech));
+  });
+
+  function resizeCanvases() {
+    const m = MAPS[currentMap];
+    const bg = getEl<HTMLCanvasElement>('bgCanvas');
+    const ov = getEl<HTMLCanvasElement>('overlayCanvas');
+    if (bg && ov) {
+      bg.width = ov.width = m.width;
+      bg.height = ov.height = m.height;
+    }
+  }
+
+  function switchMap(id: string) {
+    currentMap = id;
+    document.querySelectorAll('.map-tab').forEach((b, i) => {
+      (b as HTMLElement).classList.toggle('active', Object.keys(MAPS)[i] === id);
+    });
+    resizeCanvases();
+    drawAll();
+    updateUI();
+  }
+
+  function drawAll() {
+    drawBackground();
+    drawOverlay();
+  }
+
+  function drawBackground() {
+    const canvas = getEl<HTMLCanvasElement>('bgCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const m = MAPS[currentMap];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#1a2810';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#ffffff08';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < canvas.width; x += GRID) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+    for (let y = 0; y < canvas.height; y += GRID) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+
+    m.features.forEach(f => drawFeature(ctx, f));
+
+    ctx.font = '9px JetBrains Mono,monospace';
+    ctx.fillStyle = '#ffffff20';
+    for (let x = 0; x < canvas.width; x += GRID * 5) {
+      ctx.fillText((x / GRID) + 'cm', x + 2, 9);
+    }
+
+    const boundary = m.features.find(f => f.type === 'boundary');
+    if (boundary && boundary.points) {
+      ctx.strokeStyle = '#ff8c8c';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      boundary.points.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    const [sx, sy] = m.substationPx;
+    ctx.fillStyle = '#ffd700';
+    ctx.strokeStyle = '#fff8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(sx, sy, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('S', sx, sy + 3);
+    ctx.fillStyle = '#ffd700';
+    ctx.font = '8px JetBrains Mono,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('Substation', sx + 11, sy + 4);
+  }
+
+  function drawFeature(ctx: CanvasRenderingContext2D, f: Feature) {
+    ctx.save();
+    switch (f.type) {
+      case 'ocean':
+      case 'water': {
+        if (!f.rect) break;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = f.type === 'ocean' ? '#1a3a5c' : '#1a4060';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = '#2a6090';
+        ctx.lineWidth = 0.8;
+        for (let i = ry + 8; i < ry + rh; i += 12) {
+          ctx.beginPath();
+          for (let x = rx; x < rx + rw; x += 8) {
+            const wave = Math.sin((x - rx) * 0.15) * 2;
+            x === rx ? ctx.moveTo(x, i + wave) : ctx.lineTo(x, i + wave);
+          }
+          ctx.stroke();
+        }
+        if (f.label) {
+          ctx.fillStyle = '#4a9fc0';
+          ctx.font = 'italic 11px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(f.label, rx + rw / 2, ry + rh / 2);
+        }
+        break;
+      }
+      case 'forest': {
+        const r = Array.isArray(f.rect?.[0]) ? (f.rect![0] as unknown as number[]) : f.rect!;
+        const [rx, ry, rw, rh] = r;
+        ctx.fillStyle = '#1e3a18';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.fillStyle = '#2a5020';
+        for (let x = rx + 6; x < rx + rw - 6; x += 14) for (let y = ry + 6; y < ry + rh - 6; y += 14) {
+          const jx = (Math.sin(x * y * 0.01) * 5) | 0, jy = (Math.cos(x * y * 0.01) * 5) | 0;
+          ctx.beginPath(); ctx.arc(x + jx, y + jy, 4, 0, Math.PI * 2); ctx.fill();
+        }
+        break;
+      }
+      case 'field': {
+        if (!f.rect) break;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = '#2a4a1a';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = '#3a6025';
+        ctx.lineWidth = 0.6;
+        for (let x = rx; x < rx + rw; x += GRID) { ctx.beginPath(); ctx.moveTo(x, ry); ctx.lineTo(x, ry + rh); ctx.stroke(); }
+        if (f.label) {
+          ctx.fillStyle = '#4a7a30';
+          ctx.font = '10px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(f.label, rx + rw / 2, ry + rh / 2);
+        }
+        break;
+      }
+      case 'building': {
+        if (!f.rect) break;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = '#3a3a4a';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = '#5a5a7a';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.fillStyle = '#6a7a9a30';
+        for (let x = rx + 4; x < rx + rw - 10; x += 12) for (let y = ry + 4; y < ry + rh - 10; y += 12) {
+          ctx.fillRect(x, y, 8, 7);
+        }
+        if (f.label) {
+          ctx.fillStyle = '#8a9aba';
+          ctx.font = '9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(f.label, rx + rw / 2, ry + rh / 2 + 4);
+        }
+        break;
+      }
+      case 'parking': {
+        if (!f.rect) break;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = '#2a2a35';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = '#ffffff15';
+        ctx.lineWidth = 0.6;
+        for (let x = rx + 6; x < rx + rw; x += 12) { ctx.beginPath(); ctx.moveTo(x, ry); ctx.lineTo(x, ry + rh); ctx.stroke(); }
+        break;
+      }
+      case 'road': {
+        if (!f.points) break;
+        ctx.strokeStyle = '#4a3a25';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        f.points.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+        ctx.stroke();
+        ctx.strokeStyle = '#6a5a35';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath();
+        f.points.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+        ctx.stroke();
+        ctx.setLineDash([]);
+        break;
+      }
+      case 'contour_zone': {
+        if (!f.rect) break;
+        const [rx, ry, rw, rh] = f.rect;
+        const density: Record<string, number> = { low: 25, medium: 18, high: 12, extreme: 8 };
+        const d = density[f.density || 'medium'];
+        ctx.strokeStyle = '#c8a420';
+        ctx.lineWidth = 0.6;
+        ctx.globalAlpha = 0.35;
+        for (let i = 0; i < (rh / d) | 0; i++) {
+          const y = ry + i * d + 4;
+          ctx.beginPath();
+          ctx.moveTo(rx, y);
+          for (let x = rx; x < rx + rw; x += 8) {
+            const wave = Math.sin(x * 0.04 + i * 0.7) * 4 + Math.sin(x * 0.09 + i * 0.3) * 3;
+            ctx.lineTo(x, y + wave);
+          }
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        break;
+      }
+      case 'tidal_zone': {
+        if (!f.rect) break;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = '#00c8aa18';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = '#00c8aa40';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.setLineDash([]);
+        break;
+      }
+      case 'pinch_point': {
+        if (f.cx == null || f.cy == null || f.r == null) break;
+        ctx.fillStyle = '#00c8aa30';
+        ctx.strokeStyle = '#00c8aa';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(f.cx, f.cy, f.r, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#00c8aa';
+        ctx.font = '8px Space Grotesk,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PINCH', f.cx, f.cy + 3);
+        break;
+      }
+      case 'nobuild': {
+        if (!f.rect) break;
+        const [rx, ry, rw, rh] = f.rect;
+        ctx.fillStyle = '#f8514920';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = '#f8514970';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.setLineDash([]);
+        if (f.label) {
+          ctx.fillStyle = '#f85149';
+          ctx.font = '9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(f.label, rx + rw / 2, ry + rh / 2);
+        }
+        break;
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawOverlay() {
+    const canvas = getEl<HTMLCanvasElement>('overlayCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const plist = placements[currentMap] || [];
+
+    (cables[currentMap] || []).forEach(seg => {
+      ctx.strokeStyle = '#ff6e40';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 3]);
+      ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
+      ctx.setLineDash([]);
+      const mid = [(seg.x1 + seg.x2) / 2, (seg.y1 + seg.y2) / 2];
+      const px = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1);
+      const cm = px / GRID;
+      ctx.fillStyle = '#ff6e40aa';
+      ctx.font = '8px JetBrains Mono,monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(cm.toFixed(1) + 'cm', mid[0], mid[1] - 3);
+    });
+
+    if (mode === 'cable' && cableStart) {
+      ctx.strokeStyle = '#ff6e4088';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(cableStart.x, cableStart.y); ctx.lineTo(mousePos.x, mousePos.y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    plist.filter(p => p.tech === 'wind').forEach(p => {
+      ctx.beginPath(); ctx.arc(p.cx, p.cy, 5 * GRID, 0, Math.PI * 2);
+      ctx.fillStyle = '#58a6ff12'; ctx.fill();
+      ctx.strokeStyle = '#58a6ff40'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    plist.forEach(p => {
+      const t = TECHS[p.tech];
+      const r = (t.size * GRID) / 2;
+
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.ellipse(p.cx, p.cy + r + 2, r * 0.8, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = t.color + 'cc';
+      ctx.strokeStyle = t.color;
+      ctx.lineWidth = 1.5;
+
+      if (p.tech === 'solar') {
+        const sq = GRID * 2;
+        ctx.strokeStyle = t.color;
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
+          const px = p.cx - sq * 0.75 + i * sq * 0.5;
+          const py = p.cy - sq * 0.5 + j * sq * 0.5;
+          ctx.fillStyle = '#1a3a6a';
+          ctx.fillRect(px, py, sq * 0.45, sq * 0.45);
+          ctx.strokeStyle = t.color + 'aa';
+          ctx.strokeRect(px, py, sq * 0.45, sq * 0.45);
+          ctx.strokeStyle = '#4a8add40';
+          ctx.lineWidth = 0.5;
+          ctx.beginPath(); ctx.moveTo(px + sq * 0.225, py); ctx.lineTo(px + sq * 0.225, py + sq * 0.45); ctx.stroke();
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = t.color + 'aa';
+        }
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.cx, p.cy, Math.max(r, 8), 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+      }
+
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.max(10, r * 0.8)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = 1;
+      ctx.fillText(t.symbol, p.cx, p.cy + Math.max(4, r * 0.3));
+
+      const [sx, sy] = MAPS[currentMap].substationPx;
+      ctx.strokeStyle = t.color + '55';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 5]);
+      ctx.beginPath(); ctx.moveTo(p.cx, p.cy); ctx.lineTo(sx, sy); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = t.color;
+      ctx.font = '8px JetBrains Mono,monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(t.name, p.cx, p.cy - Math.max(r, 8) - 4);
+
+      ctx.globalAlpha = 1;
+    });
+
+    if (mode === 'place' && selectedTech && mousePos.x > 0) {
+      const t = TECHS[selectedTech];
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.arc(mousePos.x, mousePos.y, Math.max(8, (t.size * GRID) / 2), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function getCanvasPos(e: MouseEvent) {
+    const canvas = getEl<HTMLCanvasElement>('overlayCanvas');
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function getZoneAt(x: number, y: number): Feature | null {
+    const features = MAPS[currentMap].features;
+    const priority = ['nobuild', 'pinch_point', 'water', 'ocean', 'tidal_zone', 'building', 'parking', 'road', 'forest', 'field', 'contour_zone'];
+    for (const type of priority) {
+      const f = features.find(feat => {
+        if (feat.type !== type) return false;
+        if (type === 'pinch_point') return Math.hypot((feat.cx || 0) - x, (feat.cy || 0) - y) < (feat.r || 0);
+        if (feat.rect) {
+          const r = Array.isArray(feat.rect[0]) ? feat.rect[0] as unknown as number[] : feat.rect;
+          return x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3];
+        }
+        return false;
+      });
+      if (f) return f;
+    }
+    return null;
+  }
+
+  function getZoneDesc(type: string): string {
+    const descs: Record<string, string> = {
+      water: '✓ Hydro/Tidal suitable',
+      ocean: '✓ Tidal/Offshore suitable',
+      tidal_zone: '✓ Tidal turbine zone',
+      pinch_point: '⭐ 20% tidal power bonus!',
+      building: '⚠ Restricted — no wind buffer',
+      forest: 'Forested — wind restrictions may apply',
+      field: '✓ Good for Solar/Wind/Geothermal',
+      parking: '✓ Good for Solar arrays',
+      road: '✓ Road access — Biomass suitable',
+      nobuild: '✗ No-Build zone',
+      contour_zone: 'Steep terrain — check hydro potential',
+      boundary: 'Property boundary',
+    };
+    return descs[type] || '';
+  }
+
+  function checkPlacementViolations(x: number, y: number, tech: string): string[] {
+    const violations: string[] = [];
+    const zone = getZoneAt(x, y);
+
+    if (tech === 'hydroL' || tech === 'hydroH') {
+      if (!zone || (zone.type !== 'water' && zone.type !== 'ocean')) {
+        violations.push('Hydro must be placed on water');
+      }
+    }
+    if (tech === 'tidal') {
+      if (!zone || (zone.type !== 'water' && zone.type !== 'ocean' && zone.type !== 'tidal_zone')) {
+        violations.push('Tidal must be placed in coastal/water area');
+      }
+    }
+    if (tech === 'geo') {
+      if (zone && (zone.type === 'water' || zone.type === 'ocean')) {
+        violations.push('Geothermal cannot be placed on water');
+      }
+      if (zone && zone.type === 'nobuild') {
+        violations.push('No-build zone: Geothermal not allowed');
+      }
+    }
+    if (tech === 'biomass') {
+      const nearRoad = MAPS[currentMap].features.some(f => {
+        if (f.type !== 'road') return false;
+        return (f.points || []).some(([rx, ry]) => Math.hypot(rx - x, ry - y) < GRID * 4);
+      });
+      if (!nearRoad) violations.push('Biomass should be near a road');
+    }
+    if (tech === 'wind') {
+      MAPS[currentMap].features.forEach(f => {
+        if (f.type === 'building' && f.rect) {
+          const [rx, ry, rw, rh] = f.rect;
+          const closest = [Math.max(rx, Math.min(x, rx + rw)), Math.max(ry, Math.min(y, ry + rh))];
+          const d = Math.hypot(closest[0] - x, closest[1] - y);
+          if (d < 5 * GRID) violations.push('Wind buffer touches building — $200K fee');
+        }
+      });
+    }
+    return violations;
+  }
+
+  function placeUnit(x: number, y: number) {
+    if (!selectedTech) return;
+    const violations = checkPlacementViolations(x, y, selectedTech);
+    placements[currentMap].push({
+      tech: selectedTech, cx: x, cy: y,
+      id: Date.now() + Math.random(),
+      violations
+    });
+    drawOverlay();
+    updateUI();
+  }
+
+  function eraseUnit(x: number, y: number) {
+    const plist = placements[currentMap];
+    const idx = plist.findIndex(p => {
+      const t = TECHS[p.tech];
+      const r = Math.max(12, t.size * GRID / 2) + 4;
+      return Math.hypot(p.cx - x, p.cy - y) < r;
+    });
+    if (idx >= 0) { plist.splice(idx, 1); drawOverlay(); updateUI(); }
+  }
+
+  function updateInfoPanel(x: number, y: number) {
+    const m = MAPS[currentMap];
+    const [sx, sy] = m.substationPx;
+    const distPx = Math.hypot(x - sx, y - sy);
+    const distCm = distPx / GRID;
+    const cableCost = distCm * 50000;
+    const zone = getZoneAt(x, y);
+    const cursorEl = getEl('infoCursor'); if (cursorEl) cursorEl.textContent = `${(x / GRID).toFixed(1)}, ${(y / GRID).toFixed(1)} cm`;
+    const zoneEl = getEl('infoZone'); if (zoneEl) zoneEl.textContent = zone ? (zone.label || zone.type) : 'open land';
+    const distEl = getEl('infoDist'); if (distEl) distEl.textContent = `${distCm.toFixed(1)} cm`;
+    const costEl = getEl('infoCableCost'); if (costEl) costEl.textContent = `$${(cableCost / 1000).toFixed(0)}K`;
+  }
+
+  function updateUI() {
+    const plist = placements[currentMap] || [];
+    let totalKw = 0, totalStorage = 0, totalCost = 0;
+    const counts: Record<string, number> = {};
+    plist.forEach(p => {
+      const t = TECHS[p.tech];
+      totalKw += t.kw;
+      totalStorage += t.storageKwh;
+      totalCost += t.cost;
+      counts[p.tech] = (counts[p.tech] || 0) + 1;
+    });
+
+    let cableCm = 0;
+    plist.forEach(p => {
+      const [sx, sy] = MAPS[currentMap].substationPx;
+      cableCm += Math.hypot(p.cx - sx, p.cy - sy) / GRID;
+    });
+    (cables[currentMap] || []).forEach(seg => {
+      cableCm += Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / GRID;
+    });
+    totalCost += cableCm * 50000;
+    if (totalKw > 3000) totalCost += 500000;
+
+    const islandTime = totalKw > 0 ? (totalStorage / 5000).toFixed(1) : '0';
+
+    const kwEl = getEl('statPower');
+    if (kwEl) {
+      kwEl.className = 'map-stat ' + (totalKw >= 5000 ? 'ok' : totalKw >= 3000 ? 'warn' : '');
+      kwEl.innerHTML = `Power: <span>${(totalKw / 1000).toFixed(1)}MW / 5MW</span>`;
+    }
+
+    const storageEl = getEl('statStorage'); if (storageEl) storageEl.innerHTML = `Storage: <span>${totalStorage.toLocaleString()} kWh</span>`;
+    const cableEl = getEl('statCable'); if (cableEl) cableEl.innerHTML = `Cable: <span>${cableCm.toFixed(1)} cm</span>`;
+    const budgetEl = getEl('statBudget'); if (budgetEl) budgetEl.innerHTML = `Budget: <span>$${(totalCost / 1000000).toFixed(2)}M / $10M</span>`;
+    const islandEl = getEl('statIsland'); if (islandEl) islandEl.innerHTML = `Island: <span>${islandTime}h</span>`;
+
+    const cp = getEl('countsPanel');
+    if (cp) {
+      if (plist.length === 0) {
+        cp.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:4px">No placements yet</div>';
+      } else {
+        cp.innerHTML = Object.entries(counts).map(([k, v]) => {
+          const t = TECHS[k];
+          return `<div class="map-count-row"><span class="map-count-label">${t.name}</span><span class="map-count-val" style="color:${t.color}">×${v}</span></div>`;
+        }).join('');
+        cp.innerHTML += `<div class="map-count-row" style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px"><span class="map-count-label">Total cost</span><span class="map-count-val" style="color:${totalCost > 10000000 ? 'var(--danger)' : 'var(--accent)'}">$${(totalCost / 1e6).toFixed(2)}M</span></div>`;
+      }
+    }
+
+    const allViolations: string[] = [];
+    plist.forEach(p => {
+      if (p.violations && p.violations.length) {
+        p.violations.forEach(v => allViolations.push(`${TECHS[p.tech].name}: ${v}`));
+      }
+    });
+    if (totalKw > 3000) allViolations.unshift('⚡ Utility upgrade required (+$500K)');
+    if (totalStorage < 2000 && plist.length > 0) allViolations.push('⚠ Need 2,000+ kWh for Grid-Down resilience');
+    if (totalCost > 10000000) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - 10000000) / 1e6).toFixed(2)}M`);
+
+    const vp = getEl('violationsPanel');
+    if (vp) {
+      vp.innerHTML = allViolations.length
+        ? allViolations.map(v => `<div class="map-violation">⚠ ${v}</div>`).join('')
+        : '<div class="map-no-violations">✓ No violations</div>';
+    }
+  }
+
+  function selectTech(tech: string) {
+    selectedTech = tech;
+    document.querySelectorAll('.map-tech-btn').forEach(b => b.classList.remove('active'));
+    getEl(`btn-${tech}`)?.classList.add('active');
+    if (mode !== 'place' && mode !== 'cable') setMode('place');
+  }
+
+  function setMode(m: string) {
+    mode = m;
+    if (m !== 'cable') cableStart = null;
+    getEl('modPlace')?.classList.toggle('active', m === 'place');
+    getEl('modErase')?.classList.toggle('active', m === 'erase');
+    getEl('modCable')?.classList.toggle('active', m === 'cable');
+    const wrap = getEl('canvasWrap');
+    wrap?.classList.toggle('erase-mode', m === 'erase');
+  }
+
+  function clearAll() {
+    if (!confirm('Clear all placements on this map?')) return;
+    placements[currentMap] = [];
+    cables[currentMap] = [];
+    cableStart = null;
+    drawOverlay();
+    updateUI();
+  }
+
+  // Event listeners on overlay canvas
+  const overlayCanvas = getEl<HTMLCanvasElement>('overlayCanvas');
+  if (overlayCanvas) {
+    overlayCanvas.addEventListener('mousedown', (e: MouseEvent) => {
+      const { x, y } = getCanvasPos(e);
+      if (mode === 'place') {
+        placeUnit(x, y);
+      } else if (mode === 'erase') {
+        eraseUnit(x, y);
+      } else if (mode === 'cable') {
+        if (!cableStart) {
+          cableStart = { x, y };
+        } else {
+          cables[currentMap].push({ x1: cableStart.x, y1: cableStart.y, x2: x, y2: y });
+          cableStart = null;
+          drawOverlay();
+          updateUI();
+        }
+      }
+    });
+
+    overlayCanvas.addEventListener('mousemove', (e: MouseEvent) => {
+      const { x, y } = getCanvasPos(e);
+      mousePos = { x, y };
+      updateInfoPanel(x, y);
+      if (mode === 'place' || (mode === 'cable' && cableStart)) drawOverlay();
+
+      const tooltip = getEl('mapTooltip');
+      const zone = getZoneAt(x, y);
+      if (zone && tooltip) {
+        tooltip.className = 'map-tooltip';
+        tooltip.style.left = (e.clientX + 14) + 'px';
+        tooltip.style.top = (e.clientY - 10) + 'px';
+        tooltip.innerHTML = `<b>${zone.label || zone.type}</b><br>${getZoneDesc(zone.type)}`;
+      } else if (tooltip) {
+        tooltip.className = 'map-tooltip hidden';
+      }
+    });
+
+    overlayCanvas.addEventListener('mouseleave', () => {
+      mousePos = { x: 0, y: 0 };
+      const tooltip = getEl('mapTooltip');
+      if (tooltip) tooltip.className = 'map-tooltip hidden';
+    });
+  }
+
+  // Init
+  resizeCanvases();
+  drawAll();
+  updateUI();
+  selectTech('solar');
+}

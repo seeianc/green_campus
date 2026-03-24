@@ -91,6 +91,21 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
 
+### `artifacts/green-campus` (`@workspace/green-campus`)
+
+React + Vite web app with two interactive educational tools:
+
+1. **Campus Map Placer** — Canvas-based interactive map where users place renewable energy sources (Solar, Wind, Geothermal, Hydro, Tidal, Biomass) and storage (BESS, Thermal, Flywheel, CAES) on 5 campus maps (RLS, EDS, STG, CES, LCS). Features zone detection, placement violation checking, cable routing, and real-time stats panel.
+
+2. **Grid Simulator** — Planning tool with numeric inputs and dropdowns for demand patterns, budget tiers, workforce, environmental constraints, and pivot cards. Displays a 24-hour supply vs demand Chart.js chart, ROI ledger, workforce section, and supports CSV export.
+
+- Entry: `src/main.tsx`
+- App: `src/App.tsx` — tab navigation between the two tools
+- `src/pages/CampusMapTool.tsx` — canvas map tool, all logic in React `useEffect`
+- `src/pages/EnergyGridSimulator.tsx` — grid simulator, Chart.js via npm `chart.js`
+- Both tools inject scoped CSS at runtime to avoid Tailwind conflicts
+- Dependencies: `chart.js`, Tailwind CSS, Radix UI, Lucide React
+
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
