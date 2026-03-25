@@ -84,48 +84,48 @@ export default function CampusMapTool() {
       .map-main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
       .map-sidebar {
-        width: 220px;
+        width: 300px;
         flex-shrink: 0;
         background: var(--surface);
         border-right: 1px solid var(--border);
         overflow-y: auto;
-        padding: 12px 10px;
+        padding: 12px 12px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
       }
-      .map-sidebar-section { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 4px 4px 2px; }
+      .map-sidebar-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); padding: 6px 4px 4px; border-bottom: 1px solid var(--border); margin-top: 4px; }
       .map-tech-btn {
-        display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 5px;
+        display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 5px;
         cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
-        color: var(--text); font-family: 'Space Grotesk',sans-serif; font-size: 11px;
+        color: var(--text); font-family: 'Space Grotesk',sans-serif; font-size: 12px;
         font-weight: 500; transition: all .15s; text-align: left; width: 100%;
       }
       .map-tech-btn:hover { border-color: var(--accent2); background: #1f2a38; }
       .map-tech-btn.active { border-color: currentColor; }
       .map-tech-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-      .map-tech-meta { font-size: 9px; color: var(--muted); margin-top: 1px; font-family: 'JetBrains Mono',monospace; }
+      .map-tech-meta { font-size: 10px; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono',monospace; }
       .map-tech-btn.active .map-tech-meta { color: inherit; }
 
       .map-mode-row { display: flex; gap: 6px; }
       .map-mode-btn {
-        flex: 1; padding: 6px; border-radius: 4px; font-size: 10px; font-weight: 600;
+        flex: 1; padding: 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
         cursor: pointer; border: 1px solid var(--border); background: transparent;
         color: var(--muted); transition: all .15s; font-family: 'Space Grotesk',sans-serif;
         text-align: center;
       }
       .map-mode-btn.active { background: var(--accent2); color: #000; border-color: var(--accent2); }
 
-      .map-counts { padding: 6px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border); }
-      .map-count-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 10px; }
+      .map-counts { padding: 8px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border); }
+      .map-count-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 11px; }
       .map-count-label { color: var(--muted); }
-      .map-count-val { font-family: 'JetBrains Mono',monospace; font-weight: 600; }
+      .map-count-val { font-family: 'JetBrains Mono',monospace; font-weight: 600; color: var(--accent); }
 
       .map-violations-panel {
-        padding: 6px; background: #1c1010; border-radius: 5px; border: 1px solid #3a1a1a;
-        max-height: 150px; overflow-y: auto;
+        padding: 8px; background: #1c1010; border-radius: 5px; border: 1px solid #3a1a1a;
+        max-height: 200px; overflow-y: auto;
       }
-      .map-violation { font-size: 10px; color: var(--danger); padding: 2px 0; border-bottom: 1px solid #2a1010; }
+      .map-violation { font-size: 11px; color: var(--danger); padding: 3px 0; border-bottom: 1px solid #2a1010; }
       .map-violation:last-child { border-bottom: none; }
       .map-no-violations { font-size: 10px; color: var(--accent); }
 

@@ -8,7 +8,7 @@ const TOOLS = [
 ];
 
 export default function App() {
-  const [activeTool, setActiveTool] = useState<"map" | "simulator">("map");
+  const [activeTool, setActiveTool] = useState<"map" | "simulator">("simulator");
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d1117" }}>
