@@ -210,7 +210,7 @@ export default function EnergyGridSimulator() {
       .e-alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
       .e-alerts-stack { display: flex; flex-direction: column; gap: 8px; }
 
-      .e-chart-wrap { padding: 16px; }
+      .e-chart-wrap { padding: 20px; }
 
       .budget-bar-wrap { margin-top: 8px; }
       .budget-bar-track { height: 8px; background: #ede9e0; border-radius: 4px; overflow: hidden; margin: 4px 0; }
@@ -804,7 +804,7 @@ export default function EnergyGridSimulator() {
           },
           scales: {
             x: { grid: { color: '#f0ede6' }, ticks: { font: { family: 'DM Mono', size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
-            y: { grid: { color: '#f0ede6' }, ticks: { font: { family: 'DM Mono', size: 10 }, callback: (v) => Number(v).toLocaleString() + ' kW' } }
+            y: { min: 0, max: 8000, grid: { color: '#f0ede6' }, ticks: { font: { family: 'DM Mono', size: 10 }, padding: 8, callback: (v) => Number(v).toLocaleString() + ' kW' } }
           }
         }
       });
