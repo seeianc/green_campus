@@ -350,7 +350,7 @@ function initMapTool() {
       name: 'EDS — Penobscot Bay',
       desc: 'Coastal campus on Penobscot Bay — tidal opportunities',
       width: 950, height: 671,
-      substationPx: [670, 570],
+      substationPx: [630, 570],
       features: [
         { type:'ocean', rect:[0,0,950,230], label:'Penobscot Bay' },
         { type:'boundary', points:[[430,230],[810,50],[950,50],[950,700],[430,700],[360,580],[290,520],[430,320]] },
@@ -365,7 +365,7 @@ function initMapTool() {
       name: 'STG — Marsh / Atlantic',
       desc: 'Tidal river, marsh, Atlantic access — highest water potential',
       width: 900, height: 1274,
-      substationPx: [570, 600],
+      substationPx: [570, 650],
       features: [
         { type:'water', rect:[0,0,200,520], label:'The Marsh' },
         { type:'ocean', rect:[0,780,900,120], label:'Atlantic Ocean' },
@@ -386,7 +386,7 @@ function initMapTool() {
       name: 'CES — River / Tidal',
       desc: 'River with 3+ contour lines = high hydro potential',
       width: 950, height: 671,
-      substationPx: [170, 430],
+      substationPx: [140, 405],
       features: [
         { type:'water', rect:[740,0,210,800], label:'River' },
         { type:'water', rect:[840,480,110,320], label:'Tidal River' },
@@ -858,7 +858,7 @@ function initMapTool() {
 
     (cables[currentMap] || []).forEach(seg => {
       ctx.strokeStyle = '#e74c3c';
-      ctx.lineWidth = 7;
+      ctx.lineWidth = 10;
       ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
       const mid = [(seg.x1 + seg.x2) / 2, (seg.y1 + seg.y2) / 2];
       const px = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1);
@@ -871,7 +871,7 @@ function initMapTool() {
 
     if (mode === 'cable' && cableStart) {
       ctx.strokeStyle = '#e74c3c88';
-      ctx.lineWidth = 7;
+      ctx.lineWidth = 10;
       ctx.beginPath(); ctx.moveTo(cableStart.x, cableStart.y); ctx.lineTo(mousePos.x, mousePos.y); ctx.stroke();
     }
 
