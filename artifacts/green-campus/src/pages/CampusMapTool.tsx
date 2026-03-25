@@ -1114,11 +1114,15 @@ function initMapTool() {
   function updateInfoPanel(x: number, y: number) {
     const m = MAPS[currentMap];
     const [sx, sy] = m.substationPx;
-    const distPx = Math.hypot(x - sx, y - sy);
+    // In place mode, show distance from snapped position (what will actually be placed)
+    const displayX = mode === 'place' && selectedTech ? snapToGridCell(x, y, selectedTech).x : x;
+    const displayY = mode === 'place' && selectedTech ? snapToGridCell(x, y, selectedTech).y : y;
+    const distPx = Math.hypot(displayX - sx, displayY - sy);
     const distCm = distPx / GRID;
-    const cableCost = distCm * 50000;
+    const CABLE_COST_PER_CM = 50000; // $50K per cm
+    const cableCost = distCm * CABLE_COST_PER_CM;
     const zone = getZoneAt(x, y);
-    const cursorEl = getEl('infoCursor'); if (cursorEl) cursorEl.textContent = `${(x / GRID).toFixed(1)}, ${(y / GRID).toFixed(1)} cm`;
+    const cursorEl = getEl('infoCursor'); if (cursorEl) cursorEl.textContent = `${(displayX / GRID).toFixed(1)}, ${(displayY / GRID).toFixed(1)} cm`;
     const zoneEl = getEl('infoZone'); if (zoneEl) zoneEl.textContent = zone ? (zone.label || zone.type) : 'open land';
     const distEl = getEl('infoDist'); if (distEl) distEl.textContent = `${distCm.toFixed(1)} cm`;
     const costEl = getEl('infoCableCost'); if (costEl) costEl.textContent = `$${(cableCost / 1000).toFixed(0)}K`;
@@ -1150,7 +1154,8 @@ function initMapTool() {
         cableCm += Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / GRID;
       });
     });
-    totalCost += cableCm * 50000;
+    const CABLE_COST_PER_CM = 50000; // $50K per cm — must match EnergyGridSimulator
+    totalCost += cableCm * CABLE_COST_PER_CM;
     if (totalKw > 3000) totalCost += 500000;
 
     // Sync to shared state so Grid Simulator can read it

@@ -7,6 +7,7 @@ Chart.register(...registerables);
 export default function EnergyGridSimulator() {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const sourceChartRef = useRef<Chart | null>(null);
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -492,6 +493,13 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
+              <div class="e-card-header"><div class="dot" style="background:#8f6a3a"></div>Energy Source Mix</div>
+              <div class="e-chart-wrap" style="max-width:320px;margin:0 auto">
+                <canvas id="sourceChart" height="240"></canvas>
+              </div>
+            </div>
+
+            <div class="e-card">
               <div class="e-card-header"><div class="dot" style="background:#6a3abf"></div>Finance Director: ROI Ledger</div>
               <div class="e-card-body">
                 <div class="e-ledger-row"><span>Solar PV Annual Savings</span><span class="val pos" id="lSolar">$0</span></div>
@@ -568,6 +576,10 @@ export default function EnergyGridSimulator() {
       if (chartRef.current) {
         chartRef.current.destroy();
         chartRef.current = null;
+      }
+      if (sourceChartRef.current) {
+        sourceChartRef.current.destroy();
+        sourceChartRef.current = null;
       }
     };
   }, []);
@@ -798,6 +810,57 @@ export default function EnergyGridSimulator() {
       });
     }
 
+    // Init donut chart for energy source mix
+    const sourceCanvas = getEl<HTMLCanvasElement>('sourceChart');
+    if (sourceCanvas) {
+      sourceChartRef.current = new Chart(sourceCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Solar', 'Wind', 'Geo', 'Hydro', 'Tidal', 'Biomass'],
+          datasets: [{
+            data: [0, 0, 0, 0, 0, 0],
+            backgroundColor: [
+              '#f0b429',
+              '#58a6ff',
+              '#bc8cff',
+              '#39c8e8',
+              '#00c8aa',
+              '#7ee787'
+            ],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { family: 'DM Sans', size: 11 },
+                padding: 12,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              bodyFont: { family: 'DM Mono', size: 12 },
+              titleFont: { family: 'DM Sans' },
+              callbacks: {
+                label: (context) => {
+                  const value = context.parsed ?? 0;
+                  const total = (context.dataset.data as number[]).reduce((a, b) => a + b, 0);
+                  const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                  return `${context.label}: ${Math.round(value)} kW (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
     function render() {
       const s = getState();
       const r = calc(s);
@@ -891,6 +954,20 @@ export default function EnergyGridSimulator() {
         chartRef.current.data.datasets[0].data = r.demand24;
         chartRef.current.data.datasets[1].data = r.supply24;
         chartRef.current.update('none');
+      }
+
+      // Update donut chart with energy source mix
+      if (sourceChartRef.current) {
+        const sourceData = [
+          s.solar * 500,           // Solar (500 kW per unit)
+          s.wind * 3000,           // Wind (3000 kW per unit)
+          s.geo * 2000,            // Geo (2000 kW per unit)
+          (s.hydroLow + s.hydroHigh) * 1250,  // Hydro (avg 1250 kW per unit)
+          (s.tidalStd * 500 + s.tidalPP * 600),  // Tidal (mixed: std 500, pinch 600)
+          s.biomass * 1000         // Biomass (1000 kW per unit)
+        ];
+        sourceChartRef.current.data.datasets[0].data = sourceData;
+        sourceChartRef.current.update('none');
       }
 
       const setLedger = (id: string, val: number) => { const el = getEl(id); if (el) el.textContent = fmt$(val); };
