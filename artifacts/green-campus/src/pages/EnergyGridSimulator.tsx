@@ -196,6 +196,52 @@ export default function EnergyGridSimulator() {
       .e-metric-value.negative { color: var(--danger); }
       .e-metric-value.warn { color: var(--warn); }
 
+      .e-metric-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .e-metric-toggle-arrow {
+        display: inline-block;
+        font-size: 12px;
+        transition: transform 0.2s;
+      }
+      .e-metric-toggle-arrow.expanded { transform: rotate(90deg); }
+
+      .e-expense-breakdown {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      .e-expense-breakdown.expanded {
+        max-height: 500px;
+      }
+      .e-expense-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        color: var(--text-muted);
+        font-family: var(--mono);
+      }
+      .e-expense-item.category {
+        font-weight: 600;
+        color: var(--text);
+        margin-top: 6px;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+      }
+      .e-expense-item.category:first-child { margin-top: 0; }
+      .e-expense-item .label { flex: 1; }
+      .e-expense-item .value { text-align: right; min-width: 80px; }
+
       .e-alert {
         padding: 10px 14px;
         border-radius: 6px;
@@ -463,7 +509,36 @@ export default function EnergyGridSimulator() {
                   </div>
                   <div class="e-metric">
                     <div class="e-metric-label">Total Spent</div>
-                    <div class="e-metric-value" id="mSpent">$0</div>
+                    <div class="e-metric-toggle" id="spentToggle">
+                      <span class="e-metric-toggle-arrow">▶</span>
+                      <div class="e-metric-value" id="mSpent">$0</div>
+                    </div>
+                    <div class="e-expense-breakdown" id="spentBreakdown">
+                      <div class="e-expense-item category"><span class="label">GENERATION</span></div>
+                      <div class="e-expense-item"><span class="label">Solar</span><span class="value" id="costSolar">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Wind</span><span class="value" id="costWind">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Geothermal</span><span class="value" id="costGeo">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Hydro</span><span class="value" id="costHydro">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Tidal</span><span class="value" id="costTidal">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Biomass</span><span class="value" id="costBiomass">$0</span></div>
+                      
+                      <div class="e-expense-item category"><span class="label">STORAGE</span></div>
+                      <div class="e-expense-item"><span class="label">Li-Ion BESS</span><span class="value" id="costLiIon">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Thermal</span><span class="value" id="costThermal">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Flywheel</span><span class="value" id="costFlywheel">$0</span></div>
+                      <div class="e-expense-item"><span class="label">CAES</span><span class="value" id="costCAES">$0</span></div>
+                      
+                      <div class="e-expense-item category"><span class="label">EMERGING</span></div>
+                      <div class="e-expense-item"><span class="label">Hydrogen</span><span class="value" id="costHydrogen">$0</span></div>
+                      <div class="e-expense-item"><span class="label">V2G Hub</span><span class="value" id="costV2G">$0</span></div>
+                      <div class="e-expense-item"><span class="label">SCADA</span><span class="value" id="costSCADA">$0</span></div>
+                      
+                      <div class="e-expense-item category"><span class="label">INFRASTRUCTURE</span></div>
+                      <div class="e-expense-item"><span class="label">Cabling</span><span class="value" id="costCabling">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Wind Buffer</span><span class="value" id="costWindBuffer">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Utility Fee</span><span class="value" id="costUtilityFee">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Pivot Penalty</span><span class="value" id="costPivotPenalty">$0</span></div>
+                    </div>
                   </div>
                   <div class="e-metric full">
                     <div class="e-metric-label">Remaining Budget</div>
@@ -755,7 +830,7 @@ export default function EnergyGridSimulator() {
         demand24, supply24,
         roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
-        grantCompliant, isGrant, infraCosts,
+        grantCompliant, isGrant, infraCosts, genCosts, storageCosts, emergingCosts,
         migratoryBirdViolation, vernalPoolViolation,
         isMigratoryBird, isVernalPool,
       };
@@ -914,6 +989,26 @@ export default function EnergyGridSimulator() {
       const storageEl = getEl('mTotalStorage'); if (storageEl) storageEl.textContent = fmtkWh(r.totalStorage);
       const budgetEl = getEl('mBudget'); if (budgetEl) budgetEl.textContent = fmt$(r.startBudget);
       const spentEl = getEl('mSpent'); if (spentEl) spentEl.textContent = fmt$(r.totalSpent);
+
+      // Update expense breakdown
+      const setCost = (id: string, val: number) => { const el = getEl(id); if (el) el.textContent = fmt$(val); };
+      setCost('costSolar', r.genCosts.solar);
+      setCost('costWind', r.genCosts.wind);
+      setCost('costGeo', r.genCosts.geo);
+      setCost('costHydro', r.genCosts.hydro);
+      setCost('costTidal', r.genCosts.tidal);
+      setCost('costBiomass', r.genCosts.biomass);
+      setCost('costLiIon', r.storageCosts.liIon);
+      setCost('costThermal', r.storageCosts.thermal);
+      setCost('costFlywheel', r.storageCosts.flywheel);
+      setCost('costCAES', r.storageCosts.caes);
+      setCost('costHydrogen', r.emergingCosts.hydrogen);
+      setCost('costV2G', r.emergingCosts.v2g);
+      setCost('costSCADA', r.emergingCosts.scada);
+      setCost('costCabling', r.infraCosts.cabling);
+      setCost('costWindBuffer', r.infraCosts.windBuffer);
+      setCost('costUtilityFee', r.infraCosts.utilityFee);
+      setCost('costPivotPenalty', r.infraCosts.pivotPenalty);
 
       const remEl = getEl('mRemaining');
       if (remEl) {
@@ -1077,6 +1172,17 @@ export default function EnergyGridSimulator() {
     getEl('simPrintBtn')?.addEventListener('click', () => window.print());
     getEl('simExportBtn')?.addEventListener('click', exportCSV);
     getEl('simResetBtn')?.addEventListener('click', resetAll);
+
+    // Toggle expense breakdown
+    const spentToggle = getEl('spentToggle');
+    const spentBreakdown = getEl('spentBreakdown');
+    if (spentToggle && spentBreakdown) {
+      spentToggle.addEventListener('click', () => {
+        const arrow = spentToggle.querySelector('.e-metric-toggle-arrow');
+        if (arrow) arrow.classList.toggle('expanded');
+        spentBreakdown.classList.toggle('expanded');
+      });
+    }
 
     render();
   }
