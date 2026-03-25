@@ -797,14 +797,16 @@ export default function EnergyGridSimulator() {
         },
         options: {
           responsive: true,
+          maintainAspectRatio: true,
           interaction: { mode: 'index', intersect: false },
+          layout: { padding: { left: 10, right: 10, top: 10, bottom: 10 } },
           plugins: {
             legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 }, boxWidth: 16 } },
             tooltip: { bodyFont: { family: 'DM Mono' }, titleFont: { family: 'DM Sans' } }
           },
           scales: {
             x: { grid: { color: '#f0ede6' }, ticks: { font: { family: 'DM Mono', size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
-            y: { min: 0, max: 8000, grid: { color: '#f0ede6' }, ticks: { font: { family: 'DM Mono', size: 10 }, padding: 8, callback: (v) => Number(v).toLocaleString() + ' kW' } }
+            y: { beginAtZero: true, min: 0, max: 8000, grid: { color: '#f0ede6' }, ticks: { font: { family: 'DM Mono', size: 10 }, padding: 12, callback: (v) => Number(v).toLocaleString() + ' kW' } }
           }
         }
       });
