@@ -5,7 +5,5 @@
   "scripts": {
     "codegen": "orval --config ./orval.config.ts"
   },
-  "devDependencies": {
-    "orval": "^8.5.2"
-  }
+  "devDependencies": {}
 }

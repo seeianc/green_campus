@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Chart, registerables } from "chart.js";
+import { sharedState, emitSimUpdate, MAP_TECH_TO_SIM } from "../shared";
 
 Chart.register(...registerables);
 
@@ -41,6 +42,9 @@ export default function EnergyGridSimulator() {
         line-height: 1.5;
         height: 100%;
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
       }
 
       .energy-sim-header {
@@ -83,6 +87,7 @@ export default function EnergyGridSimulator() {
         grid-template-columns: 320px 1fr;
         gap: 24px;
         align-items: start;
+        min-height: 0;
       }
 
       .energy-sidebar { display: flex; flex-direction: column; gap: 16px; }
@@ -797,6 +802,24 @@ export default function EnergyGridSimulator() {
       const s = getState();
       const r = calc(s);
 
+      // Sync simulator state back to map via sharedState
+      const simTechCounts: Record<string, number> = {
+        solar: s.solar,
+        wind: s.wind,
+        geo: s.geo,
+        hydroL: s.hydroLow,
+        hydroH: s.hydroHigh,
+        tidal: s.tidalStd,
+        biomass: s.biomass,
+        bess: s.liIon,
+        thermal: s.thermal,
+        flywheel: s.flywheel,
+        caes: s.caes,
+      };
+      sharedState.techCounts = simTechCounts;
+      sharedState.budgetTier = s.budgetTier;
+      emitSimUpdate();
+
       const isGrant = s.budgetTier === 'Federal Green Grant';
       ['hydrogen','v2g','scada'].forEach(id => {
         const el = getEl<HTMLInputElement>(id);
@@ -939,6 +962,39 @@ export default function EnergyGridSimulator() {
       el.addEventListener('change', render);
     });
 
+    // Sync when map updates — pull tech counts from map placements
+    window.addEventListener('gc:map-update', () => {
+      const counts = sharedState.techCounts || {};
+      const fieldMap: Record<string, string> = {
+        solar: 'solar',
+        wind: 'wind',
+        geo: 'geo',
+        hydroL: 'hydroLow',
+        hydroH: 'hydroHigh',
+        tidal: 'tidalStd',
+        biomass: 'biomass',
+        bess: 'liIon',
+        thermal: 'thermal',
+        flywheel: 'flywheel',
+        caes: 'caes',
+      };
+      Object.entries(fieldMap).forEach(([mapKey, simId]) => {
+        const el = getEl<HTMLInputElement>(simId);
+        const newValue = counts[mapKey] ?? 0;
+        if (el && el.value !== String(newValue)) {
+          el.value = String(newValue);
+        }
+      });
+
+      const cablingEl = getEl<HTMLInputElement>('cabling');
+      const mapCableCm = Number((sharedState.totalMapCableCm || 0).toFixed(1));
+      if (cablingEl && cablingEl.value !== String(mapCableCm)) {
+        cablingEl.value = String(mapCableCm);
+      }
+
+      render();
+    });
+
     getEl('simPrintBtn')?.addEventListener('click', () => window.print());
     getEl('simExportBtn')?.addEventListener('click', exportCSV);
     getEl('simResetBtn')?.addEventListener('click', resetAll);
@@ -946,5 +1002,5 @@ export default function EnergyGridSimulator() {
     render();
   }
 
-  return <div ref={containerRef} style={{ height: "100%", display: "flex", flexDirection: "column" }} />;
+  return <div ref={containerRef} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }} />;
 }

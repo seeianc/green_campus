@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { sharedState, emitMapUpdate, MAP_TECH_TO_SIM } from "../shared";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -44,6 +45,7 @@ export default function CampusMapTool() {
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        min-height: 0;
       }
 
       .map-tool-header {
@@ -79,7 +81,7 @@ export default function CampusMapTool() {
       }
       .map-clear-btn:hover { background: var(--danger); color: #fff; }
 
-      .map-main { display: flex; flex: 1; overflow: hidden; }
+      .map-main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
       .map-sidebar {
         width: 220px;
@@ -132,12 +134,14 @@ export default function CampusMapTool() {
         overflow: auto;
         position: relative;
         background: #0a1628;
+        min-height: 0;
       }
       .map-canvas-wrap {
         position: relative;
         display: inline-block;
         cursor: crosshair;
       }
+      .map-canvas-wrap canvas { display: block; }
       .map-canvas-wrap.erase-mode { cursor: pointer; }
 
       .map-tooltip {
@@ -223,19 +227,19 @@ export default function CampusMapTool() {
             <div class="map-sidebar-section">Storage</div>
             <button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
               <span class="map-tech-dot" style="background:#ff8c8c"></span>
-              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K</div></div>
+              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K · 0.5cm sq</div></div>
             </button>
             <button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
               <span class="map-tech-dot" style="background:#ffb347"></span>
-              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M</div></div>
+              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M · 1cm sq</div></div>
             </button>
             <button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
               <span class="map-tech-dot" style="background:#da8fff"></span>
-              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K</div></div>
+              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K · 1cm sq</div></div>
             </button>
             <button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
               <span class="map-tech-dot" style="background:#84fab0"></span>
-              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M</div></div>
+              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M · 2cm sq</div></div>
             </button>
 
             <div class="map-sidebar-section">Placements</div>
@@ -283,7 +287,7 @@ export default function CampusMapTool() {
     };
   }, []);
 
-  return <div ref={containerRef} style={{ height: "100%", display: "flex", flexDirection: "column" }} />;
+  return <div ref={containerRef} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }} />;
 }
 
 function initMapTool() {
@@ -295,10 +299,10 @@ function initMapTool() {
     hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferCm:0,  squareFootprint:1 },
     tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferCm:0,  squareFootprint:1 },
     biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferCm:0,  squareFootprint:13 },
-    bess:     { name:'BESS',         color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferCm:0,  squareFootprint:0 },
-    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferCm:0,  squareFootprint:0 },
-    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferCm:0,  squareFootprint:0 },
-    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferCm:0,  squareFootprint:0 },
+    bess:     { name:'BESS',         color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferCm:0,  squareFootprint:0.25 },
+    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferCm:0,  squareFootprint:1 },
+    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferCm:0,  squareFootprint:1 },
+    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferCm:0,  squareFootprint:4 },
   };
 
   type Feature = {
@@ -325,8 +329,8 @@ function initMapTool() {
     RLS: {
       name: 'RLS — Inland School',
       desc: 'Inland campus, forested south section, no water access',
-      width: 900, height: 780,
-      substationPx: [728, 162],
+      width: 900, height: 1274,
+      substationPx: [490, 260],
       features: [
         { type:'boundary', points:[[220,55],[810,55],[810,440],[680,440],[680,560],[810,560],[810,700],[260,700],[260,580],[220,580]] },
         { type:'building', rect:[380,200,220,120], label:'Main Building' },
@@ -345,8 +349,8 @@ function initMapTool() {
     EDS: {
       name: 'EDS — Penobscot Bay',
       desc: 'Coastal campus on Penobscot Bay — tidal opportunities',
-      width: 950, height: 760,
-      substationPx: [820, 110],
+      width: 950, height: 671,
+      substationPx: [670, 570],
       features: [
         { type:'ocean', rect:[0,0,950,230], label:'Penobscot Bay' },
         { type:'boundary', points:[[430,230],[810,50],[950,50],[950,700],[430,700],[360,580],[290,520],[430,320]] },
@@ -360,8 +364,8 @@ function initMapTool() {
     STG: {
       name: 'STG — Marsh / Atlantic',
       desc: 'Tidal river, marsh, Atlantic access — highest water potential',
-      width: 900, height: 900,
-      substationPx: [820, 120],
+      width: 900, height: 1274,
+      substationPx: [570, 600],
       features: [
         { type:'water', rect:[0,0,200,520], label:'The Marsh' },
         { type:'ocean', rect:[0,780,900,120], label:'Atlantic Ocean' },
@@ -376,14 +380,13 @@ function initMapTool() {
         { type:'road', points:[[490,780],[490,640]] },
         { type:'contour_zone', rect:[580,80,220,500], density:'medium' },
         { type:'tidal_zone', rect:[0,150,200,370] },
-        { type:'pinch_point', cx:340, cy:850, r:30, label:'Tidal Pinch' },
       ]
     },
     CES: {
       name: 'CES — River / Tidal',
       desc: 'River with 3+ contour lines = high hydro potential',
-      width: 950, height: 800,
-      substationPx: [850, 90],
+      width: 950, height: 671,
+      substationPx: [170, 430],
       features: [
         { type:'water', rect:[740,0,210,800], label:'River' },
         { type:'water', rect:[840,480,110,320], label:'Tidal River' },
@@ -401,8 +404,8 @@ function initMapTool() {
     LCS: {
       name: 'LCS — Woodland Pond',
       desc: 'Dense forest with freshwater pond access to southwest',
-      width: 950, height: 760,
-      substationPx: [860, 90],
+      width: 950, height: 671,
+      substationPx: [690, 160],
       features: [
         { type:'water', rect:[0,640,500,120], label:'Freshwater Pond' },
         { type:'boundary', points:[[280,55],[820,55],[820,680],[500,730],[280,730],[200,620],[180,420],[280,200]] },
@@ -414,7 +417,6 @@ function initMapTool() {
         { type:'road', points:[[820,400],[820,680]] },
         { type:'road', points:[[560,680],[820,680]] },
         { type:'contour_zone', rect:[180,100,400,600], density:'high' },
-        { type:'nobuild', rect:[0,580,420,180], label:'Wetland Buffer' },
       ]
     }
   };
@@ -443,6 +445,57 @@ function initMapTool() {
 
   function getEl<T extends HTMLElement>(id: string): T {
     return document.getElementById(id) as T;
+  }
+
+  // Cell offsets for techs with non-rectangular square footprints.
+  const FOOTPRINT_CELLS: Record<string, [number, number][]> = {
+    solar: [
+      [0, 0], [1, 0], [2, 0],
+      [0, 1], [1, 1],
+    ],
+    geo: [
+      [1, 0],
+      [0, 1], [1, 1], [2, 1],
+      [0, 2], [1, 2], [2, 2], [3, 2],
+      [0, 3], [1, 3], [2, 3],
+      [1, 4], [2, 4],
+    ],
+    biomass: [
+      [1, 0],
+      [0, 1], [1, 1], [2, 1],
+      [0, 2], [1, 2], [2, 2], [3, 2],
+      [0, 3], [1, 3], [2, 3],
+      [1, 4], [2, 4],
+    ],
+  };
+
+  function getTechCellSpans(tech: string) {
+    if (tech === 'wind') return { widthCells: 0, heightCells: 0 };
+    if (tech in FOOTPRINT_CELLS) {
+      const cells = FOOTPRINT_CELLS[tech];
+      const maxX = Math.max(...cells.map(([x]) => x));
+      const maxY = Math.max(...cells.map(([, y]) => y));
+      return { widthCells: maxX + 1, heightCells: maxY + 1 };
+    }
+    const t = TECHS[tech];
+    const widthCells = Math.max(1, Math.round(t.size));
+    return { widthCells, heightCells: widthCells };
+  }
+
+  function snapToGridCell(x: number, y: number, tech: string) {
+    const { widthCells, heightCells } = getTechCellSpans(tech);
+    if (widthCells === 0 || heightCells === 0) {
+      return {
+        x: Math.round(x / GRID) * GRID,
+        y: Math.round(y / GRID) * GRID,
+      };
+    }
+    const gx = Math.floor(x / GRID);
+    const gy = Math.floor(y / GRID);
+    return {
+      x: gx * GRID + (widthCells * GRID) / 2,
+      y: gy * GRID + (heightCells * GRID) / 2,
+    };
   }
 
   // Build tabs
@@ -507,16 +560,6 @@ function initMapTool() {
     if (imgLoaded) {
       // Draw satellite image scaled to fill the canvas
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Subtle dark vignette to improve overlay contrast
-      const vignette = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.3,
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.8
-      );
-      vignette.addColorStop(0, 'rgba(0,0,0,0)');
-      vignette.addColorStop(1, 'rgba(0,0,0,0.22)');
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
       // Fallback: programmatic schematic map while image loads
       ctx.fillStyle = '#1a2810';
@@ -545,7 +588,7 @@ function initMapTool() {
       m.features.filter(f => f.type === 'water' || f.type === 'ocean').forEach(f => {
         if (!f.rect) return;
         const [rx, ry, rw, rh] = f.rect;
-        ctx.fillStyle = f.type === 'ocean' ? 'rgba(20,70,140,0.25)' : 'rgba(30,100,160,0.2)';
+        ctx.fillStyle = f.type === 'ocean' ? 'rgba(20,70,140,0.08)' : 'rgba(30,100,160,0.05)';
         ctx.fillRect(rx, ry, rw, rh);
         if (f.label) {
           ctx.fillStyle = 'rgba(120,200,255,0.9)';
@@ -564,9 +607,7 @@ function initMapTool() {
         ctx.fillRect(rx, ry, rw, rh);
         ctx.strokeStyle = 'rgba(0,200,170,0.6)';
         ctx.lineWidth = 1.5;
-        ctx.setLineDash([6, 4]);
         ctx.strokeRect(rx, ry, rw, rh);
-        ctx.setLineDash([]);
       });
 
       // Pinch points
@@ -592,9 +633,7 @@ function initMapTool() {
         ctx.fillRect(rx, ry, rw, rh);
         ctx.strokeStyle = 'rgba(248,81,73,0.8)';
         ctx.lineWidth = 1.5;
-        ctx.setLineDash([5, 4]);
         ctx.strokeRect(rx, ry, rw, rh);
-        ctx.setLineDash([]);
         if (f.label) {
           ctx.fillStyle = 'rgba(248,81,73,1)';
           ctx.font = 'bold 10px Space Grotesk,sans-serif';
@@ -605,20 +644,18 @@ function initMapTool() {
       });
     }
 
-    // Property boundary (always visible, prominent)
+    // Property boundary fallback: only draw on schematic fallback.
+    // Satellite maps already include parcel outlines.
     const boundary = m.features.find(f => f.type === 'boundary');
-    if (boundary && boundary.points) {
-      ctx.strokeStyle = imgLoaded ? 'rgba(255,120,100,0.9)' : '#ff8c8c';
-      ctx.lineWidth = imgLoaded ? 2.5 : 2;
-      ctx.setLineDash([8, 4]);
-      ctx.shadowColor = imgLoaded ? 'rgba(0,0,0,0.6)' : 'transparent';
-      ctx.shadowBlur = imgLoaded ? 4 : 0;
+    if (!imgLoaded && boundary && boundary.points) {
+      ctx.strokeStyle = '#ff8c8c';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 3]);
       ctx.beginPath();
       boundary.points.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
       ctx.closePath();
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.shadowBlur = 0;
     }
 
     // Substation marker (always on top)
@@ -743,11 +780,9 @@ function initMapTool() {
         ctx.stroke();
         ctx.strokeStyle = '#6a5a35';
         ctx.lineWidth = 2;
-        ctx.setLineDash([8, 4]);
         ctx.beginPath();
         f.points.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
         ctx.stroke();
-        ctx.setLineDash([]);
         break;
       }
       case 'contour_zone': {
@@ -778,9 +813,7 @@ function initMapTool() {
         ctx.fillRect(rx, ry, rw, rh);
         ctx.strokeStyle = '#00c8aa40';
         ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
         ctx.strokeRect(rx, ry, rw, rh);
-        ctx.setLineDash([]);
         break;
       }
       case 'pinch_point': {
@@ -803,9 +836,7 @@ function initMapTool() {
         ctx.fillRect(rx, ry, rw, rh);
         ctx.strokeStyle = '#f8514970';
         ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
         ctx.strokeRect(rx, ry, rw, rh);
-        ctx.setLineDash([]);
         if (f.label) {
           ctx.fillStyle = '#f85149';
           ctx.font = '9px Space Grotesk,sans-serif';
@@ -826,33 +857,28 @@ function initMapTool() {
     const plist = placements[currentMap] || [];
 
     (cables[currentMap] || []).forEach(seg => {
-      ctx.strokeStyle = '#ff6e40';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 3]);
+      ctx.strokeStyle = '#e74c3c';
+      ctx.lineWidth = 7;
       ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
-      ctx.setLineDash([]);
       const mid = [(seg.x1 + seg.x2) / 2, (seg.y1 + seg.y2) / 2];
       const px = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1);
       const cm = px / GRID;
-      ctx.fillStyle = '#ff6e40aa';
+      ctx.fillStyle = '#e74c3caa';
       ctx.font = '8px JetBrains Mono,monospace';
       ctx.textAlign = 'center';
       ctx.fillText(cm.toFixed(1) + 'cm', mid[0], mid[1] - 3);
     });
 
     if (mode === 'cable' && cableStart) {
-      ctx.strokeStyle = '#ff6e4088';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#e74c3c88';
+      ctx.lineWidth = 7;
       ctx.beginPath(); ctx.moveTo(cableStart.x, cableStart.y); ctx.lineTo(mousePos.x, mousePos.y); ctx.stroke();
-      ctx.setLineDash([]);
     }
 
     plist.filter(p => p.tech === 'wind').forEach(p => {
       ctx.beginPath(); ctx.arc(p.cx, p.cy, 5 * GRID, 0, Math.PI * 2);
       ctx.fillStyle = '#58a6ff12'; ctx.fill();
-      ctx.strokeStyle = '#58a6ff40'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.strokeStyle = '#58a6ff40'; ctx.lineWidth = 1; ctx.stroke();
     });
 
     plist.forEach(p => {
@@ -870,27 +896,39 @@ function initMapTool() {
       ctx.strokeStyle = t.color;
       ctx.lineWidth = 1.5;
 
-      if (p.tech === 'solar') {
-        const sq = GRID * 2;
-        ctx.strokeStyle = t.color;
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
-          const px = p.cx - sq * 0.75 + i * sq * 0.5;
-          const py = p.cy - sq * 0.5 + j * sq * 0.5;
-          ctx.fillStyle = '#1a3a6a';
-          ctx.fillRect(px, py, sq * 0.45, sq * 0.45);
-          ctx.strokeStyle = t.color + 'aa';
-          ctx.strokeRect(px, py, sq * 0.45, sq * 0.45);
-          ctx.strokeStyle = '#4a8add40';
-          ctx.lineWidth = 0.5;
-          ctx.beginPath(); ctx.moveTo(px + sq * 0.225, py); ctx.lineTo(px + sq * 0.225, py + sq * 0.45); ctx.stroke();
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = t.color + 'aa';
-        }
-      } else {
+      if (p.tech === 'wind') {
         ctx.beginPath();
         ctx.arc(p.cx, p.cy, Math.max(r, 8), 0, Math.PI * 2);
         ctx.fill(); ctx.stroke();
+      } else {
+        const cells = FOOTPRINT_CELLS[p.tech];
+        if (cells) {
+          const minX = Math.min(...cells.map(([x]) => x));
+          const maxX = Math.max(...cells.map(([x]) => x));
+          const minY = Math.min(...cells.map(([, y]) => y));
+          const maxY = Math.max(...cells.map(([, y]) => y));
+          const widthCells = maxX - minX + 1;
+          const heightCells = maxY - minY + 1;
+          const left = p.cx - (widthCells * GRID) / 2;
+          const top = p.cy - (heightCells * GRID) / 2;
+
+          cells.forEach(([cx, cy]) => {
+            const px = left + cx * GRID;
+            const py = top + cy * GRID;
+            ctx.fillStyle = p.tech === 'solar' ? '#1a3a6acc' : t.color + '66';
+            ctx.fillRect(px, py, GRID, GRID);
+            ctx.strokeStyle = t.color;
+            ctx.strokeRect(px + 0.5, py + 0.5, GRID - 1, GRID - 1);
+          });
+        } else {
+          const span = Math.max(0.5, t.size) * GRID;
+          const left = p.cx - span / 2;
+          const top = p.cy - span / 2;
+          ctx.fillStyle = t.color + '66';
+          ctx.fillRect(left, top, span, span);
+          ctx.strokeStyle = t.color;
+          ctx.strokeRect(left + 0.5, top + 0.5, span - 1, span - 1);
+        }
       }
 
       ctx.fillStyle = '#fff';
@@ -902,9 +940,7 @@ function initMapTool() {
       const [sx, sy] = MAPS[currentMap].substationPx;
       ctx.strokeStyle = t.color + '55';
       ctx.lineWidth = 1;
-      ctx.setLineDash([3, 5]);
       ctx.beginPath(); ctx.moveTo(p.cx, p.cy); ctx.lineTo(sx, sy); ctx.stroke();
-      ctx.setLineDash([]);
 
       ctx.fillStyle = t.color;
       ctx.font = '8px JetBrains Mono,monospace';
@@ -916,11 +952,36 @@ function initMapTool() {
 
     if (mode === 'place' && selectedTech && mousePos.x > 0) {
       const t = TECHS[selectedTech];
+      const snapped = snapToGridCell(mousePos.x, mousePos.y, selectedTech);
       ctx.globalAlpha = 0.4;
       ctx.fillStyle = t.color;
-      ctx.beginPath();
-      ctx.arc(mousePos.x, mousePos.y, Math.max(8, (t.size * GRID) / 2), 0, Math.PI * 2);
-      ctx.fill();
+      if (selectedTech === 'wind') {
+        ctx.beginPath();
+        ctx.arc(snapped.x, snapped.y, Math.max(8, (t.size * GRID) / 2), 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const cells = FOOTPRINT_CELLS[selectedTech];
+        if (cells) {
+          const minX = Math.min(...cells.map(([x]) => x));
+          const maxX = Math.max(...cells.map(([x]) => x));
+          const minY = Math.min(...cells.map(([, y]) => y));
+          const maxY = Math.max(...cells.map(([, y]) => y));
+          const widthCells = maxX - minX + 1;
+          const heightCells = maxY - minY + 1;
+          const left = snapped.x - (widthCells * GRID) / 2;
+          const top = snapped.y - (heightCells * GRID) / 2;
+          cells.forEach(([cx, cy]) => {
+            const px = left + cx * GRID;
+            const py = top + cy * GRID;
+            ctx.fillRect(px, py, GRID, GRID);
+          });
+        } else {
+          const span = Math.max(0.5, t.size) * GRID;
+          const left = snapped.x - span / 2;
+          const top = snapped.y - span / 2;
+          ctx.fillRect(left, top, span, span);
+        }
+      }
       ctx.globalAlpha = 1;
     }
   }
@@ -1011,9 +1072,10 @@ function initMapTool() {
 
   function placeUnit(x: number, y: number) {
     if (!selectedTech) return;
-    const violations = checkPlacementViolations(x, y, selectedTech);
+    const snapped = snapToGridCell(x, y, selectedTech);
+    const violations = checkPlacementViolations(snapped.x, snapped.y, selectedTech);
     placements[currentMap].push({
-      tech: selectedTech, cx: x, cy: y,
+      tech: selectedTech, cx: snapped.x, cy: snapped.y,
       id: Date.now() + Math.random(),
       violations
     });
@@ -1025,8 +1087,26 @@ function initMapTool() {
     const plist = placements[currentMap];
     const idx = plist.findIndex(p => {
       const t = TECHS[p.tech];
-      const r = Math.max(12, t.size * GRID / 2) + 4;
-      return Math.hypot(p.cx - x, p.cy - y) < r;
+      if (p.tech === 'wind') {
+        const r = Math.max(12, t.size * GRID / 2) + 4;
+        return Math.hypot(p.cx - x, p.cy - y) < r;
+      }
+      const cells = FOOTPRINT_CELLS[p.tech];
+      if (cells) {
+        const minX = Math.min(...cells.map(([cx]) => cx));
+        const maxX = Math.max(...cells.map(([cx]) => cx));
+        const minY = Math.min(...cells.map(([, cy]) => cy));
+        const maxY = Math.max(...cells.map(([, cy]) => cy));
+        const width = (maxX - minX + 1) * GRID;
+        const height = (maxY - minY + 1) * GRID;
+        const left = p.cx - width / 2;
+        const top = p.cy - height / 2;
+        return x >= left && x <= left + width && y >= top && y <= top + height;
+      }
+      const span = Math.max(0.5, t.size) * GRID;
+      const left = p.cx - span / 2;
+      const top = p.cy - span / 2;
+      return x >= left && x <= left + span && y >= top && y <= top + span;
     });
     if (idx >= 0) { plist.splice(idx, 1); drawOverlay(); updateUI(); }
   }
@@ -1045,10 +1125,11 @@ function initMapTool() {
   }
 
   function updateUI() {
-    const plist = placements[currentMap] || [];
+    // Aggregate ALL placements across all maps for cost/kw totals
+    const allPlacements = Object.values(placements).flat();
     let totalKw = 0, totalStorage = 0, totalCost = 0;
     const counts: Record<string, number> = {};
-    plist.forEach(p => {
+    allPlacements.forEach(p => {
       const t = TECHS[p.tech];
       totalKw += t.kw;
       totalStorage += t.storageKwh;
@@ -1056,17 +1137,31 @@ function initMapTool() {
       counts[p.tech] = (counts[p.tech] || 0) + 1;
     });
 
+    // Cable costs across all maps
     let cableCm = 0;
-    plist.forEach(p => {
-      const [sx, sy] = MAPS[currentMap].substationPx;
-      cableCm += Math.hypot(p.cx - sx, p.cy - sy) / GRID;
+    Object.entries(placements).forEach(([mapId, plist]) => {
+      plist.forEach(p => {
+        const [sx, sy] = MAPS[mapId].substationPx;
+        cableCm += Math.hypot(p.cx - sx, p.cy - sy) / GRID;
+      });
     });
-    (cables[currentMap] || []).forEach(seg => {
-      cableCm += Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / GRID;
+    Object.values(cables).forEach(segs => {
+      segs.forEach(seg => {
+        cableCm += Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / GRID;
+      });
     });
     totalCost += cableCm * 50000;
     if (totalKw > 3000) totalCost += 500000;
 
+    // Sync to shared state so Grid Simulator can read it
+    sharedState.techCounts = counts;
+    sharedState.totalMapCost = totalCost;
+    sharedState.totalMapKw = totalKw;
+    sharedState.totalMapCableCm = cableCm;
+    emitMapUpdate();
+
+    const budgetLimit = sharedState.budgetLimit;
+    const budgetM = (budgetLimit / 1e6).toFixed(0);
     const islandTime = totalKw > 0 ? (totalStorage / 5000).toFixed(1) : '0';
 
     const kwEl = getEl('statPower');
@@ -1077,19 +1172,28 @@ function initMapTool() {
 
     const storageEl = getEl('statStorage'); if (storageEl) storageEl.innerHTML = `Storage: <span>${totalStorage.toLocaleString()} kWh</span>`;
     const cableEl = getEl('statCable'); if (cableEl) cableEl.innerHTML = `Cable: <span>${cableCm.toFixed(1)} cm</span>`;
-    const budgetEl = getEl('statBudget'); if (budgetEl) budgetEl.innerHTML = `Budget: <span>$${(totalCost / 1000000).toFixed(2)}M / $10M</span>`;
+    const budgetEl = getEl('statBudget');
+    if (budgetEl) {
+      const over = totalCost > budgetLimit;
+      budgetEl.className = 'map-stat' + (over ? ' danger' : totalCost > budgetLimit * 0.85 ? ' warn' : '');
+      budgetEl.innerHTML = `Budget: <span>$${(totalCost / 1e6).toFixed(2)}M / $${budgetM}M</span>`;
+    }
     const islandEl = getEl('statIsland'); if (islandEl) islandEl.innerHTML = `Island: <span>${islandTime}h</span>`;
 
+    // Counts panel (current map only for clarity)
+    const plist = placements[currentMap] || [];
+    const currentCounts: Record<string, number> = {};
+    plist.forEach(p => { currentCounts[p.tech] = (currentCounts[p.tech] || 0) + 1; });
     const cp = getEl('countsPanel');
     if (cp) {
       if (plist.length === 0) {
         cp.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:4px">No placements yet</div>';
       } else {
-        cp.innerHTML = Object.entries(counts).map(([k, v]) => {
+        cp.innerHTML = Object.entries(currentCounts).map(([k, v]) => {
           const t = TECHS[k];
           return `<div class="map-count-row"><span class="map-count-label">${t.name}</span><span class="map-count-val" style="color:${t.color}">×${v}</span></div>`;
         }).join('');
-        cp.innerHTML += `<div class="map-count-row" style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px"><span class="map-count-label">Total cost</span><span class="map-count-val" style="color:${totalCost > 10000000 ? 'var(--danger)' : 'var(--accent)'}">$${(totalCost / 1e6).toFixed(2)}M</span></div>`;
+        cp.innerHTML += `<div class="map-count-row" style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px"><span class="map-count-label">Total cost (all maps)</span><span class="map-count-val" style="color:${totalCost > budgetLimit ? 'var(--danger)' : 'var(--accent)'}">$${(totalCost / 1e6).toFixed(2)}M</span></div>`;
       }
     }
 
@@ -1100,8 +1204,8 @@ function initMapTool() {
       }
     });
     if (totalKw > 3000) allViolations.unshift('⚡ Utility upgrade required (+$500K)');
-    if (totalStorage < 2000 && plist.length > 0) allViolations.push('⚠ Need 2,000+ kWh for Grid-Down resilience');
-    if (totalCost > 10000000) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - 10000000) / 1e6).toFixed(2)}M`);
+    if (totalStorage < 2000 && allPlacements.length > 0) allViolations.push('⚠ Need 2,000+ kWh for Grid-Down resilience');
+    if (totalCost > budgetLimit) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - budgetLimit) / 1e6).toFixed(2)}M`);
 
     const vp = getEl('violationsPanel');
     if (vp) {
@@ -1109,6 +1213,9 @@ function initMapTool() {
         ? allViolations.map(v => `<div class="map-violation">⚠ ${v}</div>`).join('')
         : '<div class="map-no-violations">✓ No violations</div>';
     }
+
+    // Unused import suppressor
+    void MAP_TECH_TO_SIM;
   }
 
   function selectTech(tech: string) {
@@ -1182,6 +1289,9 @@ function initMapTool() {
       if (tooltip) tooltip.className = 'map-tooltip hidden';
     });
   }
+
+  // Listen for simulator budget changes → refresh map budget display
+  window.addEventListener('gc:sim-update', () => updateUI());
 
   // Init
   resizeCanvases();

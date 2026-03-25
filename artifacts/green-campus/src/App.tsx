@@ -46,9 +46,13 @@ export default function App() {
         </div>
       </nav>
 
-      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {activeTool === "map" && <CampusMapTool />}
-        {activeTool === "simulator" && <EnergyGridSimulator />}
+      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <div style={{ display: activeTool === "map" ? "flex" : "none", flex: 1, flexDirection: "column", minHeight: 0 }}>
+          <CampusMapTool />
+        </div>
+        <div style={{ display: activeTool === "simulator" ? "flex" : "none", flex: 1, flexDirection: "column", minHeight: 0 }}>
+          <EnergyGridSimulator />
+        </div>
       </div>
     </div>
   );
