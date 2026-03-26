@@ -931,7 +931,7 @@ export default function EnergyGridSimulator() {
         windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
         utilityFee: totalPeakSupply > 3000 ? 500000 : 0,
         pivotPenalty: s.pivotCard==='Maintenance Crisis' ? 500000 :
-                      (s.pivotCard==='Polar Vortex' && s.biomass*1000 < 7500) ? 300000 : 0,
+                      (isPolar && polarDemandThreshold && totalPeakSupply < polarDemandThreshold) ? 300000 : 0,
       };
 
       // Hydrogen electrolyzer boosts solar & wind output by 30%
@@ -961,10 +961,19 @@ export default function EnergyGridSimulator() {
 
       const demandProfile = s.demandPattern==='Night Owl' ? NIGHT_OWL :
                             s.demandPattern==='Morning Rush' ? MORN_RUSH : STANDARD;
+      
+      // Polar Vortex demand spike: peaks at 7,500 kW (or 5,500 kW with thermal storage)
+      const polarDemandThreshold = isPolar ? (s.thermal > 0 ? 5500 : 7500) : null;
+      const demandProfileMax = Math.max(...demandProfile);
+      const polarScaleFactor = isPolar && polarDemandThreshold ? polarDemandThreshold / demandProfileMax : 1;
+      
       const demand24 = HOURS.map((_h, i) => {
         let d = demandProfile[i];
         if (isAIHub) d += 1500;
-        if (isPolar) d += s.thermal > 0 ? 500 : 2500;
+        // For Polar Vortex, scale entire demand profile to meet the threshold
+        if (isPolar) {
+          d = d * polarScaleFactor;
+        }
         // SCADA reduces total demand by 15%
         if (isGrant && s.scada > 0) d = d * 0.85;
         // V2G caps peak demand at 4,750 kW
