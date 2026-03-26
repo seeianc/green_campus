@@ -599,7 +599,7 @@ export default function EnergyGridSimulator() {
               </div>
             </div>
 
-            <div class="e-card" id="emergingCard">
+            <div class="e-card" id="emergingCard" style="display:none">
               <div class="e-card-header"><div class="dot" style="background:#bf5a8a"></div>Emerging Technology <span class="e-tag warn" style="margin-left:auto">Grant Required</span></div>
               <div class="e-card-body">
                 <div id="emergingNote" class="e-alert warn" style="margin-bottom:10px">
@@ -1545,6 +1545,7 @@ export default function EnergyGridSimulator() {
         if (sidebar) sidebar.style.display = 'flex';
         if (content) content.style.display = 'block';
         contentRevealed = true;
+        render();
       }
     };
 
