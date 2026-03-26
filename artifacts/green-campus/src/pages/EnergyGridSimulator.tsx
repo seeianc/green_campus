@@ -253,7 +253,7 @@ export default function EnergyGridSimulator() {
       }
       .e-expense-item.category:first-child { margin-top: 0; }
       .e-expense-item .label { flex: 1; }
-      .e-expense-item .value { text-align: right; min-width: 80px; }
+      .e-expense-item .value { display: inline-block; text-align: right; min-width: 100px; }
 
       .e-alert {
         padding: 10px 14px;
@@ -434,6 +434,13 @@ export default function EnergyGridSimulator() {
           max-height: none !important;
           overflow: visible !important;
           page-break-inside: avoid;
+          visibility: visible !important;
+        }
+        #adjustmentsBreakdown .e-expense-item {
+          display: block !important;
+        }
+        #adjustmentsBreakdown [id$="Item"] {
+          display: block !important;
         }
         .e-btn-row,
         #simPrintBtn {
@@ -668,22 +675,22 @@ export default function EnergyGridSimulator() {
                       <div class="e-expense-item" style="cursor: pointer; opacity: 0.8;" onclick="document.getElementById('adjustmentsBreakdown').style.display = document.getElementById('adjustmentsBreakdown').style.display === 'none' ? 'block' : 'none'; document.getElementById('adjToggle').textContent = document.getElementById('adjustmentsBreakdown').style.display === 'none' ? '▶' : '▼';"><span class="label">Cost Adjustments Breakdown <span id="adjToggle" style="font-size: 10px; margin-left: 4px;">▶</span></span></div>
                       <div id="adjustmentsBreakdown" style="display: none; padding: 8px 0; border-left: 2px solid rgba(255,255,255,0.1); margin-left: 12px;">
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjWindItem">
-                          <div><span class="label">Wind <span id="adjWindDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjWind" style="font-size: 11px; text-align: right;">$0</span></div>
+                          <div><span class="label">Wind <span id="adjWindDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjWind" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjTidalItem">
-                          <div><span class="label">Tidal <span id="adjTidalDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjTidal" style="font-size: 11px; text-align: right;">$0</span></div>
+                          <div><span class="label">Tidal <span id="adjTidalDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjTidal" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjLiIonItem">
-                          <div><span class="label">Li-Ion <span id="adjLiIonDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjLiIon" style="font-size: 11px; text-align: right;">$0</span></div>
+                          <div><span class="label">Li-Ion <span id="adjLiIonDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjLiIon" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjPivotItem">
-                          <div><span class="label">Pivot Penalty <span id="adjPivotDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjPivot" style="font-size: 11px; text-align: right;">$0</span></div>
+                          <div><span class="label">Pivot Penalty <span id="adjPivotDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjPivot" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjUtilityItem">
-                          <div><span class="label">Utility Fee <span id="adjUtilityDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjUtility" style="font-size: 11px; text-align: right;">$0</span></div>
+                          <div><span class="label">Utility Fee <span id="adjUtilityDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjUtility" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjCraneItem">
-                          <div><span class="label">Crane Logistics <span id="adjCraneDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCrane" style="font-size: 11px; text-align: right;">$0</span></div>
+                          <div><span class="label">Crane Logistics <span id="adjCraneDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCrane" style="font-size: 11px;">$0</span></div>
                         </div>
                       </div>
                       <div class="e-expense-item"><span class="label">plus: Renewable Revenue (ROI period)</span><span class="value positive" id="costRenewableRevenue">$0</span></div>
