@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build green-campus
+        env:
+          PORT: 3000
+        run: pnpm --filter @workspace/green-campus run build
+      
+      - name: Deploy to GitHub Pages
+        run: |
+          # Copy built files to temporary location before switching branches
+          mkdir -p /tmp/deploy
+          cp -r artifacts/green-campus/dist/public/* /tmp/deploy/
+          
+          # Configure git
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          
+          # Switch to gh-pages branch
+          git fetch origin gh-pages
+          git checkout gh-pages
+          
+          # Clear old files but keep .git
+          shopt -s dotglob
+          rm -rf !(\.git) || true
+          
+          # Copy files to root of gh-pages
+          cp -r /tmp/deploy/* .
+          
+          # Commit and push
+          git add -A
+          git commit -m "Deploy: ${{ github.sha }}" || echo "No changes"
+          git push origin gh-pages
