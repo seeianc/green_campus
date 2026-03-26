@@ -547,7 +547,7 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="solar" value="0" min="0" max="50">
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">On/Offshore Wind</div><div class="e-input-sub">3,000 kW/unit · $2.5M each</div></div>
+                  <div><div class="e-input-label">Wind Turbine</div><div class="e-input-sub">3,000 kW/unit · $2.5M each</div></div>
                   <input class="e-qty-input" type="number" id="wind" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row">
