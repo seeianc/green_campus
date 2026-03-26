@@ -725,6 +725,9 @@ export default function EnergyGridSimulator() {
                       <div class="e-expense-item category"><span class="label">INFRASTRUCTURE</span></div>
                       <div class="e-expense-item"><span class="label">Cabling</span><span class="value" id="costCabling">$0</span></div>
                       <div class="e-expense-item"><span class="label">Crane Logistics</span><span class="value" id="costCraneLogistics">$0</span></div>
+                      <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="costCraneLogisticsDesc">
+                        <div><span class="label">Wind turbine crane operator surcharge<span id="costCraneLogisticsDescText" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span></div>
+                      </div>
                       <div class="e-expense-item"><span class="label">Wind Buffer</span><span class="value" id="costWindBuffer">$0</span></div>
                       <div class="e-expense-item"><span class="label">Utility Fee</span><span class="value" id="costUtilityFee">$0</span></div>
                       <div class="e-expense-item"><span class="label">Pivot Penalty</span><span class="value" id="costPivotPenalty">$0</span></div>
@@ -1337,6 +1340,17 @@ export default function EnergyGridSimulator() {
       setCost('costSCADA', r.emergingCosts.scada);
       setCost('costCabling', r.infraCosts.cabling);
       setCost('costCraneLogistics', r.infraCosts.craneLogistics);
+      
+      // Show crane logistics description only when charge is active
+      const craneDescEl = getEl('costCraneLogisticsDesc');
+      if (craneDescEl) {
+        if (r.infraCosts.craneLogistics > 0) {
+          craneDescEl.style.display = 'block';
+        } else {
+          craneDescEl.style.display = 'none';
+        }
+      }
+      
       setCost('costWindBuffer', r.infraCosts.windBuffer);
       setCost('costUtilityFee', r.infraCosts.utilityFee);
       setCost('costPivotPenalty', r.infraCosts.pivotPenalty);
