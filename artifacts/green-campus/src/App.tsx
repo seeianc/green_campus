@@ -1,14 +1,16 @@
 import { useState } from "react";
 import CampusMapTool from "@/pages/CampusMapTool";
 import EnergyGridSimulator from "@/pages/EnergyGridSimulator";
+import GreenSchoolSimulator from "@/pages/GreenSchoolSimulator";
 
 const TOOLS = [
   { id: "map", label: "⚡ Campus Map Placer" },
   { id: "simulator", label: "📊 Grid Simulator" },
+  { id: "school", label: "🏫 Green School Simulator" },
 ];
 
 export default function App() {
-  const [activeTool, setActiveTool] = useState<"map" | "simulator">("simulator");
+  const [activeTool, setActiveTool] = useState<"map" | "simulator" | "school">("simulator");
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d1117" }}>
@@ -24,7 +26,7 @@ export default function App() {
         {TOOLS.map(tool => (
           <button
             key={tool.id}
-            onClick={() => setActiveTool(tool.id as "map" | "simulator")}
+            onClick={() => setActiveTool(tool.id as "map" | "simulator" | "school")}
             style={{
               padding: "10px 20px",
               background: activeTool === tool.id ? "#161b22" : "transparent",
@@ -52,6 +54,9 @@ export default function App() {
         </div>
         <div style={{ display: activeTool === "simulator" ? "flex" : "none", flex: 1, flexDirection: "column", minHeight: 0 }}>
           <EnergyGridSimulator />
+        </div>
+        <div style={{ display: activeTool === "school" ? "flex" : "none", flex: 1, flexDirection: "column", minHeight: 0 }}>
+          <GreenSchoolSimulator />
         </div>
       </div>
     </div>
