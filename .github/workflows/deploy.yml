@@ -35,8 +35,14 @@ jobs:
         run: pnpm --filter @workspace/green-campus run build
       
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./artifacts/green-campus/dist/public
-          cname: false
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git fetch origin gh-pages
+          git checkout gh-pages
+          shopt -s dotglob
+          rm -rf *.html *.css *.js assets maps public || true
+          cp -r artifacts/green-campus/dist/public/* .
+          git add -A
+          git commit -m "Deploy: ${{ github.sha }}" || echo "No changes"
+          git push origin gh-pages
