@@ -682,6 +682,9 @@ export default function EnergyGridSimulator() {
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjUtilityItem">
                           <div><span class="label">Utility Fee <span id="adjUtilityDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjUtility" style="font-size: 11px;">$0</span></div>
                         </div>
+                        <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjCraneItem">
+                          <div><span class="label">Crane Logistics <span id="adjCraneDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCrane" style="font-size: 11px;">$0</span></div>
+                        </div>
                       </div>
                       <div class="e-expense-item"><span class="label">plus: Renewable Revenue (ROI period)</span><span class="value positive" id="costRenewableRevenue">$0</span></div>
                       <div class="e-expense-item" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 8px;"><span class="label" style="font-weight: bold;">Remaining Budget</span><span class="value" id="costRemaining" style="font-weight: bold;">$10M</span></div>
@@ -1314,6 +1317,7 @@ export default function EnergyGridSimulator() {
       
       setAdjItem('adjPivot', r.pivotPenaltyAdjustment, 'adjPivotDesc', r.pivotPenaltyAdjustment !== 0 ? '(Pivot Card Penalty)' : '');
       setAdjItem('adjUtility', r.utilityFeeAdjustment, 'adjUtilityDesc', r.utilityFeeAdjustment !== 0 ? '(Peak > 3,000 kW)' : '');
+      setAdjItem('adjCrane', r.infraCosts.craneLogistics, 'adjCraneDesc', r.infraCosts.craneLogistics !== 0 ? '(Crane Operator Shortage)' : '');
       
       setCost('costRenewableRevenue', r.renewableRevenueProjection);
       setCost('costRemaining', r.remaining);
