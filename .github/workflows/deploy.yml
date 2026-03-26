@@ -56,7 +56,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout gh-pages
           rm -rf * .nojekyll .gitignore
-          cp -r public/* .
+          if [ -d "public" ] && [ "$(ls -A public)" ]; then
+            cp -r public/* .
+          else
+            echo "Error: public directory is empty or not found"
+            exit 1
+          fi
           git add -A
           git commit -m "Deploy ${{ github.sha }}" || true
           git push origin gh-pages
