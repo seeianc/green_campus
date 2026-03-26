@@ -31,6 +31,7 @@ jobs:
       - name: Build green-campus
         env:
           PORT: 3000
+          BASE_PATH: /
         run: pnpm --filter @workspace/green-campus run build
       
       - name: Deploy to GitHub Pages
