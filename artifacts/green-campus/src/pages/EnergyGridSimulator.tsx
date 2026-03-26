@@ -714,6 +714,9 @@ export default function EnergyGridSimulator() {
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjCraneItem">
                           <div><span class="label">Crane Logistics <span id="adjCraneDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCrane" style="font-size: 11px;">$0</span></div>
                         </div>
+                        <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjCarbonTaxItem">
+                          <div><span class="label">Carbon Tax <span id="adjCarbonTaxDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCarbonTax" style="font-size: 11px;">$0</span></div>
+                        </div>
                       </div>
                       <div class="e-expense-item"><span class="label">plus: Renewable Revenue (ROI period)</span><span class="value positive" id="costRenewableRevenue">$0</span></div>
                       <div class="e-expense-item" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 8px;"><span class="label" style="font-weight: bold;">Remaining Budget</span><span class="value" id="costRemaining" style="font-weight: bold;">$10M</span></div>
@@ -763,6 +766,7 @@ export default function EnergyGridSimulator() {
                       <div class="e-expense-item"><span class="label">Wind Buffer</span><span class="value" id="costWindBuffer">$0</span></div>
                       <div class="e-expense-item"><span class="label">Utility Fee</span><span class="value" id="costUtilityFee">$0</span></div>
                       <div class="e-expense-item"><span class="label">Pivot Penalty</span><span class="value" id="costPivotPenalty">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Carbon Tax (Annual)</span><span class="value" id="costCarbonTax">$0</span></div>
                     </div>
                   </div>
                   <div class="e-metric full">
@@ -1071,24 +1075,28 @@ export default function EnergyGridSimulator() {
         return total + overproduction * 0.11;
       }, 0);
 
+      // Carbon tax: $0.10/kWh on annual shortfall (demand not met by renewables)
+      const dailyShortfallKwh = supply24_temp.reduce((total, supply, i) => total + Math.max(0, demand24[i] - supply), 0);
+      const annualCarbonTaxFee = isCarbonTax ? dailyShortfallKwh * 365 * 0.10 : 0;
+
       // Calculate cost adjustments from pivot cards and data selections
       const baseWindCost = s.wind * 2500000; // Base wind cost
       const adjustedWindCost = s.wind * 2500000 * (isMarine ? 0.8 : 1); // Only Marine Hub affects unit cost
       const windCostAdjustment = adjustedWindCost - baseWindCost;
-      
+
       const baseTidalCost = (s.tidalStd + s.tidalPP) * 1500000; // Base tidal cost
       const adjustedTidalCost = (s.tidalStd + s.tidalPP) * 1500000 * (isMarine ? 0.8 : 1);
       const tidalCostAdjustment = adjustedTidalCost - baseTidalCost;
-      
+
       const baseLiIonCost = s.liIon * 500000; // Base Li-Ion cost
       const adjustedLiIonCost = s.liIon * (isSupplyChain ? 1000000 : 500000);
       const liIonCostAdjustment = adjustedLiIonCost - baseLiIonCost;
-      
+
       const pivotPenaltyAdjustment = infraCosts.pivotPenalty;
       const utilityFeeAdjustment = infraCosts.utilityFee;
       const craneLogisticsAdjustment = infraCosts.craneLogistics;
-      
-      const totalCostAdjustments = windCostAdjustment + tidalCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment;
+
+      const totalCostAdjustments = windCostAdjustment + tidalCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment + annualCarbonTaxFee;
 
       // Calculate annual revenue from renewable energy sales at $0.11/kW rate
       const annualRenewableRevenue = kwSoldBack * 365 * 0.11;
@@ -1097,7 +1105,8 @@ export default function EnergyGridSimulator() {
       const totalSpent = Object.values(genCosts).reduce((a,b)=>a+b,0)
         + Object.values(storageCosts).reduce((a,b)=>a+b,0)
         + Object.values(emergingCosts).reduce((a,b)=>a+b,0)
-        + Object.values(infraCosts).reduce((a,b)=>a+b,0);
+        + Object.values(infraCosts).reduce((a,b)=>a+b,0)
+        + annualCarbonTaxFee;
 
       const basePeakDemand = 5000;
       const islandTime = totalStorage / basePeakDemand;
@@ -1125,8 +1134,6 @@ export default function EnergyGridSimulator() {
         biomass: s.biomass * 1800000,
       };
       const baseAnnualSavings = Object.values(roiSavings).reduce((a,b)=>a+b,0);
-      const dailyShortfallKwh = supply24_temp.reduce((total, supply, i) => total + Math.max(0, demand24[i] - supply), 0);
-      const annualCarbonTaxFee = isCarbonTax ? dailyShortfallKwh * 365 * 0.10 : 0;
       const pivotImpact = isCarbonTax ? -annualCarbonTaxFee :
                           (isAIHub && totalStorage === 0) ? -50000 : 0;
       const finalSavings = baseAnnualSavings + pivotImpact;
@@ -1149,7 +1156,7 @@ export default function EnergyGridSimulator() {
         islandTime, gridStatus, gridClass,
         demand24, supply24, renewableCredits, kwSoldBack,
         annualRenewableRevenue, renewableRevenueProjection,
-        totalCostAdjustments, windCostAdjustment, tidalCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment,
+        totalCostAdjustments, windCostAdjustment, tidalCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment, annualCarbonTaxFee,
         roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
         grantCompliant, isGrant, infraCosts, genCosts, storageCosts, emergingCosts,
@@ -1351,6 +1358,7 @@ export default function EnergyGridSimulator() {
       setAdjItem('adjPivot', r.pivotPenaltyAdjustment, 'adjPivotDesc', r.pivotPenaltyAdjustment !== 0 ? '(Pivot Card Penalty)' : '');
       setAdjItem('adjUtility', r.utilityFeeAdjustment, 'adjUtilityDesc', r.utilityFeeAdjustment !== 0 ? '(Peak > 3,000 kW)' : '');
       setAdjItem('adjCrane', r.infraCosts.craneLogistics, 'adjCraneDesc', r.infraCosts.craneLogistics !== 0 ? '(Crane Operator Shortage)' : '');
+      setAdjItem('adjCarbonTax', r.annualCarbonTaxFee, 'adjCarbonTaxDesc', r.annualCarbonTaxFee !== 0 ? '($0.10/kWh shortfall × 365 days)' : '');
       
       setCost('costRenewableRevenue', r.renewableRevenueProjection);
       setCost('costRemaining', r.remaining);
@@ -1391,6 +1399,7 @@ export default function EnergyGridSimulator() {
       setCost('costWindBuffer', r.infraCosts.windBuffer);
       setCost('costUtilityFee', r.infraCosts.utilityFee);
       setCost('costPivotPenalty', r.infraCosts.pivotPenalty);
+      setCost('costCarbonTax', r.annualCarbonTaxFee);
 
       const remEl = getEl('mRemaining');
       if (remEl) {
