@@ -16,3 +16,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+@media print {
+  html, body, #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  /* Override inline styles on App.tsx wrapper divs */
+  #root > div,
+  #root > div > div {
+    height: auto !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+    background: white !important;
+  }
+  /* Hide the app nav bar */
+  #root > div > nav {
+    display: none !important;
+  }
+}
