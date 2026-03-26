@@ -69,16 +69,30 @@ jobs:
       
       - name: Deploy
         run: |
+          echo "=== Contents of current directory ==="
+          ls -la
+          echo ""
+          echo "=== Contents of public directory ==="
+          ls -la public/ 2>/dev/null || echo "public directory not found"
+          echo ""
+          echo "=== Find all files in public ==="
+          find public -type f 2>/dev/null | head -20 || echo "No files found"
+          echo ""
+          
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout gh-pages
           rm -rf * .nojekyll .gitignore
-          if [ -d "public" ] && [ "$(ls -A public)" ]; then
-            cp -r public/* .
+          
+          # Copy everything from public, including hidden files
+          if [ -d "public" ]; then
+            cp -r public/. .
+            echo "Deployment completed"
           else
-            echo "Error: public directory is empty or not found"
+            echo "Error: public directory not found"
             exit 1
           fi
+          
           git add -A
           git commit -m "Deploy ${{ github.sha }}" || true
           git push origin gh-pages
