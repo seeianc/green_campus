@@ -969,7 +969,7 @@ export default function EnergyGridSimulator() {
 
       const infraCosts = {
         cabling: s.cabling * 50000,
-        craneLogistics: isCrane ? 500000 : 0,
+        craneLogistics: isCrane && s.wind > 0 ? 500000 : 0,
         windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
         utilityFee: totalPeakSupply > 3000 ? 500000 : 0,
         pivotPenalty: s.pivotCard==='Maintenance Crisis' ? 500000 :
