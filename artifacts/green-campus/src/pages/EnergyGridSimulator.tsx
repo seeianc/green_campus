@@ -908,7 +908,7 @@ export default function EnergyGridSimulator() {
 
       const genCosts = {
         solar: s.solar * 1000000,
-        wind: s.wind * (isCrane ? 3000000 : 2500000) * (isMarine ? 0.8 : 1),
+        wind: s.wind * 2500000 * (isMarine ? 0.8 : 1),
         geo: s.geo * 5000000,
         hydro: (s.hydroLow + s.hydroHigh) * 4000000,
         tidal: (s.tidalStd + s.tidalPP) * 1500000 * (isMarine ? 0.8 : 1),
@@ -928,6 +928,7 @@ export default function EnergyGridSimulator() {
 
       const infraCosts = {
         cabling: s.cabling * 50000,
+        craneLogistics: isCrane ? 500000 : 0,
         windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
         utilityFee: totalPeakSupply > 3000 ? 500000 : 0,
         pivotPenalty: s.pivotCard==='Maintenance Crisis' ? 500000 :
@@ -995,7 +996,7 @@ export default function EnergyGridSimulator() {
 
       // Calculate cost adjustments from pivot cards and data selections
       const baseWindCost = s.wind * 2500000; // Base wind cost
-      const adjustedWindCost = s.wind * (isCrane ? 3000000 : 2500000) * (isMarine ? 0.8 : 1);
+      const adjustedWindCost = s.wind * 2500000 * (isMarine ? 0.8 : 1); // Only Marine Hub affects unit cost
       const windCostAdjustment = adjustedWindCost - baseWindCost;
       
       const baseTidalCost = (s.tidalStd + s.tidalPP) * 1500000; // Base tidal cost
@@ -1008,8 +1009,9 @@ export default function EnergyGridSimulator() {
       
       const pivotPenaltyAdjustment = infraCosts.pivotPenalty;
       const utilityFeeAdjustment = infraCosts.utilityFee;
+      const craneLogisticsAdjustment = infraCosts.craneLogistics;
       
-      const totalCostAdjustments = windCostAdjustment + tidalCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment;
+      const totalCostAdjustments = windCostAdjustment + tidalCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment;
 
       // Calculate annual revenue from renewable energy sales at $0.11/kW rate
       const annualRenewableRevenue = kwSoldBack * 365 * 0.11;
@@ -1068,7 +1070,7 @@ export default function EnergyGridSimulator() {
         islandTime, gridStatus, gridClass,
         demand24, supply24, renewableCredits, kwSoldBack,
         annualRenewableRevenue, renewableRevenueProjection,
-        totalCostAdjustments, windCostAdjustment, tidalCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment,
+        totalCostAdjustments, windCostAdjustment, tidalCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment,
         roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
         grantCompliant, isGrant, infraCosts, genCosts, storageCosts, emergingCosts,
@@ -1256,8 +1258,8 @@ export default function EnergyGridSimulator() {
       };
       
       // Set adjustments in both breakdowns (budget and spent)
-      setAdjItem('adjWind', r.windCostAdjustment, 'adjWindDesc', r.windCostAdjustment !== 0 ? '(Crane Operator +20%)' : '');
-      setAdjItem('costWindAdj', r.windCostAdjustment, 'costWindAdjDesc', r.windCostAdjustment !== 0 ? '(Crane Operator +20%)' : '');
+      setAdjItem('adjWind', r.windCostAdjustment, 'adjWindDesc', r.windCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
+      setAdjItem('costWindAdj', r.windCostAdjustment, 'costWindAdjDesc', r.windCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
       
       setAdjItem('adjTidal', r.tidalCostAdjustment, 'adjTidalDesc', r.tidalCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
       setAdjItem('costTidalAdj', r.tidalCostAdjustment, 'costTidalAdjDesc', r.tidalCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
