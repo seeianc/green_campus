@@ -1008,7 +1008,7 @@ export default function EnergyGridSimulator() {
         craneLogistics: s.wind > 0 && isCrane ? 500000 : 0,
         windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
         utilityFee: totalPeakSupply > 3000 ? 500000 : 0,
-        pivotPenalty: s.pivotCard==='Maintenance Crisis' ? 500000 :
+        pivotPenalty: (isMaint && (s.solar > 0 || s.wind > 0)) ? 500000 :
                       (isPolar && polarDemandThreshold && totalPeakSupply < polarDemandThreshold) ? 300000 : 0,
       };
 
