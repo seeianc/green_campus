@@ -309,6 +309,33 @@ export default function EnergyGridSimulator() {
       }
       .e-tag.warn { background: var(--warn-light); color: var(--warn); }
 
+      .e-hour-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+        margin-top: 8px;
+      }
+      .e-hour-btn {
+        padding: 6px 4px;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: white;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+      }
+      .e-hour-btn:hover { border-color: var(--accent); }
+      .e-hour-btn.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        font-weight: 700;
+      }
+
       @media (max-width: 900px) {
         .energy-sim-main { grid-template-columns: 1fr; }
       }
@@ -556,6 +583,14 @@ export default function EnergyGridSimulator() {
                     <div class="e-metric-label">ROI Break-Even</div>
                     <div class="e-metric-value" id="mROI">— Years</div>
                   </div>
+                  <div class="e-metric full">
+                    <div class="e-metric-label">Battery Discharge Hours</div>
+                    <div class="e-hour-grid" id="hourGrid"></div>
+                  </div>
+                  <div class="e-metric">
+                    <div class="e-metric-label">Renewable Energy Credits</div>
+                    <div class="e-metric-value positive" id="mRenewableCredits">$0</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -677,6 +712,17 @@ export default function EnergyGridSimulator() {
       return +(getEl<HTMLInputElement>(id)?.value || 0);
     }
 
+    function getSelectedHours(): number[] {
+      const selected: number[] = [];
+      for (let i = 0; i < 24; i++) {
+        const btn = getEl<HTMLElement>(`hourBtn-${i}`);
+        if (btn && btn.classList.contains('active')) {
+          selected.push(i);
+        }
+      }
+      return selected.length > 0 ? selected : [17, 18, 19, 20];
+    }
+
     function getState() {
       return {
         solar: getVal('solar'), wind: getVal('wind'), geo: getVal('geo'),
@@ -750,10 +796,33 @@ export default function EnergyGridSimulator() {
                       (s.pivotCard==='Polar Vortex' && s.biomass*1000 < 7500) ? 300000 : 0,
       };
 
+      // Calculate renewable energy credits from overproduction
+      const dischargingHours = getSelectedHours();
+      const supply24_temp = HOURS.map((_h, i) => {
+        let supply = 0;
+        supply += s.solar * SOLAR_PER_UNIT[i] * solarMult;
+        supply += s.geo * GEO_PER_UNIT[i];
+        supply += s.wind * BASE_WIND[i] * windMult;
+        supply += s.biomass * BIOMASS_PER_UNIT[i];
+        supply += s.hydroLow * 500;
+        supply += s.hydroHigh * 2000;
+        supply += s.tidalStd * 500;
+        supply += s.tidalPP * 600;
+        if (dischargingHours.includes(i) && hasVarGen) supply += s.liIon * 1000;
+        return Math.round(supply);
+      });
+
+      const renewableCredits = supply24_temp.reduce((total, supply, i) => {
+        const demand = demand24[i];
+        const overproduction = Math.max(0, supply - demand);
+        return total + overproduction * 0.22;
+      }, 0);
+
       const totalSpent = Object.values(genCosts).reduce((a,b)=>a+b,0)
         + Object.values(storageCosts).reduce((a,b)=>a+b,0)
         + Object.values(emergingCosts).reduce((a,b)=>a+b,0)
-        + Object.values(infraCosts).reduce((a,b)=>a+b,0);
+        + Object.values(infraCosts).reduce((a,b)=>a+b,0)
+        - renewableCredits;
 
       const remaining = startBudget - totalSpent;
       const basePeakDemand = 5000;
@@ -790,19 +859,7 @@ export default function EnergyGridSimulator() {
       const hasVarGen = s.solar > 0 || s.wind > 0;
       const storageDischarge = totalStorage / 4;
 
-      const supply24 = HOURS.map((_h, i) => {
-        let supply = 0;
-        supply += s.solar * SOLAR_PER_UNIT[i] * solarMult;
-        supply += s.geo * GEO_PER_UNIT[i];
-        supply += s.wind * BASE_WIND[i] * windMult;
-        supply += s.biomass * BIOMASS_PER_UNIT[i];
-        supply += s.hydroLow * 500;
-        supply += s.hydroHigh * 2000;
-        supply += s.tidalStd * 500;
-        supply += s.tidalPP * 600;
-        if (i >= 17 && i <= 20 && hasVarGen) supply += storageDischarge;
-        return Math.round(supply);
-      });
+      const supply24 = supply24_temp;
 
       const roiSavings = {
         solar: s.solar * 165000,
@@ -827,7 +884,7 @@ export default function EnergyGridSimulator() {
       return {
         totalPeakSupply, totalStorage, startBudget, totalSpent, remaining,
         islandTime, gridStatus, gridClass,
-        demand24, supply24,
+        demand24, supply24, renewableCredits,
         roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
         grantCompliant, isGrant, infraCosts, genCosts, storageCosts, emergingCosts,
@@ -939,6 +996,23 @@ export default function EnergyGridSimulator() {
     }
 
     function render() {
+      // Initialize hour grid if not already done
+      const hourGrid = getEl('hourGrid');
+      if (hourGrid && hourGrid.children.length === 0) {
+        for (let i = 0; i < 24; i++) {
+          const btn = document.createElement('button');
+          btn.id = `hourBtn-${i}`;
+          btn.className = 'e-hour-btn' + (i >= 17 && i <= 20 ? ' active' : '');
+          btn.textContent = i.toString().padStart(2, '0');
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            btn.classList.toggle('active');
+            render();
+          });
+          hourGrid.appendChild(btn);
+        }
+      }
+
       const s = getState();
       const r = calc(s);
 
@@ -1027,6 +1101,8 @@ export default function EnergyGridSimulator() {
         roiEl.textContent = r.roi ? r.roi + ' yrs' : '— yrs';
         roiEl.className = 'e-metric-value ' + (r.roi && parseFloat(r.roi) < 10 ? 'positive' : r.roi ? 'warn' : '');
       }
+      const creditsEl = getEl('mRenewableCredits');
+      if (creditsEl) creditsEl.textContent = fmt$(r.renewableCredits);
 
       const alerts: { cls: string; msg: string }[] = [];
       if (r.gridClass !== 'ok') alerts.push({ cls: r.gridClass, msg: r.gridStatus });
