@@ -678,7 +678,7 @@ export default function EnergyGridSimulator() {
               <div class="e-card-body">
                 <div class="e-metrics-grid">
                   <div class="e-metric">
-                    <div class="e-metric-label">Total Peak Supply</div>
+                    <div class="e-metric-label">Actual Peak Supply</div>
                     <div class="e-metric-value" id="mTotalSupply">0 kW</div>
                   </div>
                   <div class="e-metric">
@@ -1126,6 +1126,7 @@ export default function EnergyGridSimulator() {
 
       const storageDischarge = totalStorage / 4;
       const supply24 = supply24_temp;
+      const actualPeakSupply = Math.max(...supply24);
 
       const roiSavings = {
         solar: s.solar * 165000,
@@ -1154,7 +1155,7 @@ export default function EnergyGridSimulator() {
       const payroll = s.wSolar*55000 + s.wElec*68000 + s.wEng*72000;
 
       return {
-        totalPeakSupply, totalStorage, startBudget, totalSpent, remaining,
+        totalPeakSupply, actualPeakSupply, totalStorage, startBudget, totalSpent, remaining,
         islandTime, gridStatus, gridClass,
         demand24, supply24, renewableCredits, kwSoldBack,
         annualRenewableRevenue, renewableRevenueProjection,
@@ -1317,7 +1318,7 @@ export default function EnergyGridSimulator() {
         hdr.className = 'grid-status-badge' + (r.gridClass==='warn' ? ' warn' : r.gridClass==='danger' ? ' danger' : '');
       }
 
-      const supplyEl = getEl('mTotalSupply'); if (supplyEl) supplyEl.textContent = fmtkW(r.totalPeakSupply);
+      const supplyEl = getEl('mTotalSupply'); if (supplyEl) supplyEl.textContent = fmtkW(r.actualPeakSupply);
       const storageEl = getEl('mTotalStorage'); if (storageEl) storageEl.textContent = fmtkWh(r.totalStorage);
       const budgetEl = getEl('mBudget'); if (budgetEl) budgetEl.textContent = fmt$(r.startBudget);
       const spentEl = getEl('mSpent'); if (spentEl) spentEl.textContent = fmt$(r.totalSpent);
@@ -1498,7 +1499,8 @@ export default function EnergyGridSimulator() {
       const r = calc(s);
       const rows = [
         ['Field','Value'],
-        ['Total Peak Supply (kW)', r.totalPeakSupply],
+        ['Actual Peak Supply (kW)', r.actualPeakSupply],
+        ['Rated Capacity (kW)', r.totalPeakSupply],
         ['Total Storage (kWh)', r.totalStorage],
         ['Starting Budget', r.startBudget],
         ['Total Spent', r.totalSpent],
