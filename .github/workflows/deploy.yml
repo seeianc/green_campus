@@ -69,29 +69,27 @@ jobs:
       
       - name: Deploy
         run: |
-          echo "=== Contents of current directory ==="
-          ls -la
-          echo ""
-          echo "=== Contents of public directory ==="
-          ls -la public/ 2>/dev/null || echo "public directory not found"
-          echo ""
-          echo "=== Find all files in public ==="
-          find public -type f 2>/dev/null | head -20 || echo "No files found"
+          echo "=== Contents of current directory before operations ==="
+          ls -la public/ | head -10
           echo ""
           
+          # Copy files to temp location before switching branches
+          mkdir -p /tmp/deploy
+          cp -r public/. /tmp/deploy/
+          echo "Copied files to /tmp/deploy"
+          echo ""
+          
+          # Now switch branches and deploy
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout gh-pages
+          
+          # Clear old files
           rm -rf * .nojekyll .gitignore
           
-          # Copy everything from public, including hidden files
-          if [ -d "public" ]; then
-            cp -r public/. .
-            echo "Deployment completed"
-          else
-            echo "Error: public directory not found"
-            exit 1
-          fi
+          # Copy built files from temp location
+          cp -r /tmp/deploy/. .
+          echo "Deployment files copied to gh-pages branch"
           
           git add -A
           git commit -m "Deploy ${{ github.sha }}" || true
