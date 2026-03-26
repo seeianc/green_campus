@@ -354,10 +354,21 @@ export default function EnergyGridSimulator() {
       }
 
       @media print {
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        html, body {
+          margin: 0;
+          padding: 0;
+          height: auto;
+        }
         .energy-sim {
           background: white;
           height: auto;
           overflow: visible;
+          display: block;
         }
         .energy-sim-header {
           position: relative;
@@ -366,47 +377,77 @@ export default function EnergyGridSimulator() {
           color: white;
           border-bottom: 2px solid #000;
           page-break-after: avoid;
+          padding: 20px;
+          font-size: 24px;
+          font-weight: bold;
         }
         .energy-sim-main {
-          display: block;
-          padding: 20px;
+          display: block !important;
+          padding: 0;
           max-width: 100%;
           margin: 0;
           min-height: auto;
+          page-break-before: always;
         }
-        .energy-sidebar,
+        .energy-sidebar {
+          display: block !important;
+          width: 100%;
+          page-break-inside: avoid;
+          margin-bottom: 20px;
+        }
         .energy-content {
-          display: block;
-          gap: 0;
+          display: block !important;
+          width: 100%;
         }
         .e-card {
           page-break-inside: avoid;
-          margin-bottom: 16px;
+          margin-bottom: 20px;
           break-inside: avoid;
+          padding: 16px;
+          border: 1px solid #ddd;
+          page-break-after: auto;
+        }
+        .e-card-header {
+          page-break-after: avoid;
+          font-weight: bold;
+          margin-bottom: 12px;
+        }
+        .e-card-body {
+          page-break-inside: avoid;
         }
         .e-expense-breakdown {
-          max-height: none;
-          overflow: visible;
+          max-height: none !important;
+          overflow: visible !important;
+          display: block !important;
         }
         .e-metric-toggle {
-          color: var(--text);
+          color: #000;
+          display: block;
         }
-        .energy-sidebar .e-card {
-          page-break-inside: avoid;
-          margin-bottom: 12px;
+        .e-metric-toggle-arrow {
+          display: none;
         }
         #spentBreakdown,
         #budgetBreakdown,
         #adjustmentsBreakdown {
           display: block !important;
           max-height: none !important;
+          overflow: visible !important;
+          page-break-inside: avoid;
         }
-        .e-btn-row {
-          display: none;
+        .e-btn-row,
+        #simPrintBtn {
+          display: none !important;
         }
         canvas {
-          max-height: 300px;
+          max-width: 100%;
+          height: auto;
           page-break-inside: avoid;
+          margin: 20px 0;
+        }
+        .e-chart-wrap {
+          page-break-inside: avoid;
+          margin: 20px 0;
         }
       }
     `;
