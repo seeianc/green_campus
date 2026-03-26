@@ -424,23 +424,45 @@ export default function EnergyGridSimulator() {
           color: #000;
           display: block;
         }
+        .e-metric-toggle.expanded {
+          display: block !important;
+        }
         .e-metric-toggle-arrow {
           display: none;
         }
         #spentBreakdown,
-        #budgetBreakdown,
-        #adjustmentsBreakdown {
+        #budgetBreakdown {
           display: block !important;
           max-height: none !important;
           overflow: visible !important;
           page-break-inside: avoid;
           visibility: visible !important;
         }
-        #adjustmentsBreakdown .e-expense-item {
+        #adjustmentsBreakdown {
           display: block !important;
+          max-height: none !important;
+          overflow: visible !important;
+          page-break-inside: avoid;
+          padding: 8px 0 !important;
+          border-left: 2px solid #ddd !important;
+          margin-left: 12px !important;
         }
-        #adjustmentsBreakdown [id$="Item"] {
+        #adjustmentsBreakdown > .e-expense-item {
           display: block !important;
+          border: none !important;
+          padding-left: 8px !important;
+          font-size: 11px !important;
+        }
+        #adjWindItem,
+        #adjTidalItem,
+        #adjLiIonItem,
+        #adjPivotItem,
+        #adjUtilityItem,
+        #adjCraneItem {
+          display: block !important;
+          border: none !important;
+          padding-left: 8px !important;
+          font-size: 11px !important;
         }
         .e-btn-row,
         #simPrintBtn {
