@@ -514,7 +514,7 @@ export default function EnergyGridSimulator() {
                   <div class="e-select-label">Budget Tier</div>
                   <select class="e-select" id="budgetTier">
                     <option value=""></option>
-                    <option value="Failed Bond">Failed Bond ($8M)</option>
+                    <option value="Failed Bond">Failed Bond ($9M)</option>
                     <option value="Federal Green Grant">Federal Green Grant ($12M)</option>
                   </select>
                 </div>
@@ -981,7 +981,7 @@ export default function EnergyGridSimulator() {
       const totalStorage =
         s.liIon*1000 + s.thermal*2500 + s.flywheel*1000 + s.caes*5000;
 
-      const startBudget = s.budgetTier==='Failed Bond' ? 8000000 : isGrant ? 12000000 : 10000000;
+      const startBudget = s.budgetTier==='Failed Bond' ? 9000000 : isGrant ? 12000000 : 10000000;
 
       const genCosts = {
         solar: s.solar * 1000000,
@@ -1125,8 +1125,10 @@ export default function EnergyGridSimulator() {
         biomass: s.biomass * 1800000,
       };
       const baseAnnualSavings = Object.values(roiSavings).reduce((a,b)=>a+b,0);
-      const pivotImpact = isCarbonTax ? baseAnnualSavings * 0.2 :
-                          (isAIHub && s.liIon === 0) ? -50000 : 0;
+      const dailyShortfallKwh = supply24_temp.reduce((total, supply, i) => total + Math.max(0, demand24[i] - supply), 0);
+      const annualCarbonTaxFee = isCarbonTax ? dailyShortfallKwh * 365 * 0.10 : 0;
+      const pivotImpact = isCarbonTax ? -annualCarbonTaxFee :
+                          (isAIHub && totalStorage === 0) ? -50000 : 0;
       const finalSavings = baseAnnualSavings + pivotImpact;
       const roi = finalSavings > 0 ? (totalSpent / finalSavings).toFixed(2) : null;
       
