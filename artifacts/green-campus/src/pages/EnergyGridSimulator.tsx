@@ -977,6 +977,9 @@ export default function EnergyGridSimulator() {
       const migratoryBirdViolation = isMigratoryBird && s.wind > 0;
       const vernalPoolViolation = isVernalPool && s.geo > 0;
 
+      // Polar Vortex demand threshold — must be declared before infraCosts
+      const polarDemandThreshold = isPolar ? (s.thermal > 0 ? 5500 : 7500) : null;
+
       const totalPeakSupply =
         s.solar*500 + s.wind*3000 + s.geo*2000 +
         s.hydroLow*500 + s.hydroHigh*2000 +
@@ -1045,7 +1048,6 @@ export default function EnergyGridSimulator() {
                             s.demandPattern==='Morning Rush' ? MORN_RUSH : STANDARD;
       
       // Polar Vortex demand spike: peaks at 7,500 kW (or 5,500 kW with thermal storage)
-      const polarDemandThreshold = isPolar ? (s.thermal > 0 ? 5500 : 7500) : null;
       const demandProfileMax = Math.max(...demandProfile);
       const polarScaleFactor = isPolar && polarDemandThreshold ? polarDemandThreshold / demandProfileMax : 1;
       
@@ -1159,7 +1161,7 @@ export default function EnergyGridSimulator() {
         totalCostAdjustments, windCostAdjustment, tidalCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment, annualCarbonTaxFee,
         roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
-        grantCompliant, isGrant, infraCosts, genCosts, storageCosts, emergingCosts,
+        grantCompliant, isGrant, isPolar, polarDemandThreshold, isAIHub, isMaint, isSupplyChain, isCarbonTax, infraCosts, genCosts, storageCosts, emergingCosts,
         migratoryBirdViolation, vernalPoolViolation,
         isMigratoryBird, isVernalPool,
       };
@@ -1431,7 +1433,16 @@ export default function EnergyGridSimulator() {
       if (r.isGrant && !r.grantCompliant) alerts.push({ cls: 'warn', msg: '⚠️ Grant Violation: Must purchase at least 1 Emerging Tech!' });
       if (r.totalPeakSupply === 0) alerts.push({ cls: 'warn', msg: '⚠️ No generation tech selected — grid has no supply.' });
       if (r.infraCosts.utilityFee > 0) alerts.push({ cls: 'warn', msg: '⚠️ Utility Upgrade Fee triggered: supply exceeds 3,000 kW (+$500K)' });
-      if (r.infraCosts.pivotPenalty > 0) alerts.push({ cls: 'warn', msg: '⚠️ Pivot Card Penalty applied: +' + fmt$(r.infraCosts.pivotPenalty) });
+      if (r.isPolar) {
+        const threshold = r.polarDemandThreshold ?? 7500;
+        const met = r.totalPeakSupply >= threshold;
+        alerts.push({ cls: met ? 'ok' : 'danger', msg: (met ? '✅' : '⛔') + ' Polar Vortex: Campus demand spiked to ' + threshold.toLocaleString() + ' kW — your supply is ' + (met ? 'sufficient.' : 'insufficient! Add more generation.') + (r.totalStorage === 0 || !r.infraCosts ? '' : ' (Tip: add Thermal Storage to reduce threshold to 5,500 kW)') });
+      }
+      if (r.isAIHub) alerts.push({ cls: 'warn', msg: '⚡ AI Learning Hub: Campus demand increased by 1,500 kW every hour — new peak demand is 6,500 kW.' });
+      if (r.isMaint) alerts.push({ cls: 'warn', msg: '🔧 Maintenance Crisis: Solar and Wind output reduced to 75%.' + (r.infraCosts.pivotPenalty > 0 ? ' $500K repair fee applied.' : '') });
+      if (r.isSupplyChain) alerts.push({ cls: 'warn', msg: '📦 Supply Chain Crisis: Li-Ion BESS cost doubled to $1M/unit.' });
+      if (r.isCarbonTax && r.annualCarbonTaxFee > 0) alerts.push({ cls: 'warn', msg: '🌿 Carbon Tax: ' + fmt$(r.annualCarbonTaxFee) + '/yr fee on ' + Math.round(r.annualCarbonTaxFee / 0.10 / 365).toLocaleString() + ' kWh daily shortfall.' });
+      if (r.isCarbonTax && r.annualCarbonTaxFee === 0) alerts.push({ cls: 'ok', msg: '✅ Carbon Tax: Grid is 100% renewable — no carbon tax fee applies.' });
       if (r.migratoryBirdViolation) alerts.push({ cls: 'danger', msg: '🐦 VIOLATION — Migratory Bird Ordinance: Wind turbines are prohibited. Remove wind turbines.' });
       if (r.vernalPoolViolation) alerts.push({ cls: 'danger', msg: '🌿 VIOLATION — Vernal Pool Protection: No Geothermal permitted. Remove geothermal.' });
       if (r.isMigratoryBird && !r.migratoryBirdViolation) alerts.push({ cls: 'warn', msg: '🐦 Migratory Bird Ordinance active: Wind turbines may only be placed in developed areas.' });
