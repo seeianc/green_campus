@@ -806,7 +806,7 @@ Error generating stack: `+l.message+`
               <div class="e-card-header"><div class="dot" style="background:#6a3abf"></div>Finance Director: ROI Ledger</div>
               <div class="e-card-body">
                 <div class="e-ledger-row"><span>Solar PV Annual Savings</span><span class="val pos" id="lSolar">$0</span></div>
-                <div class="e-ledger-row"><span>Onshore Wind Annual Savings</span><span class="val pos" id="lWind">$0</span></div>
+                <div class="e-ledger-row"><span>Wind Turbine Annual Savings</span><span class="val pos" id="lWind">$0</span></div>
                 <div class="e-ledger-row"><span>Geothermal Annual Savings</span><span class="val pos" id="lGeo">$0</span></div>
                 <div class="e-ledger-row"><span>Small Hydro Annual Savings</span><span class="val pos" id="lHydro">$0</span></div>
                 <div class="e-ledger-row"><span>Tidal Annual Savings</span><span class="val pos" id="lTidal">$0</span></div>
