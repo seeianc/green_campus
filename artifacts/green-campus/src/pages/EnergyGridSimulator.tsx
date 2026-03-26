@@ -724,6 +724,7 @@ export default function EnergyGridSimulator() {
                       
                       <div class="e-expense-item category"><span class="label">INFRASTRUCTURE</span></div>
                       <div class="e-expense-item"><span class="label">Cabling</span><span class="value" id="costCabling">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Crane Logistics</span><span class="value" id="costCraneLogistics">$0</span></div>
                       <div class="e-expense-item"><span class="label">Wind Buffer</span><span class="value" id="costWindBuffer">$0</span></div>
                       <div class="e-expense-item"><span class="label">Utility Fee</span><span class="value" id="costUtilityFee">$0</span></div>
                       <div class="e-expense-item"><span class="label">Pivot Penalty</span><span class="value" id="costPivotPenalty">$0</span></div>
@@ -1335,6 +1336,7 @@ export default function EnergyGridSimulator() {
       setCost('costV2G', r.emergingCosts.v2g);
       setCost('costSCADA', r.emergingCosts.scada);
       setCost('costCabling', r.infraCosts.cabling);
+      setCost('costCraneLogistics', r.infraCosts.craneLogistics);
       setCost('costWindBuffer', r.infraCosts.windBuffer);
       setCost('costUtilityFee', r.infraCosts.utilityFee);
       setCost('costPivotPenalty', r.infraCosts.pivotPenalty);
