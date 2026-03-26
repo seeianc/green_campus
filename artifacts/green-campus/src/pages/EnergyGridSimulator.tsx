@@ -1286,6 +1286,8 @@ export default function EnergyGridSimulator() {
       });
       const emergingNote = getEl('emergingNote');
       if (emergingNote) emergingNote.style.display = isGrant ? 'none' : 'flex';
+      const emergingCard = getEl('emergingCard');
+      if (emergingCard) emergingCard.style.display = isGrant ? 'block' : 'none';
 
       const windInput = getEl<HTMLInputElement>('wind');
       const geoInput = getEl<HTMLInputElement>('geo');
