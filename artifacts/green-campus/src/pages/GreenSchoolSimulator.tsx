@@ -308,6 +308,33 @@ export default function GreenSchoolSimulator() {
       }
       .e-tag.warn { background: var(--warn-light); color: var(--warn); }
 
+      .e-hour-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+        margin-top: 8px;
+      }
+      .e-hour-btn {
+        padding: 6px 4px;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: white;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+      }
+      .e-hour-btn:hover { border-color: var(--accent); }
+      .e-hour-btn.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        font-weight: 700;
+      }
+
       @media (max-width: 900px) {
         .energy-sim-main { grid-template-columns: 1fr; }
       }
@@ -438,6 +465,14 @@ export default function GreenSchoolSimulator() {
               </div>
             </div>
 
+            <div class="e-card">
+              <div class="e-card-header"><div class="dot" style="background:#3a5fbf"></div>Battery Discharge Schedule</div>
+              <div class="e-card-body">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Select hours (0-23) to discharge 1,000 kW per BESS unit</div>
+                <div class="e-hour-grid" id="hourGrid"></div>
+              </div>
+            </div>
+
             <div class="e-card" id="emergingCard">
               <div class="e-card-header"><div class="dot" style="background:#bf5a8a"></div>Emerging Technology <span class="e-tag warn" style="margin-left:auto">Grant Required</span></div>
               <div class="e-card-body">
@@ -554,6 +589,10 @@ export default function GreenSchoolSimulator() {
                   <div class="e-metric">
                     <div class="e-metric-label">ROI Break-Even</div>
                     <div class="e-metric-value" id="mROI">— Years</div>
+                  </div>
+                  <div class="e-metric">
+                    <div class="e-metric-label">Renewable Credits</div>
+                    <div class="e-metric-value positive" id="mRenewableCredits">$0</div>
                   </div>
                 </div>
               </div>
@@ -676,6 +715,17 @@ export default function GreenSchoolSimulator() {
       return +(getEl<HTMLInputElement>(id)?.value || 0);
     }
 
+    function getSelectedHours(): number[] {
+      const selected: number[] = [];
+      for (let i = 0; i < 24; i++) {
+        const btn = getEl<HTMLElement>(`hourBtn-${i}`);
+        if (btn && btn.classList.contains('active')) {
+          selected.push(i);
+        }
+      }
+      return selected.length > 0 ? selected : [17, 18, 19, 20];
+    }
+
     function getState() {
       return {
         solar: getVal('solar'), wind: getVal('wind'), geo: getVal('geo'),
@@ -721,13 +771,21 @@ export default function GreenSchoolSimulator() {
 
       const startBudget = s.budgetTier==='Failed Bond' ? 8000000 : isGrant ? 12000000 : 10000000;
 
-      const genCosts = {
+      const baseCosts = {
         solar: s.solar * 1000000,
         wind: s.wind * (isCrane ? 3000000 : 2500000),
         geo: s.geo * 5000000,
         hydro: (s.hydroLow + s.hydroHigh) * 4000000,
-        tidal: (s.tidalStd + s.tidalPP) * (isMarine ? 1200000 : 1500000),
+        tidal: (s.tidalStd + s.tidalPP) * 1500000,
         biomass: s.biomass * 3500000,
+      };
+      const genCosts = {
+        solar: baseCosts.solar,
+        wind: baseCosts.wind * (isMarine ? 0.8 : 1),
+        geo: baseCosts.geo,
+        hydro: baseCosts.hydro,
+        tidal: baseCosts.tidal * (isMarine ? 0.8 : 1),
+        biomass: baseCosts.biomass,
       };
       const storageCosts = {
         liIon: s.liIon * (isSupplyChain ? 1000000 : 500000),
@@ -752,7 +810,8 @@ export default function GreenSchoolSimulator() {
       const totalSpent = Object.values(genCosts).reduce((a,b)=>a+b,0)
         + Object.values(storageCosts).reduce((a,b)=>a+b,0)
         + Object.values(emergingCosts).reduce((a,b)=>a+b,0)
-        + Object.values(infraCosts).reduce((a,b)=>a+b,0);
+        + Object.values(infraCosts).reduce((a,b)=>a+b,0)
+        - renewableCredits;
 
       const remaining = startBudget - totalSpent;
       const basePeakDemand = 5000;
@@ -789,6 +848,7 @@ export default function GreenSchoolSimulator() {
       const hasVarGen = s.solar > 0 || s.wind > 0;
       const storageDischarge = totalStorage / 4;
 
+      const dischargingHours = getSelectedHours();
       const supply24 = HOURS.map((_h, i) => {
         let supply = 0;
         supply += s.solar * SOLAR_PER_UNIT[i] * solarMult;
@@ -799,9 +859,15 @@ export default function GreenSchoolSimulator() {
         supply += s.hydroHigh * 2000;
         supply += s.tidalStd * 500;
         supply += s.tidalPP * 600;
-        if (i >= 17 && i <= 20 && hasVarGen) supply += storageDischarge;
+        if (dischargingHours.includes(i) && hasVarGen) supply += s.liIon * 1000;
         return Math.round(supply);
       });
+
+      const renewableCredits = supply24.reduce((total, supply, i) => {
+        const demand = demand24[i];
+        const overproduction = Math.max(0, supply - demand);
+        return total + overproduction * 0.22;
+      }, 0);
 
       const roiSavings = {
         solar: s.solar * 165000,
@@ -826,13 +892,13 @@ export default function GreenSchoolSimulator() {
       return {
         totalPeakSupply, totalStorage, startBudget, totalSpent, remaining,
         islandTime, gridStatus, gridClass,
-        demand24, supply24,
+        demand24, supply24, renewableCredits,
         roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
         grantCompliant, isGrant, infraCosts, genCosts, storageCosts, emergingCosts,
         migratoryBirdViolation, vernalPoolViolation,
         isMigratoryBird, isVernalPool,
-      };
+      }
     }
 
     function fmt$(n: number) { return '$' + Math.round(n).toLocaleString(); }
@@ -938,6 +1004,23 @@ export default function GreenSchoolSimulator() {
     }
 
     function render() {
+      // Initialize hour grid if not already done
+      const hourGrid = getEl('hourGrid');
+      if (hourGrid && hourGrid.children.length === 0) {
+        for (let i = 0; i < 24; i++) {
+          const btn = document.createElement('button');
+          btn.id = `hourBtn-${i}`;
+          btn.className = 'e-hour-btn' + (i >= 17 && i <= 20 ? ' active' : '');
+          btn.textContent = i.toString().padStart(2, '0');
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            btn.classList.toggle('active');
+            render();
+          });
+          hourGrid.appendChild(btn);
+        }
+      }
+
       const s = getState();
       const r = calc(s);
 
@@ -1008,6 +1091,8 @@ export default function GreenSchoolSimulator() {
         roiEl.textContent = r.roi ? r.roi + ' yrs' : '— yrs';
         roiEl.className = 'e-metric-value ' + (r.roi && parseFloat(r.roi) < 10 ? 'positive' : r.roi ? 'warn' : '');
       }
+      const creditsEl = getEl('mRenewableCredits');
+      if (creditsEl) creditsEl.textContent = fmt$(r.renewableCredits);
 
       const alerts: { cls: string; msg: string }[] = [];
       if (r.gridClass !== 'ok') alerts.push({ cls: r.gridClass, msg: r.gridStatus });

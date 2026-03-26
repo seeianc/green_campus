@@ -724,10 +724,10 @@ export default function EnergyGridSimulator() {
 
       const genCosts = {
         solar: s.solar * 1000000,
-        wind: s.wind * (isCrane ? 3000000 : 2500000),
+        wind: s.wind * (isCrane ? 3000000 : 2500000) * (isMarine ? 0.8 : 1),
         geo: s.geo * 5000000,
         hydro: (s.hydroLow + s.hydroHigh) * 4000000,
-        tidal: (s.tidalStd + s.tidalPP) * (isMarine ? 1200000 : 1500000),
+        tidal: (s.tidalStd + s.tidalPP) * 1500000 * (isMarine ? 0.8 : 1),
         biomass: s.biomass * 3500000,
       };
       const storageCosts = {
