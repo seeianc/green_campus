@@ -1,27 +1,27 @@
 import { useState, useEffect, useRef } from "react";
 import LZString from "lz-string";
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, onValue, off } from "firebase/database";
 import EnergyGridSimulator from "@/pages/EnergyGridSimulator";
 import CampusMapTool from "@/pages/CampusMapTool";
 import { sharedState } from "@/shared";
 
-const GIST_API = "https://api.github.com/gists";
-const POLL_INTERVAL = 5000;
-function getStoredPat(): string {
-  return localStorage.getItem("gc_github_pat") || "";
-}
+// Firebase config — these values are public-safe, access is controlled by DB rules
+const firebaseConfig = {
+  apiKey: "AIzaSyAuHDUZSSHNs_8VmJXDUBVSjE4V_7AmjS4",
+  authDomain: "green-campus-c4ebd.firebaseapp.com",
+  databaseURL: "https://green-campus-c4ebd-default-rtdb.firebaseio.com",
+  projectId: "green-campus-c4ebd",
+  storageBucket: "green-campus-c4ebd.firebasestorage.app",
+  messagingSenderId: "59870993495",
+  appId: "1:59870993495:web:57c202057d5c7f300d5712",
+};
 
-function storePatIfNeeded(): string {
-  let pat = localStorage.getItem("gc_github_pat") || "";
-  if (!pat) {
-    pat = window.prompt(
-      "To join a live session, enter a GitHub Personal Access Token with 'gist' scope.\n\n" +
-      "Create one at: github.com/settings/tokens → Tokens (classic) → Generate new token\n" +
-      "→ check only 'gist' → set No expiration\n\n" +
-      "This is stored only in your browser — never sent anywhere except GitHub."
-    ) || "";
-    if (pat) localStorage.setItem("gc_github_pat", pat);
-  }
-  return pat;
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+
+function generateSessionId(): string {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
 export default function App() {
@@ -32,9 +32,9 @@ export default function App() {
 
   const sessionIdRef = useRef<string>("");
   const lastContentRef = useRef<string>("");
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPullingRef = useRef(false);
+  const dbListenerRef = useRef<ReturnType<typeof ref> | null>(null);
 
   // ── Plan serialization ──────────────────────────────────────────────────
   function getPlanState(): object {
@@ -58,7 +58,7 @@ export default function App() {
     return { v: 1, placements: sharedState.placements, cables: sharedState.cables, sim, bessHours };
   }
 
-  // ── Snapshot share (existing) ───────────────────────────────────────────
+  // ── Snapshot share (URL-based, no session) ──────────────────────────────
   function sharePlan() {
     const plan = getPlanState();
     const encoded = LZString.compressToEncodedURIComponent(JSON.stringify(plan));
@@ -69,148 +69,92 @@ export default function App() {
     });
   }
 
-  // ── Gist helpers ────────────────────────────────────────────────────────
-  async function gistPost(pat: string, content: string): Promise<string> {
-    const res = await fetch(GIST_API, {
-      method: "POST",
-      headers: {
-        Authorization: `token ${pat}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        description: "Green Campus Plan Session",
-        public: false,
-        files: { "plan.json": { content } },
-      }),
+  // ── Firebase: attach real-time listener ────────────────────────────────
+  function attachListener(sessionId: string) {
+    const dbRef = ref(db, `sessions/${sessionId}`);
+    dbListenerRef.current = dbRef;
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data || !data.plan) return;
+      const content = JSON.stringify(data.plan);
+      if (content === lastContentRef.current) return;
+      try {
+        const plan = JSON.parse(content);
+        isPullingRef.current = true;
+        lastContentRef.current = content;
+        window.dispatchEvent(new CustomEvent("gc:restore-plan", { detail: plan }));
+        setTimeout(() => { isPullingRef.current = false; }, 3200);
+      } catch {
+        console.warn("Failed to parse session data");
+      }
     });
-    if (!res.ok) throw new Error(`Gist create failed: ${res.status}`);
-    const data = await res.json();
-    return data.id as string;
   }
 
-  async function gistPatch(pat: string, gistId: string, content: string): Promise<void> {
-    const res = await fetch(`${GIST_API}/${gistId}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `token ${pat}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ files: { "plan.json": { content } } }),
-    });
-    if (!res.ok) console.warn(`Gist patch failed: ${res.status}`);
-  }
-
-  async function gistGet(gistId: string): Promise<string | null> {
-    const pat = getStoredPat();
-    const headers: Record<string, string> = { "Cache-Control": "no-cache" };
-    if (pat) headers["Authorization"] = `token ${pat}`;
-    const res = await fetch(`${GIST_API}/${gistId}`, { headers });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.files?.["plan.json"]?.content ?? null;
-  }
-
-  // ── Push state to Gist if changed (called on interval) ─────────────────
+  // ── Firebase: push state if changed (runs on interval) ─────────────────
   async function maybePush() {
     if (!sessionIdRef.current || isPullingRef.current) return;
-    const pat = getStoredPat();
-    if (!pat) return;
     const content = JSON.stringify(getPlanState());
     if (content === lastContentRef.current) return;
     lastContentRef.current = content;
-    await gistPatch(pat, sessionIdRef.current, content);
+    await set(ref(db, `sessions/${sessionIdRef.current}`), { plan: JSON.parse(content) });
   }
 
-  // ── Poll Gist for remote changes ────────────────────────────────────────
-  async function pollGist(gistId: string) {
-    const content = await gistGet(gistId);
-    if (!content || content === lastContentRef.current) return;
-    try {
-      const plan = JSON.parse(content);
-      isPullingRef.current = true;
-      lastContentRef.current = content;
-      window.dispatchEvent(new CustomEvent("gc:restore-plan", { detail: plan }));
-      setTimeout(() => { isPullingRef.current = false; }, 3200);
-    } catch {
-      console.warn("Failed to parse Gist content");
-    }
-  }
-
-  function startPolling(gistId: string) {
-    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+  function startPushInterval() {
     if (pushTimerRef.current) clearInterval(pushTimerRef.current);
-    pollTimerRef.current = setInterval(() => pollGist(gistId), POLL_INTERVAL);
-    // Push local changes every 3 seconds if state has changed
     pushTimerRef.current = setInterval(() => maybePush(), 3000);
   }
 
+  // ── Stop session ────────────────────────────────────────────────────────
   function stopSession() {
-    if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
-    if (pushTimerRef.current) { clearTimeout(pushTimerRef.current); pushTimerRef.current = null; }
+    if (dbListenerRef.current) { off(dbListenerRef.current); dbListenerRef.current = null; }
+    if (pushTimerRef.current) { clearInterval(pushTimerRef.current); pushTimerRef.current = null; }
     sessionIdRef.current = "";
     lastContentRef.current = "";
+    isPullingRef.current = false;
     setSessionActive(false);
     setSessionLabel("⚡ Start Session");
-    // Remove session param from URL
     const url = new URL(window.location.href);
     url.searchParams.delete("session");
     window.history.replaceState(null, "", url.toString());
   }
 
-  // ── Start a new session ─────────────────────────────────────────────────
+  // ── Create a new session ────────────────────────────────────────────────
   async function createSession() {
     if (sessionActive) { stopSession(); return; }
-    const pat = storePatIfNeeded();
-    if (!pat) { alert("A GitHub PAT is required to start a session."); return; }
-    setSessionLabel("Creating…");
+    setSessionLabel("Starting…");
     try {
-      const content = JSON.stringify(getPlanState());
-      const gistId = await gistPost(pat, content);
-      sessionIdRef.current = gistId;
+      const sessionId = generateSessionId();
+      const plan = getPlanState();
+      const content = JSON.stringify(plan);
+      await set(ref(db, `sessions/${sessionId}`), { plan });
+      sessionIdRef.current = sessionId;
       lastContentRef.current = content;
 
-      // Update URL
       const url = new URL(window.location.href);
       url.searchParams.delete("plan");
-      url.searchParams.set("session", gistId);
+      url.searchParams.set("session", sessionId);
       window.history.replaceState(null, "", url.toString());
-
-      // Copy session URL to clipboard
       navigator.clipboard.writeText(url.toString()).catch(() => {});
 
+      attachListener(sessionId);
+      startPushInterval();
       setSessionActive(true);
       setSessionLabel("● Live (click to stop)");
-      startPolling(gistId);
-      alert(
-        "Session started! Session URL copied to clipboard.\n\n" +
-        "Share the URL with others so they can join. Each person needs their own GitHub PAT."
-      );
+      alert("Session started! URL copied to clipboard.\n\nShare it with others — no setup needed on their end.");
     } catch (err) {
       console.error(err);
       setSessionLabel("⚡ Start Session");
-      alert("Failed to create session. Check your GitHub PAT and try again.");
+      alert("Failed to start session. Check your internet connection.");
     }
   }
 
   // ── Join an existing session ────────────────────────────────────────────
-  async function joinSession(gistId: string) {
-    const pat = storePatIfNeeded();
-    if (!pat) { alert("A GitHub PAT is required to join a session."); return; }
-    const content = await gistGet(gistId);
-    if (!content) { console.warn("Could not fetch session Gist"); return; }
-    try {
-      const plan = JSON.parse(content);
-      sessionIdRef.current = gistId;
-      lastContentRef.current = content;
-      isPullingRef.current = true;
-      window.dispatchEvent(new CustomEvent("gc:restore-plan", { detail: plan }));
-      setTimeout(() => { isPullingRef.current = false; }, 3200);
-    } catch {
-      console.warn("Failed to parse session Gist");
-    }
+  async function joinSession(sessionId: string) {
+    sessionIdRef.current = sessionId;
+    attachListener(sessionId);
+    startPushInterval();
     setSessionActive(true);
     setSessionLabel("● Live (click to stop)");
-    startPolling(gistId);
   }
 
   // ── On mount: restore from ?plan= or join ?session= ────────────────────
@@ -220,7 +164,6 @@ export default function App() {
     const planParam = params.get("plan");
 
     if (sessionParam) {
-      // Delay to let child components initialise
       setTimeout(() => joinSession(sessionParam), 300);
     } else if (planParam) {
       try {
@@ -237,8 +180,8 @@ export default function App() {
   // ── Cleanup on unmount ──────────────────────────────────────────────────
   useEffect(() => {
     return () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
+      if (dbListenerRef.current) off(dbListenerRef.current);
+      if (pushTimerRef.current) clearInterval(pushTimerRef.current);
     };
   }, []);
 
