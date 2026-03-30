@@ -571,11 +571,11 @@ Error generating stack: `+l.message+`
                   <input class="e-qty-input" type="number" id="thermal" value="0" min="0" max="10">
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Mechanical Flywheels</div><div class="e-input-sub">1,000 kWh/unit · $300K each</div><div class="e-input-sub" style="color:var(--accent-muted)">Short-burst frequency regulation — very long lifespan, low maintenance</div></div>
+                  <div><div class="e-input-label">Mechanical Flywheels</div><div class="e-input-sub">1,000 kWh/unit · $300K each</div><div class="e-input-sub" style="color:var(--accent-muted)">Eliminates voltage flicker from intermittent sources — smooths power quality</div></div>
                   <input class="e-qty-input" type="number" id="flywheel" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">CAES</div><div class="e-input-sub">5,000 kWh/unit · $2M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Compressed Air Energy Storage — large-scale, long-duration bulk shifting</div></div>
+                  <div><div class="e-input-label">CAES</div><div class="e-input-sub">5,000 kWh/unit · $2M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Compressed Air Energy Storage — maximizes island mode duration during grid outages</div></div>
                   <input class="e-qty-input" type="number" id="caes" value="0" min="0" max="10">
                 </div>
               </div>
