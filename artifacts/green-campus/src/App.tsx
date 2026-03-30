@@ -7,13 +7,15 @@ import { sharedState } from "@/shared";
 const GIST_API = "https://api.github.com/gists";
 const POLL_INTERVAL = 5000;
 const PUSH_DEBOUNCE = 1500;
+const BUILT_IN_PAT: string = import.meta.env.VITE_GIST_PAT || "";
 
 function getStoredPat(): string {
-  return localStorage.getItem("gc_github_pat") || "";
+  return BUILT_IN_PAT || localStorage.getItem("gc_github_pat") || "";
 }
 
 function storePatIfNeeded(): string {
-  let pat = getStoredPat();
+  if (BUILT_IN_PAT) return BUILT_IN_PAT;
+  let pat = localStorage.getItem("gc_github_pat") || "";
   if (!pat) {
     pat = window.prompt(
       "Enter your GitHub Personal Access Token (gist scope required).\n" +

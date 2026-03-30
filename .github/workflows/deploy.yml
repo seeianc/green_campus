@@ -29,6 +29,7 @@ jobs:
         env:
           PORT: 3000
           BASE_PATH: /green_campus/
+          VITE_GIST_PAT: ${{ secrets.VITE_GIST_PAT }}
       
       - name: Debug - Check build output
         if: always()
