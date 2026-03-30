@@ -582,19 +582,19 @@ export default function EnergyGridSimulator() {
               <div class="e-card-header"><div class="dot" style="background:#5a7abf"></div>Storage Technology</div>
               <div class="e-card-body">
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Lithium-Ion BESS</div><div class="e-input-sub">1,000 kWh/unit · $500K each</div></div>
+                  <div><div class="e-input-label">Lithium-Ion BESS</div><div class="e-input-sub">1,000 kWh/unit · $500K each</div><div class="e-input-sub" style="color:var(--accent-muted)">Fast response — ideal for solar evening storage &amp; peak shaving</div></div>
                   <input class="e-qty-input" type="number" id="liIon" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Thermal Storage</div><div class="e-input-sub">2,500 kWh/unit · $1M each</div></div>
+                  <div><div class="e-input-label">Thermal Storage</div><div class="e-input-sub">2,500 kWh/unit · $1M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Stores heat/cold for HVAC loads — reduces Polar Vortex peak demand</div></div>
                   <input class="e-qty-input" type="number" id="thermal" value="0" min="0" max="10">
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Mechanical Flywheels</div><div class="e-input-sub">1,000 kWh/unit · $300K each</div></div>
+                  <div><div class="e-input-label">Mechanical Flywheels</div><div class="e-input-sub">1,000 kWh/unit · $300K each</div><div class="e-input-sub" style="color:var(--accent-muted)">Short-burst frequency regulation — very long lifespan, low maintenance</div></div>
                   <input class="e-qty-input" type="number" id="flywheel" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">CAES</div><div class="e-input-sub">5,000 kWh/unit · $2M each</div></div>
+                  <div><div class="e-input-label">CAES</div><div class="e-input-sub">5,000 kWh/unit · $2M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Compressed Air Energy Storage — large-scale, long-duration bulk shifting</div></div>
                   <input class="e-qty-input" type="number" id="caes" value="0" min="0" max="10">
                 </div>
               </div>
@@ -1685,6 +1685,8 @@ export default function EnergyGridSimulator() {
           el.value = String(counts[mapTech] || 0);
         }
       });
+      const cablingEl = getEl<HTMLInputElement>('cabling');
+      if (cablingEl) cablingEl.value = String(Math.round(sharedState.totalMapCableCm));
       render();
     });
 
