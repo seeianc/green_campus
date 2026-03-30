@@ -167,14 +167,43 @@ export default function CampusMapTool() {
       .map-legend { padding: 6px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border); }
       .map-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); padding: 1px 0; }
       .map-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+      /* Map Selection Screen */
+      .map-sel-screen { height: 100%; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg); }
+      .map-sel-header { padding: 36px 40px 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+      .map-sel-header h2 { font-size: 18px; font-weight: 600; color: var(--accent); margin: 0 0 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+      .map-sel-header p { font-size: 13px; color: var(--muted); margin: 0; }
+      .map-sel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 32px 40px; }
+      .map-sel-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.15s; }
+      .map-sel-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+      .map-sel-card img { width: 100%; height: 170px; object-fit: cover; object-position: center; display: block; border-bottom: 1px solid var(--border); }
+      .map-sel-card-info { padding: 14px 16px; }
+      .map-sel-card-name { font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 4px; }
+      .map-sel-card-desc { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin: 0 0 10px; }
+      .map-sel-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+      .map-sel-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid; font-weight: 600; }
+      .map-back-btn { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all .15s; font-family: 'Space Grotesk',sans-serif; }
+      .map-back-btn:hover { color: var(--text); border-color: var(--muted); }
     `;
     document.head.appendChild(style);
 
     container.innerHTML = `
       <div class="map-tool-root" id="mapToolRoot">
+
+        <!-- Map Selection Screen -->
+        <div class="map-sel-screen" id="mapSelScreen">
+          <div class="map-sel-header">
+            <h2>Select a Campus</h2>
+            <p>Choose a school site to begin placing your renewable energy infrastructure</p>
+          </div>
+          <div class="map-sel-grid" id="mapSelGrid"></div>
+        </div>
+
+        <!-- Tool Screen (shown after map selection) -->
+        <div id="mapToolScreen" style="display:none;flex-direction:column;height:100%;min-height:0;">
         <div class="map-tool-header">
-          <h1>⚡ Green Campus — Map Placer</h1>
-          <div class="map-tabs" id="mapToolTabs"></div>
+          <button class="map-back-btn" id="mapBackBtn">← Maps</button>
+          <h1 id="mapToolTitle" style="margin-left:8px">⚡ Map Placer</h1>
           <div class="map-header-stats">
             <div class="map-stat" id="statPower">Power: <span>0 kW</span></div>
             <div class="map-stat" id="statStorage">Storage: <span>0 kWh</span></div>
@@ -276,6 +305,7 @@ export default function CampusMapTool() {
         </div>
 
         <div class="map-tooltip hidden" id="mapTooltip"></div>
+        </div><!-- /mapToolScreen -->
       </div>
     `;
 
@@ -328,21 +358,15 @@ function initMapTool() {
   const MAPS: Record<string, MapDef> = {
     RLS: {
       name: 'RLS — Inland School',
-      desc: 'Inland campus, forested south section, no water access',
+      desc: 'Inland campus, forested hillside, no water access',
       width: 900, height: 1274,
       substationPx: [490, 260],
       features: [
         { type:'boundary', points:[[220,55],[810,55],[810,440],[680,440],[680,560],[810,560],[810,700],[260,700],[260,580],[220,580]] },
         { type:'building', rect:[380,200,220,120], label:'Main Building' },
         { type:'building', rect:[620,200,80,60], label:'Annex' },
-        { type:'building', rect:[380,330,120,40], label:'Wing' },
-        { type:'parking', rect:[290,200,80,100] },
-        { type:'parking', rect:[500,380,140,60] },
         { type:'field', rect:[280,55,360,140], label:'Athletic Fields' },
-        { type:'field', rect:[640,60,160,140] },
         { type:'forest', rect:[220,450,580,250] },
-        { type:'road', points:[[220,300],[280,300]] },
-        { type:'road', points:[[220,420],[810,420]] },
         { type:'contour_zone', rect:[220,400,580,300], density:'high' },
       ]
     },
@@ -359,27 +383,6 @@ function initMapTool() {
         { type:'forest', rect:[430,310,440,420] },
         { type:'contour_zone', rect:[360,230,590,310], density:'extreme' },
         { type:'road', points:[[580,700],[580,620]] },
-      ]
-    },
-    STG: {
-      name: 'STG — Marsh / Atlantic',
-      desc: 'Tidal river, marsh, Atlantic access — highest water potential',
-      width: 900, height: 1274,
-      substationPx: [570, 670],
-      features: [
-        { type:'water', rect:[0,0,200,520], label:'The Marsh' },
-        { type:'ocean', rect:[0,780,900,120], label:'Atlantic Ocean' },
-        { type:'water', rect:[340,830,60,70] },
-        { type:'boundary', points:[[200,130],[280,100],[700,80],[810,240],[780,480],[680,480],[680,780],[220,780],[170,680],[140,480],[200,350],[170,210]] },
-        { type:'building', rect:[490,560,160,80], label:'School' },
-        { type:'building', rect:[490,660,120,40], label:'Wing' },
-        { type:'field', rect:[500,280,240,200], label:'Field' },
-        { type:'forest', rect:[200,130,250,350] },
-        { type:'forest', rect:[450,130,350,250] },
-        { type:'road', points:[[400,780],[600,780]] },
-        { type:'road', points:[[490,780],[490,640]] },
-        { type:'contour_zone', rect:[580,80,220,500], density:'medium' },
-        { type:'tidal_zone', rect:[0,150,200,370] },
       ]
     },
     CES: {
@@ -402,29 +405,46 @@ function initMapTool() {
       ]
     },
     LCS: {
-      name: 'LCS — Woodland Pond',
-      desc: 'Dense forest with freshwater pond access to southwest',
+      name: 'LCS — Coastal Forest',
+      desc: 'Forested coastal campus with steep contours and shoreline access',
       width: 950, height: 671,
-      substationPx: [690, 160],
+      substationPx: [630, 120],
       features: [
-        { type:'water', rect:[0,640,500,120], label:'Freshwater Pond' },
-        { type:'boundary', points:[[280,55],[820,55],[820,680],[500,730],[280,730],[200,620],[180,420],[280,200]] },
-        { type:'building', rect:[560,100,260,120], label:'School' },
-        { type:'building', rect:[580,230,200,80], label:'Gym/Hall' },
-        { type:'field', rect:[560,330,240,200] },
-        { type:'forest', rect:[180,55,400,700] },
-        { type:'parking', rect:[560,90,80,90] },
-        { type:'road', points:[[820,400],[820,680]] },
-        { type:'road', points:[[560,680],[820,680]] },
-        { type:'contour_zone', rect:[180,100,400,600], density:'high' },
+        { type:'ocean', rect:[550,500,400,171], label:'Coastal Water' },
+        { type:'boundary', points:[[180,10],[950,10],[950,390],[700,390],[700,500],[560,500],[420,440],[180,360]] },
+        { type:'building', rect:[570,30,160,110], label:'School' },
+        { type:'parking', rect:[580,145,100,55] },
+        { type:'forest', rect:[0,0,560,500] },
+        { type:'forest', rect:[560,0,390,30] },
+        { type:'contour_zone', rect:[0,0,950,520], density:'high' },
+        { type:'road', points:[[700,390],[700,500]] },
       ]
-    }
+    },
+    STG: {
+      name: 'STG — Lakeside Campus',
+      desc: 'Hillside campus beside a lake — hydro and wind potential',
+      width: 900, height: 1274,
+      substationPx: [520, 870],
+      features: [
+        { type:'water', rect:[0,0,240,980], label:'Lake' },
+        { type:'boundary', points:[[200,30],[860,30],[860,550],[900,550],[900,1100],[380,1100],[240,980],[240,750],[150,600],[200,300]] },
+        { type:'building', rect:[400,800,230,180], label:'School' },
+        { type:'parking', rect:[410,720,150,75] },
+        { type:'field', rect:[500,150,360,350], label:'Open Fields' },
+        { type:'forest', rect:[240,0,660,150] },
+        { type:'forest', rect:[240,500,660,300] },
+        { type:'contour_zone', rect:[200,0,700,800], density:'high' },
+        { type:'road', points:[[380,1100],[380,800]] },
+        { type:'road', points:[[380,950],[240,950]] },
+      ]
+    },
   };
 
   const GRID = 18;
-  let currentMap = 'RLS';
+  let currentMap = 'EDS';
   let selectedTech = 'solar';
   let mode = 'place';
+  let mapScale = 1;
   type Placement = { tech: string; cx: number; cy: number; id: number; violations: string[] };
   type Cable = { x1: number; y1: number; x2: number; y2: number };
   const placements: Record<string, Placement[]> = {};
@@ -498,18 +518,47 @@ function initMapTool() {
     };
   }
 
-  // Build tabs
-  const tabs = getEl('mapToolTabs');
-  if (tabs) {
+  // Map selection screen — build cards
+  const MAP_TAGS: Record<string, { label: string; color: string }[]> = {
+    RLS: [{ label: 'Inland', color: '#7ee787' }, { label: 'Forest', color: '#2ea043' }, { label: 'Wind', color: '#58a6ff' }],
+    EDS: [{ label: 'Coastal', color: '#39c8e8' }, { label: 'Tidal', color: '#00c8aa' }, { label: 'High Contour', color: '#d29922' }],
+    CES: [{ label: 'River', color: '#39c8e8' }, { label: 'Hydro', color: '#0099cc' }, { label: 'Open Fields', color: '#7ee787' }],
+    LCS: [{ label: 'Coastal', color: '#39c8e8' }, { label: 'Forest', color: '#2ea043' }, { label: 'High Contour', color: '#d29922' }],
+    STG: [{ label: 'Lakeside', color: '#58a6ff' }, { label: 'Hillside', color: '#d29922' }, { label: 'Hydro', color: '#0099cc' }],
+  };
+  const selGrid = getEl('mapSelGrid');
+  if (selGrid) {
     Object.entries(MAPS).forEach(([id, m]) => {
-      const btn = document.createElement('button');
-      btn.className = 'map-tab' + (id === currentMap ? ' active' : '');
-      btn.textContent = id;
-      btn.title = m.name;
-      btn.onclick = () => switchMap(id);
-      tabs.appendChild(btn);
+      const card = document.createElement('div');
+      card.className = 'map-sel-card';
+      const tags = (MAP_TAGS[id] || []).map(t =>
+        `<span class="map-sel-tag" style="color:${t.color};border-color:${t.color}40;background:${t.color}15">${t.label}</span>`
+      ).join('');
+      card.innerHTML = `
+        <img src="${BASE_URL}maps/${id}.png" alt="${m.name}" />
+        <div class="map-sel-card-info">
+          <div class="map-sel-card-name">${m.name}</div>
+          <div class="map-sel-card-desc">${m.desc}</div>
+          <div class="map-sel-card-tags">${tags}</div>
+        </div>`;
+      card.addEventListener('click', () => {
+        const selScreen = getEl('mapSelScreen');
+        const toolScreen = getEl('mapToolScreen');
+        if (selScreen) selScreen.style.display = 'none';
+        if (toolScreen) toolScreen.style.display = 'flex';
+        switchMap(id);
+      });
+      selGrid.appendChild(card);
     });
   }
+
+  // Back to selection button
+  getEl('mapBackBtn')?.addEventListener('click', () => {
+    const selScreen = getEl('mapSelScreen');
+    const toolScreen = getEl('mapToolScreen');
+    if (selScreen) selScreen.style.display = 'flex';
+    if (toolScreen) toolScreen.style.display = 'none';
+  });
 
   // Mode buttons
   getEl('modPlace')?.addEventListener('click', () => setMode('place'));
@@ -524,19 +573,24 @@ function initMapTool() {
 
   function resizeCanvases() {
     const m = MAPS[currentMap];
+    const container = getEl('mapContainer');
     const bg = getEl<HTMLCanvasElement>('bgCanvas');
     const ov = getEl<HTMLCanvasElement>('overlayCanvas');
-    if (bg && ov) {
-      bg.width = ov.width = m.width;
-      bg.height = ov.height = m.height;
-    }
+    if (!bg || !ov) return;
+    const cw = container ? container.clientWidth : m.width;
+    const ch = container ? container.clientHeight : m.height;
+    const aspect = m.width / m.height;
+    let w = cw, h = Math.round(cw / aspect);
+    if (h > ch) { h = ch; w = Math.round(h * aspect); }
+    mapScale = w / m.width;
+    bg.width = ov.width = w;
+    bg.height = ov.height = h;
   }
 
   function switchMap(id: string) {
     currentMap = id;
-    document.querySelectorAll('.map-tab').forEach((b, i) => {
-      (b as HTMLElement).classList.toggle('active', Object.keys(MAPS)[i] === id);
-    });
+    const titleEl = getEl('mapToolTitle');
+    if (titleEl) titleEl.textContent = `⚡ ${MAPS[id].name}`;
     resizeCanvases();
     drawAll();
     updateUI();
@@ -558,25 +612,32 @@ function initMapTool() {
     const imgLoaded = img && img.complete && img.naturalWidth > 0;
 
     if (imgLoaded) {
-      // Draw satellite image scaled to fill the canvas
+      // Draw satellite image scaled to fill the canvas (no scale transform — image fills canvas directly)
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     } else {
       // Fallback: programmatic schematic map while image loads
+      ctx.save();
+      ctx.scale(mapScale, mapScale);
       ctx.fillStyle = '#1a2810';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, m.width, m.height);
       ctx.strokeStyle = '#ffffff08';
       ctx.lineWidth = 0.5;
-      for (let x = 0; x < canvas.width; x += GRID) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
-      for (let y = 0; y < canvas.height; y += GRID) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+      for (let x = 0; x < m.width; x += GRID) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, m.height); ctx.stroke(); }
+      for (let y = 0; y < m.height; y += GRID) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(m.width, y); ctx.stroke(); }
       m.features.forEach(f => drawFeature(ctx, f));
+      ctx.restore();
     }
 
-    // Grid scale ruler (always on top)
+    // Everything from here uses map coordinates — apply scale
+    ctx.save();
+    ctx.scale(mapScale, mapScale);
+
+    // Grid scale ruler
     ctx.font = 'bold 10px JetBrains Mono,monospace';
     ctx.fillStyle = imgLoaded ? 'rgba(255,255,255,0.7)' : '#ffffff30';
     ctx.strokeStyle = imgLoaded ? 'rgba(0,0,0,0.5)' : 'transparent';
     ctx.lineWidth = 2;
-    for (let x = 0; x < canvas.width; x += GRID * 5) {
+    for (let x = 0; x < m.width; x += GRID * 5) {
       const label = (x / GRID) + 'cm';
       if (imgLoaded) ctx.strokeText(label, x + 2, 12);
       ctx.fillText(label, x + 2, 12);
@@ -684,6 +745,7 @@ function initMapTool() {
     }
     ctx.fillText('Substation', sx + 13, sy + 5);
     ctx.textAlign = 'left';
+    ctx.restore();
   }
 
   function drawFeature(ctx: CanvasRenderingContext2D, f: Feature) {
@@ -854,6 +916,8 @@ function initMapTool() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(mapScale, mapScale);
     const plist = placements[currentMap] || [];
 
     (cables[currentMap] || []).forEach(seg => {
@@ -877,8 +941,8 @@ function initMapTool() {
 
     plist.filter(p => p.tech === 'wind').forEach(p => {
       ctx.beginPath(); ctx.arc(p.cx, p.cy, 5 * GRID, 0, Math.PI * 2);
-      ctx.fillStyle = '#58a6ff12'; ctx.fill();
-      ctx.strokeStyle = '#58a6ff40'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#58a6ff35'; ctx.fill();
+      ctx.strokeStyle = '#58a6ff90'; ctx.lineWidth = 2; ctx.stroke();
     });
 
     plist.forEach(p => {
@@ -891,10 +955,12 @@ function initMapTool() {
       ctx.beginPath(); ctx.ellipse(p.cx, p.cy + r + 2, r * 0.8, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = t.color + 'cc';
-      ctx.strokeStyle = t.color;
-      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = t.color + 'dd';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 8;
 
       if (p.tech === 'wind') {
         ctx.beginPath();
@@ -915,37 +981,47 @@ function initMapTool() {
           cells.forEach(([cx, cy]) => {
             const px = left + cx * GRID;
             const py = top + cy * GRID;
-            ctx.fillStyle = p.tech === 'solar' ? '#1a3a6acc' : t.color + '66';
+            ctx.fillStyle = p.tech === 'solar' ? '#1a5aaa' : t.color + 'aa';
             ctx.fillRect(px, py, GRID, GRID);
-            ctx.strokeStyle = t.color;
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
             ctx.strokeRect(px + 0.5, py + 0.5, GRID - 1, GRID - 1);
           });
         } else {
           const span = Math.max(0.5, t.size) * GRID;
           const left = p.cx - span / 2;
           const top = p.cy - span / 2;
-          ctx.fillStyle = t.color + '66';
+          ctx.fillStyle = t.color + 'aa';
           ctx.fillRect(left, top, span, span);
-          ctx.strokeStyle = t.color;
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
           ctx.strokeRect(left + 0.5, top + 0.5, span - 1, span - 1);
         }
       }
 
+      ctx.shadowBlur = 0;
       ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.max(10, r * 0.8)}px sans-serif`;
+      ctx.font = `bold ${Math.max(13, r)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.globalAlpha = 1;
-      ctx.fillText(t.symbol, p.cx, p.cy + Math.max(4, r * 0.3));
+      ctx.fillText(t.symbol, p.cx, p.cy + Math.max(5, r * 0.35));
 
       const [sx, sy] = MAPS[currentMap].substationPx;
-      ctx.strokeStyle = t.color + '55';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = t.color + '88';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
       ctx.beginPath(); ctx.moveTo(p.cx, p.cy); ctx.lineTo(sx, sy); ctx.stroke();
+      ctx.setLineDash([]);
 
-      ctx.fillStyle = t.color;
-      ctx.font = '8px JetBrains Mono,monospace';
+      // Label with background for readability
+      ctx.font = 'bold 11px Space Grotesk,sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(t.name, p.cx, p.cy - Math.max(r, 8) - 4);
+      const labelY = p.cy - Math.max(r, 8) - 6;
+      const labelW = ctx.measureText(t.name).width + 8;
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
+      ctx.fillStyle = t.color;
+      ctx.fillText(t.name, p.cx, labelY);
 
       ctx.globalAlpha = 1;
     });
@@ -984,12 +1060,13 @@ function initMapTool() {
       }
       ctx.globalAlpha = 1;
     }
+    ctx.restore();
   }
 
   function getCanvasPos(e: MouseEvent) {
     const canvas = getEl<HTMLCanvasElement>('overlayCanvas');
     const rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    return { x: (e.clientX - rect.left) / mapScale, y: (e.clientY - rect.top) / mapScale };
   }
 
   function getZoneAt(x: number, y: number): Feature | null {

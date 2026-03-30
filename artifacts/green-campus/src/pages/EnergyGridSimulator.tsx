@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Chart, registerables } from "chart.js";
+import { sharedState, MAP_TECH_TO_SIM } from "../shared";
 
 Chart.register(...registerables);
 
@@ -523,7 +524,7 @@ export default function EnergyGridSimulator() {
                   <select class="e-select" id="workforce">
                     <option value=""></option>
                     <option value="Crane Operator Shortage">Crane Operator Shortage</option>
-                    <option value="Marine Industry Hub">Marine Industry Hub</option>
+                    <option value="Hydropower Engineering Hub">Hydropower Engineering Hub</option>
                   </select>
                 </div>
                 <div class="e-select-row" style="border-bottom:none">
@@ -555,7 +556,7 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="geo" value="0" min="0" max="10">
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Small Hydro (Low)</div><div class="e-input-sub">500 kW/unit · $4M combined</div></div>
+                  <div><div class="e-input-label">Small Hydro (Low)</div><div class="e-input-sub">500 kW/unit · $1M each</div></div>
                   <input class="e-qty-input" type="number" id="hydroLow" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row">
@@ -697,10 +698,10 @@ export default function EnergyGridSimulator() {
                       <div class="e-expense-item" style="cursor: pointer; opacity: 0.8;" onclick="document.getElementById('adjustmentsBreakdown').style.display = document.getElementById('adjustmentsBreakdown').style.display === 'none' ? 'block' : 'none'; document.getElementById('adjToggle').textContent = document.getElementById('adjustmentsBreakdown').style.display === 'none' ? '▶' : '▼';"><span class="label">Cost Adjustments Breakdown <span id="adjToggle" style="font-size: 10px; margin-left: 4px;">▶</span></span></div>
                       <div id="adjustmentsBreakdown" style="display: none; padding: 8px 0; border-left: 2px solid rgba(255,255,255,0.1); margin-left: 12px;">
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjWindItem">
-                          <div><span class="label">Wind <span id="adjWindDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjWind" style="font-size: 11px;">$0</span></div>
+                          <div><span class="label">Geothermal <span id="adjWindDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjWind" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjTidalItem">
-                          <div><span class="label">Tidal <span id="adjTidalDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjTidal" style="font-size: 11px;">$0</span></div>
+                          <div><span class="label">Hydro <span id="adjTidalDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjTidal" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjLiIonItem">
                           <div><span class="label">Li-Ion <span id="adjLiIonDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjLiIon" style="font-size: 11px;">$0</span></div>
@@ -733,13 +734,13 @@ export default function EnergyGridSimulator() {
                       <div class="e-expense-item"><span class="label">Solar</span><span class="value" id="costSolar">$0</span></div>
                       <div class="e-expense-item"><span class="label">Wind</span><span class="value" id="costWind">$0</span></div>
                       <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="costWindAdjItem">
-                        <div><span class="label">Wind Adjustment <span id="costWindAdjDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="costWindAdj" style="font-size: 11px;">$0</span></div>
+                        <div><span class="label">Geothermal Adjustment <span id="costWindAdjDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="costWindAdj" style="font-size: 11px;">$0</span></div>
                       </div>
                       <div class="e-expense-item"><span class="label">Geothermal</span><span class="value" id="costGeo">$0</span></div>
                       <div class="e-expense-item"><span class="label">Hydro</span><span class="value" id="costHydro">$0</span></div>
                       <div class="e-expense-item"><span class="label">Tidal</span><span class="value" id="costTidal">$0</span></div>
                       <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="costTidalAdjItem">
-                        <div><span class="label">Tidal Adjustment <span id="costTidalAdjDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="costTidalAdj" style="font-size: 11px;">$0</span></div>
+                        <div><span class="label">Hydro Adjustment <span id="costTidalAdjDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="costTidalAdj" style="font-size: 11px;">$0</span></div>
                       </div>
                       <div class="e-expense-item"><span class="label">Biomass</span><span class="value" id="costBiomass">$0</span></div>
                       
@@ -827,15 +828,51 @@ export default function EnergyGridSimulator() {
             <div class="e-card">
               <div class="e-card-header"><div class="dot" style="background:#6a3abf"></div>Finance Director: ROI Ledger</div>
               <div class="e-card-body">
-                <div class="e-ledger-row"><span>Solar PV Annual Savings</span><span class="val pos" id="lSolar">$0</span></div>
-                <div class="e-ledger-row"><span>Wind Turbine Annual Savings</span><span class="val pos" id="lWind">$0</span></div>
-                <div class="e-ledger-row"><span>Geothermal Annual Savings</span><span class="val pos" id="lGeo">$0</span></div>
-                <div class="e-ledger-row"><span>Small Hydro Annual Savings</span><span class="val pos" id="lHydro">$0</span></div>
-                <div class="e-ledger-row"><span>Tidal Annual Savings</span><span class="val pos" id="lTidal">$0</span></div>
-                <div class="e-ledger-row"><span>Biomass Annual Savings</span><span class="val pos" id="lBiomass">$0</span></div>
-                <div class="e-ledger-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:8px"><span>Base Annual Savings</span><span class="val pos" id="lBaseTotal">$0</span></div>
-                <div class="e-ledger-row"><span>Pivot Card Impact</span><span class="val" id="lPivot">$0</span></div>
-                <div class="e-ledger-row" style="font-size:15px"><span>Final Adjusted Savings</span><span class="val pos" id="lFinal">$0</span></div>
+                <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;font-family:var(--mono)">Each technology produces a fixed amount of electricity per year. That production is valued at the grid rate ($0.22/kWh) — the cost of electricity you no longer need to purchase.</div>
+                <div class="e-ledger-row">
+                  <div><div>Solar PV</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lSolarKwh">—</div></div>
+                  <span class="val pos" id="lSolar">$0</span>
+                </div>
+                <div class="e-ledger-row">
+                  <div><div>Wind Turbine</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lWindKwh">—</div></div>
+                  <span class="val pos" id="lWind">$0</span>
+                </div>
+                <div class="e-ledger-row">
+                  <div><div>Geothermal</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lGeoKwh">—</div></div>
+                  <span class="val pos" id="lGeo">$0</span>
+                </div>
+                <div class="e-ledger-row">
+                  <div><div>Small Hydro</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lHydroKwh">—</div></div>
+                  <span class="val pos" id="lHydro">$0</span>
+                </div>
+                <div class="e-ledger-row">
+                  <div><div>Tidal</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lTidalKwh">—</div></div>
+                  <span class="val pos" id="lTidal">$0</span>
+                </div>
+                <div class="e-ledger-row">
+                  <div><div>Biomass</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lBiomassKwh">—</div></div>
+                  <span class="val pos" id="lBiomass">$0</span>
+                </div>
+                <div class="e-ledger-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:8px">
+                  <div><div>Gross Annual Savings</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lTotalKwh">0 kWh/yr × $0.22</div></div>
+                  <span class="val pos" id="lBaseTotal">$0</span>
+                </div>
+                <div class="e-ledger-row">
+                  <div>
+                    <div>Overproduction Diminishing Return</div>
+                    <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lCapDesc">All production used on-site</div>
+                    <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">Campus annual demand: <span id="lDemandKwh">—</span></div>
+                  </div>
+                  <span class="val" id="lCapAdj">—</span>
+                </div>
+                <div class="e-ledger-row">
+                  <div>
+                    <div>Scenario Card Impact</div>
+                    <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lPivotDesc">No active penalty or bonus</div>
+                  </div>
+                  <span class="val" id="lPivot">$0</span>
+                </div>
+                <div class="e-ledger-row" style="font-size:15px"><span>Net Annual Savings</span><span class="val pos" id="lFinal">$0</span></div>
               </div>
             </div>
 
@@ -923,6 +960,20 @@ export default function EnergyGridSimulator() {
     const BASE_WIND = [3000,3000,3000,3000,3000,2800,2500,2200,1800,1500,1200,1200,1200,1200,1200,1200,1500,1800,2200,2500,2800,3000,3000,3000];
     const BIOMASS_PER_UNIT = Array(24).fill(1000);
 
+    // Grid electricity rate and annual kWh production per unit (basis for ROI)
+    const GRID_RATE = 0.22;       // $/kWh — Maine commercial rate (own-use savings)
+    const WHOLESALE_RATE = 0.06; // $/kWh — grid buyback rate for surplus (net metering cap)
+    const ANNUAL_KWH_PER_UNIT: Record<string, number> = {
+      solar:     700_000,  // 500 kW @ ~16% capacity factor
+      wind:    8_000_000,  // 3,000 kW @ ~30% capacity factor
+      geo:    14_000_000,  // 2,000 kW @ ~80% capacity factor
+      hydroLow: 2_000_000, // 500 kW @ ~46% capacity factor
+      hydroHigh:7_500_000, // 2,000 kW @ ~43% capacity factor
+      tidalStd: 1_500_000, // 500 kW @ ~34% capacity factor
+      tidalPP:  1_800_000, // 600 kW @ ~34% capacity factor
+      biomass:  7_000_000, // 1,000 kW @ ~80% capacity factor
+    };
+
     function getEl<T extends HTMLElement>(id: string): T | null {
       return document.getElementById(id) as T | null;
     }
@@ -970,7 +1021,7 @@ export default function EnergyGridSimulator() {
       const isCarbonTax = s.pivotCard === 'The Carbon Tax';
       const isSupplyChain = s.pivotCard === 'Supply Chain Crisis';
       const isCrane = s.workforce === 'Crane Operator Shortage';
-      const isMarine = s.workforce === 'Marine Industry Hub';
+      const isHydroHub = s.workforce === 'Hydropower Engineering Hub';
       const isMigratoryBird = s.envConstraints === 'Migratory Bird';
       const isVernalPool = s.envConstraints === 'Vernal Pool';
 
@@ -992,10 +1043,10 @@ export default function EnergyGridSimulator() {
 
       const genCosts = {
         solar: s.solar * 1000000,
-        wind: s.wind * 2500000 * (isMarine ? 0.8 : 1),
-        geo: s.geo * 5000000,
-        hydro: (s.hydroLow + s.hydroHigh) * 4000000,
-        tidal: (s.tidalStd + s.tidalPP) * 1500000 * (isMarine ? 0.8 : 1),
+        wind: s.wind * 2500000,
+        geo: s.geo * 5000000 * (isHydroHub ? 0.8 : 1),
+        hydro: s.hydroLow * 1000000 * (isHydroHub ? 0.8 : 1) + s.hydroHigh * 4000000 * (isHydroHub ? 0.8 : 1),
+        tidal: (s.tidalStd + s.tidalPP) * 1500000,
         biomass: s.biomass * 3500000,
       };
       const storageCosts = {
@@ -1082,13 +1133,14 @@ export default function EnergyGridSimulator() {
       const annualCarbonTaxFee = isCarbonTax ? dailyShortfallKwh * 365 * 0.10 : 0;
 
       // Calculate cost adjustments from pivot cards and data selections
-      const baseWindCost = s.wind * 2500000; // Base wind cost
-      const adjustedWindCost = s.wind * 2500000 * (isMarine ? 0.8 : 1); // Only Marine Hub affects unit cost
-      const windCostAdjustment = adjustedWindCost - baseWindCost;
+      const baseGeoCost = s.geo * 5000000;
+      const adjustedGeoCost = s.geo * 5000000 * (isHydroHub ? 0.8 : 1);
 
-      const baseTidalCost = (s.tidalStd + s.tidalPP) * 1500000; // Base tidal cost
-      const adjustedTidalCost = (s.tidalStd + s.tidalPP) * 1500000 * (isMarine ? 0.8 : 1);
-      const tidalCostAdjustment = adjustedTidalCost - baseTidalCost;
+      const geoCostAdjustment = adjustedGeoCost - baseGeoCost;
+
+      const baseHydroCost = s.hydroLow * 1000000 + s.hydroHigh * 4000000;
+      const adjustedHydroCost = baseHydroCost * (isHydroHub ? 0.8 : 1);
+      const hydroCostAdjustment = adjustedHydroCost - baseHydroCost;
 
       const baseLiIonCost = s.liIon * 500000; // Base Li-Ion cost
       const adjustedLiIonCost = s.liIon * (isSupplyChain ? 1000000 : 500000);
@@ -1098,11 +1150,7 @@ export default function EnergyGridSimulator() {
       const utilityFeeAdjustment = infraCosts.utilityFee;
       const craneLogisticsAdjustment = infraCosts.craneLogistics;
 
-      const totalCostAdjustments = windCostAdjustment + tidalCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment + annualCarbonTaxFee;
-
-      // Calculate annual revenue from renewable energy sales at $0.11/kW rate
-      const annualRenewableRevenue = kwSoldBack * 365 * 0.11;
-      let renewableRevenueProjection = 0;
+      const totalCostAdjustments = geoCostAdjustment + hydroCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment + annualCarbonTaxFee;
 
       const totalSpent = Object.values(genCosts).reduce((a,b)=>a+b,0)
         + Object.values(storageCosts).reduce((a,b)=>a+b,0)
@@ -1128,25 +1176,51 @@ export default function EnergyGridSimulator() {
       const supply24 = supply24_temp;
       const actualPeakSupply = Math.max(...supply24);
 
-      const roiSavings = {
-        solar: s.solar * 165000,
-        wind: s.wind * 1760000,
-        geo: s.geo * 3500000,
-        hydro: (s.hydroLow + s.hydroHigh) * 3500000,
-        tidal: (s.tidalStd + s.tidalPP) * 330000,
-        biomass: s.biomass * 1800000,
+      const annualKwh = {
+        solar:   s.solar    * ANNUAL_KWH_PER_UNIT.solar,
+        wind:    s.wind     * ANNUAL_KWH_PER_UNIT.wind,
+        geo:     s.geo      * ANNUAL_KWH_PER_UNIT.geo,
+        hydro:   s.hydroLow * ANNUAL_KWH_PER_UNIT.hydroLow + s.hydroHigh * ANNUAL_KWH_PER_UNIT.hydroHigh,
+        tidal:   s.tidalStd * ANNUAL_KWH_PER_UNIT.tidalStd + s.tidalPP  * ANNUAL_KWH_PER_UNIT.tidalPP,
+        biomass: s.biomass  * ANNUAL_KWH_PER_UNIT.biomass,
       };
-      const baseAnnualSavings = Object.values(roiSavings).reduce((a,b)=>a+b,0);
+      const totalAnnualKwh = Object.values(annualKwh).reduce((a, b) => a + b, 0);
+
+      // Net metering cap: own-use saves at retail rate; surplus earns wholesale only
+      const annualDemandKwh = demand24.reduce((a, b) => a + b, 0) * 365;
+      const surplusKwh = Math.max(0, totalAnnualKwh - annualDemandKwh);
+      const capAdjustment = -surplusKwh * (GRID_RATE - WHOLESALE_RATE);
+      const annualRenewableRevenue = surplusKwh * WHOLESALE_RATE;
+      const renewableRevenueProjection = 0;
+
+      const roiSavings = {
+        solar:   annualKwh.solar   * GRID_RATE,
+        wind:    annualKwh.wind    * GRID_RATE,
+        geo:     annualKwh.geo     * GRID_RATE,
+        hydro:   annualKwh.hydro   * GRID_RATE,
+        tidal:   annualKwh.tidal   * GRID_RATE,
+        biomass: annualKwh.biomass * GRID_RATE,
+      };
+      const baseAnnualSavings = Object.values(roiSavings).reduce((a,b)=>a+b,0) + capAdjustment;
       const pivotImpact = isCarbonTax ? -annualCarbonTaxFee :
                           (isAIHub && totalStorage === 0) ? -50000 : 0;
       const finalSavings = baseAnnualSavings + pivotImpact;
       const roi = finalSavings > 0 ? (totalSpent / finalSavings).toFixed(2) : null;
-      
-      // Calculate projected revenue from renewable energy over ROI period
-      renewableRevenueProjection = roi && parseFloat(roi) > 0 ? Math.round(annualRenewableRevenue * parseFloat(roi)) : 0;
-      
-      // Recalculate remaining now that renewableRevenueProjection is known
-      const remaining = startBudget - totalSpent + renewableRevenueProjection;
+      const remaining = startBudget - totalSpent;
+
+      // Solar storage requirement: each 500 kW solar unit needs 1,000 kWh storage (any type)
+      const requiredStorageForSolar = s.solar * 1000;
+      const solarStorageViolation = s.solar > 0 && totalStorage < requiredStorageForSolar;
+
+      // Night Owl: solar without at least 2 Li-Ion BESS units is a violation
+      const isNightOwl = s.demandPattern === 'Night Owl';
+      const nightOwlViolation = isNightOwl && s.solar > 0 && s.liIon < 2;
+
+      // Morning Rush: solar+wind > 50% of total annual production with no storage is a violation
+      const isMornRush = s.demandPattern === 'Morning Rush';
+      const solarWindKwh = annualKwh.solar + annualKwh.wind;
+      const solarWindFraction = totalAnnualKwh > 0 ? solarWindKwh / totalAnnualKwh : 0;
+      const mornRushViolation = isMornRush && solarWindFraction > 0.50 && totalStorage === 0;
 
       const constructJobs = Math.floor((totalSpent / 2000000) * 10);
       const permRoles = Math.floor((totalSpent / 2000000) * 1);
@@ -1159,12 +1233,15 @@ export default function EnergyGridSimulator() {
         islandTime, gridStatus, gridClass,
         demand24, supply24, renewableCredits, kwSoldBack,
         annualRenewableRevenue, renewableRevenueProjection,
-        totalCostAdjustments, windCostAdjustment, tidalCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment, annualCarbonTaxFee,
+        totalCostAdjustments, geoCostAdjustment, hydroCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment, annualCarbonTaxFee,
+        annualKwh, totalAnnualKwh, annualDemandKwh, surplusKwh, capAdjustment,
         roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
         grantCompliant, isGrant, isPolar, polarDemandThreshold, isAIHub, isMaint, isSupplyChain, isCarbonTax, infraCosts, genCosts, storageCosts, emergingCosts,
         migratoryBirdViolation, vernalPoolViolation,
         isMigratoryBird, isVernalPool,
+        solarStorageViolation, requiredStorageForSolar,
+        isNightOwl, nightOwlViolation, isMornRush, mornRushViolation, solarWindFraction,
       };
     }
 
@@ -1303,14 +1380,33 @@ export default function EnergyGridSimulator() {
 
       const windInput = getEl<HTMLInputElement>('wind');
       const geoInput = getEl<HTMLInputElement>('geo');
+      const solarInput = getEl<HTMLInputElement>('solar');
+      const liIonInput = getEl<HTMLInputElement>('liIon');
       if (windInput) {
-        windInput.style.borderColor = r.migratoryBirdViolation ? 'var(--danger)' : '';
-        windInput.style.background = r.migratoryBirdViolation ? 'var(--danger-light)' : '';
+        windInput.style.borderColor = r.migratoryBirdViolation || r.mornRushViolation ? 'var(--danger)' : '';
+        windInput.style.background = r.migratoryBirdViolation || r.mornRushViolation ? 'var(--danger-light)' : '';
       }
       if (geoInput) {
         geoInput.style.borderColor = r.vernalPoolViolation ? 'var(--danger)' : '';
         geoInput.style.background = r.vernalPoolViolation ? 'var(--danger-light)' : '';
       }
+      if (solarInput) {
+        const solarBad = r.nightOwlViolation || r.mornRushViolation || r.solarStorageViolation;
+        solarInput.style.borderColor = solarBad ? 'var(--danger)' : '';
+        solarInput.style.background = solarBad ? 'var(--danger-light)' : '';
+      }
+      if (liIonInput) {
+        const liIonBad = r.nightOwlViolation || r.solarStorageViolation;
+        liIonInput.style.borderColor = liIonBad ? 'var(--danger)' : '';
+        liIonInput.style.background = liIonBad ? 'var(--danger-light)' : '';
+      }
+      ['thermal', 'flywheel', 'caes'].forEach(id => {
+        const el = getEl<HTMLInputElement>(id);
+        if (el) {
+          el.style.borderColor = r.solarStorageViolation ? 'var(--danger)' : '';
+          el.style.background = r.solarStorageViolation ? 'var(--danger-light)' : '';
+        }
+      });
 
       const hdr = getEl('headerStatus');
       if (hdr) {
@@ -1349,11 +1445,11 @@ export default function EnergyGridSimulator() {
       };
       
       // Set adjustments in both breakdowns (budget and spent)
-      setAdjItem('adjWind', r.windCostAdjustment, 'adjWindDesc', r.windCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
-      setAdjItem('costWindAdj', r.windCostAdjustment, 'costWindAdjDesc', r.windCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
-      
-      setAdjItem('adjTidal', r.tidalCostAdjustment, 'adjTidalDesc', r.tidalCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
-      setAdjItem('costTidalAdj', r.tidalCostAdjustment, 'costTidalAdjDesc', r.tidalCostAdjustment !== 0 ? '(Marine Hub -20%)' : '');
+      setAdjItem('adjWind', r.geoCostAdjustment, 'adjWindDesc', r.geoCostAdjustment !== 0 ? '(Hydropower Hub -20%)' : '');
+      setAdjItem('costWindAdj', r.geoCostAdjustment, 'costWindAdjDesc', r.geoCostAdjustment !== 0 ? '(Hydropower Hub -20%)' : '');
+
+      setAdjItem('adjTidal', r.hydroCostAdjustment, 'adjTidalDesc', r.hydroCostAdjustment !== 0 ? '(Hydropower Hub -20%)' : '');
+      setAdjItem('costTidalAdj', r.hydroCostAdjustment, 'costTidalAdjDesc', r.hydroCostAdjustment !== 0 ? '(Hydropower Hub -20%)' : '');
       
       setAdjItem('adjLiIon', r.liIonCostAdjustment, 'adjLiIonDesc', r.liIonCostAdjustment !== 0 ? '(Supply Chain +100%)' : '');
       setAdjItem('costLiIonAdj', r.liIonCostAdjustment, 'costLiIonAdjDesc', r.liIonCostAdjustment !== 0 ? '(Supply Chain +100%)' : '');
@@ -1410,7 +1506,7 @@ export default function EnergyGridSimulator() {
         remEl.className = 'e-metric-value ' + (r.remaining < 0 ? 'negative' : 'positive');
       }
 
-      const effectiveSpent = Math.max(0, r.totalSpent - r.renewableRevenueProjection);
+      const effectiveSpent = r.totalSpent;
       const pct = Math.min(100, Math.round((effectiveSpent / r.startBudget) * 100));
       const bar = getEl('budgetBar');
       if (bar) { bar.style.width = pct + '%'; bar.className = 'budget-bar-fill' + (r.remaining < 0 ? ' over' : ''); }
@@ -1448,6 +1544,14 @@ export default function EnergyGridSimulator() {
       if (r.vernalPoolViolation) alerts.push({ cls: 'danger', msg: '🌿 VIOLATION — Vernal Pool Protection: No Geothermal permitted. Remove geothermal.' });
       if (r.isMigratoryBird && !r.migratoryBirdViolation) alerts.push({ cls: 'warn', msg: '🐦 Migratory Bird Ordinance active: Wind turbines may only be placed in developed areas.' });
       if (r.isVernalPool && !r.vernalPoolViolation) alerts.push({ cls: 'warn', msg: '🌿 Vernal Pool Protection active: Geothermal is banned. Max 25% of forested land may be cleared.' });
+      if (r.nightOwlViolation) alerts.push({ cls: 'danger', msg: '🌙 VIOLATION — Night Owl Campus: Solar requires at least 2 Li-Ion BESS units for evening storage. Add BESS.' });
+      if (r.isNightOwl && !r.nightOwlViolation && s.solar > 0) alerts.push({ cls: 'ok', msg: '🌙 Night Owl Campus: Solar + BESS requirement met. ✅' });
+      if (r.isNightOwl && s.solar === 0) alerts.push({ cls: 'warn', msg: '🌙 Night Owl Campus: No solar selected — BESS requirement does not apply.' });
+      if (r.mornRushViolation) alerts.push({ cls: 'danger', msg: `⏰ VIOLATION — Morning Rush: Solar + Wind = ${Math.round(r.solarWindFraction * 100)}% of supply. Add storage or increase geo/hydro/biomass to resolve.` });
+      if (r.isMornRush && !r.mornRushViolation && r.solarWindFraction > 0.50) alerts.push({ cls: 'ok', msg: `⏰ Morning Rush: Solar + Wind at ${Math.round(r.solarWindFraction * 100)}% — storage solution in place. ✅` });
+      if (r.isMornRush && r.solarWindFraction <= 0.50) alerts.push({ cls: 'ok', msg: `⏰ Morning Rush: Solar + Wind at ${Math.round(r.solarWindFraction * 100)}% of supply — within the 50% threshold. ✅` });
+      if (r.solarStorageViolation) alerts.push({ cls: 'danger', msg: `☀️ VIOLATION — Solar Storage Requirement: ${s.solar} solar unit(s) require ${r.requiredStorageForSolar.toLocaleString()} kWh of storage. Current total storage: ${r.totalStorage.toLocaleString()} kWh. Add storage to comply.` });
+      if (s.solar > 0 && !r.solarStorageViolation) alerts.push({ cls: 'ok', msg: `☀️ Solar Storage Requirement met: ${r.totalStorage.toLocaleString()} kWh storage ≥ ${r.requiredStorageForSolar.toLocaleString()} kWh required. ✅` });
 
       const stack = getEl('alertsStack');
       if (stack) {
@@ -1477,15 +1581,35 @@ export default function EnergyGridSimulator() {
       }
 
       const setLedger = (id: string, val: number) => { const el = getEl(id); if (el) el.textContent = fmt$(val); };
-      setLedger('lSolar', r.roiSavings.solar);
-      setLedger('lWind', r.roiSavings.wind);
-      setLedger('lGeo', r.roiSavings.geo);
-      setLedger('lHydro', r.roiSavings.hydro);
-      setLedger('lTidal', r.roiSavings.tidal);
-      setLedger('lBiomass', r.roiSavings.biomass);
+      const fmtKwh = (kwh: number) => kwh === 0 ? '—' : kwh >= 1_000_000 ? (kwh/1_000_000).toFixed(1)+'M kWh/yr' : Math.round(kwh/1000)+'K kWh/yr';
+      const setKwh = (id: string, kwh: number) => { const el = getEl(id); if (el) el.textContent = fmtKwh(kwh); };
+
+      setLedger('lSolar', r.roiSavings.solar);   setKwh('lSolarKwh',   r.annualKwh.solar);
+      setLedger('lWind',  r.roiSavings.wind);    setKwh('lWindKwh',    r.annualKwh.wind);
+      setLedger('lGeo',   r.roiSavings.geo);     setKwh('lGeoKwh',     r.annualKwh.geo);
+      setLedger('lHydro', r.roiSavings.hydro);   setKwh('lHydroKwh',   r.annualKwh.hydro);
+      setLedger('lTidal', r.roiSavings.tidal);   setKwh('lTidalKwh',   r.annualKwh.tidal);
+      setLedger('lBiomass',r.roiSavings.biomass);setKwh('lBiomassKwh', r.annualKwh.biomass);
       setLedger('lBaseTotal', r.baseAnnualSavings);
+      const totalKwhEl = getEl('lTotalKwh'); if (totalKwhEl) totalKwhEl.textContent = fmtKwh(r.totalAnnualKwh) + ' × $0.22';
+      const demandKwhEl = getEl('lDemandKwh'); if (demandKwhEl) demandKwhEl.textContent = fmtKwh(r.annualDemandKwh);
+      const capAdjEl = getEl('lCapAdj');
+      const capDescEl = getEl('lCapDesc');
+      if (r.surplusKwh > 0) {
+        if (capAdjEl) { capAdjEl.textContent = fmt$(r.capAdjustment); capAdjEl.className = 'val neg'; }
+        if (capDescEl) capDescEl.textContent = `${fmtKwh(r.surplusKwh)} beyond campus demand — unused credits worth only $0.06/kWh at true-up`;
+      } else {
+        if (capAdjEl) { capAdjEl.textContent = '—'; capAdjEl.className = 'val'; }
+        if (capDescEl) capDescEl.textContent = 'All production used on-site — no diminishing return';
+      }
       const pivotEl = getEl('lPivot');
+      const pivotDescEl = getEl('lPivotDesc');
       if (pivotEl) { pivotEl.textContent = fmt$(r.pivotImpact); pivotEl.className = 'val ' + (r.pivotImpact >= 0 ? 'pos' : 'neg'); }
+      if (pivotDescEl) {
+        if (r.isCarbonTax) pivotDescEl.textContent = `Carbon Tax scenario: annual fee on fossil fuel baseline`;
+        else if (r.isAIHub && r.totalStorage === 0) pivotDescEl.textContent = 'AI Hub scenario: storage required — $50K/yr reliability penalty';
+        else pivotDescEl.textContent = 'No active scenario penalty or bonus';
+      }
       setLedger('lFinal', r.finalSavings);
 
       const constJobs = getEl('wConstJobs'); if (constJobs) constJobs.textContent = r.constructJobs.toLocaleString();
@@ -1550,6 +1674,18 @@ export default function EnergyGridSimulator() {
     document.querySelectorAll('.e-qty-input, .e-select, .workforce-item input').forEach(el => {
       el.addEventListener('input', render);
       el.addEventListener('change', render);
+    });
+
+    // Sync map placements → simulator inputs
+    window.addEventListener('gc:map-update', () => {
+      const counts = sharedState.techCounts;
+      Object.entries(MAP_TECH_TO_SIM).forEach(([mapTech, simId]) => {
+        const el = getEl<HTMLInputElement>(simId);
+        if (el && el.type === 'number') {
+          el.value = String(counts[mapTech] || 0);
+        }
+      });
+      render();
     });
 
     // Show additional content only after all 4 data cards are filled
