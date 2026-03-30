@@ -20,9 +20,12 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 
-function generateSessionId(): string {
+function generateId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
+
+// Unique ID for this browser tab — used to ignore our own Firebase echoes
+const CLIENT_ID = generateId();
 
 export default function App() {
   const [showMap, setShowMap] = useState(false);
@@ -31,6 +34,7 @@ export default function App() {
   const [sessionLabel, setSessionLabel] = useState("⚡ Start Session");
 
   const sessionIdRef = useRef<string>("");
+  const sessionUrlRef = useRef<string>("");
   const lastContentRef = useRef<string>("");
   const pushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPullingRef = useRef(false);
@@ -76,13 +80,12 @@ export default function App() {
     onValue(dbRef, (snapshot) => {
       const data = snapshot.val();
       if (!data || !data.plan) return;
-      const content = JSON.stringify(data.plan);
-      if (content === lastContentRef.current) return;
+      // Ignore our own writes echoed back from Firebase
+      if (data.pusherId === CLIENT_ID) return;
       try {
-        const plan = JSON.parse(content);
         isPullingRef.current = true;
-        lastContentRef.current = content;
-        window.dispatchEvent(new CustomEvent("gc:restore-plan", { detail: plan }));
+        lastContentRef.current = JSON.stringify(data.plan);
+        window.dispatchEvent(new CustomEvent("gc:restore-plan", { detail: data.plan }));
         setTimeout(() => { isPullingRef.current = false; }, 3200);
       } catch {
         console.warn("Failed to parse session data");
@@ -93,10 +96,11 @@ export default function App() {
   // ── Firebase: push state if changed (runs on interval) ─────────────────
   async function maybePush() {
     if (!sessionIdRef.current || isPullingRef.current) return;
-    const content = JSON.stringify(getPlanState());
+    const plan = getPlanState();
+    const content = JSON.stringify(plan);
     if (content === lastContentRef.current) return;
     lastContentRef.current = content;
-    await set(ref(db, `sessions/${sessionIdRef.current}`), { plan: JSON.parse(content) });
+    await set(ref(db, `sessions/${sessionIdRef.current}`), { plan, pusherId: CLIENT_ID });
   }
 
   function startPushInterval() {
@@ -109,6 +113,7 @@ export default function App() {
     if (dbListenerRef.current) { off(dbListenerRef.current); dbListenerRef.current = null; }
     if (pushTimerRef.current) { clearInterval(pushTimerRef.current); pushTimerRef.current = null; }
     sessionIdRef.current = "";
+    sessionUrlRef.current = "";
     lastContentRef.current = "";
     isPullingRef.current = false;
     setSessionActive(false);
@@ -118,29 +123,38 @@ export default function App() {
     window.history.replaceState(null, "", url.toString());
   }
 
+  // ── Copy session URL to clipboard ───────────────────────────────────────
+  function copySessionUrl() {
+    if (!sessionUrlRef.current) return;
+    navigator.clipboard.writeText(sessionUrlRef.current).then(() => {
+      setSessionLabel("✅ Copied!");
+      setTimeout(() => setSessionLabel("● Live"), 2000);
+    }).catch(() => {
+      window.prompt("Copy this session URL:", sessionUrlRef.current);
+    });
+  }
+
   // ── Create a new session ────────────────────────────────────────────────
   async function createSession() {
-    if (sessionActive) { stopSession(); return; }
     setSessionLabel("Starting…");
     try {
-      const sessionId = generateSessionId();
+      const sessionId = generateId();
       const plan = getPlanState();
-      const content = JSON.stringify(plan);
-      await set(ref(db, `sessions/${sessionId}`), { plan });
+      await set(ref(db, `sessions/${sessionId}`), { plan, pusherId: CLIENT_ID });
       sessionIdRef.current = sessionId;
-      lastContentRef.current = content;
+      lastContentRef.current = JSON.stringify(plan);
 
       const url = new URL(window.location.href);
       url.searchParams.delete("plan");
       url.searchParams.set("session", sessionId);
       window.history.replaceState(null, "", url.toString());
+      sessionUrlRef.current = url.toString();
       navigator.clipboard.writeText(url.toString()).catch(() => {});
 
       attachListener(sessionId);
       startPushInterval();
       setSessionActive(true);
-      setSessionLabel("● Live (click to stop)");
-      alert("Session started! URL copied to clipboard.\n\nShare it with others — no setup needed on their end.");
+      setSessionLabel("● Live");
     } catch (err) {
       console.error(err);
       setSessionLabel("⚡ Start Session");
@@ -221,25 +235,67 @@ export default function App() {
         >
           {shareLabel}
         </button>
-        <button
-          onClick={createSession}
-          style={{
-            marginRight: "8px",
-            padding: "5px 14px",
-            borderRadius: "4px",
-            border: `1px solid ${sessionActive ? "#388bfd" : "#30363d"}`,
-            background: sessionActive ? "#0d2044" : "transparent",
-            color: sessionActive ? "#79c0ff" : "#7d8590",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: 600,
-            fontFamily: "'Space Grotesk', sans-serif",
-            letterSpacing: "0.04em",
-            transition: "all 0.15s",
-          }}
-        >
-          {sessionLabel}
-        </button>
+        {sessionActive ? (
+          <>
+            <button
+              onClick={copySessionUrl}
+              style={{
+                marginRight: "4px",
+                padding: "5px 14px",
+                borderRadius: "4px",
+                border: "1px solid #388bfd",
+                background: "#0d2044",
+                color: "#79c0ff",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: 600,
+                fontFamily: "'Space Grotesk', sans-serif",
+                letterSpacing: "0.04em",
+                transition: "all 0.15s",
+              }}
+            >
+              {sessionLabel}
+            </button>
+            <button
+              onClick={stopSession}
+              style={{
+                marginRight: "8px",
+                padding: "5px 10px",
+                borderRadius: "4px",
+                border: "1px solid #30363d",
+                background: "transparent",
+                color: "#7d8590",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: 600,
+                fontFamily: "'Space Grotesk', sans-serif",
+                transition: "all 0.15s",
+              }}
+            >
+              ■ Stop
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={createSession}
+            style={{
+              marginRight: "8px",
+              padding: "5px 14px",
+              borderRadius: "4px",
+              border: "1px solid #30363d",
+              background: "transparent",
+              color: "#7d8590",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: 600,
+              fontFamily: "'Space Grotesk', sans-serif",
+              letterSpacing: "0.04em",
+              transition: "all 0.15s",
+            }}
+          >
+            {sessionLabel}
+          </button>
+        )}
         <button
           onClick={() => setShowMap(v => !v)}
           style={{
