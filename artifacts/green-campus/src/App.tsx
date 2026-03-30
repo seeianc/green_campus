@@ -6,7 +6,6 @@ import { sharedState } from "@/shared";
 
 const GIST_API = "https://api.github.com/gists";
 const POLL_INTERVAL = 5000;
-const PUSH_DEBOUNCE = 1500;
 const BUILT_IN_PAT: string = import.meta.env.VITE_GIST_PAT || "";
 
 function getStoredPat(): string {
@@ -36,7 +35,7 @@ export default function App() {
   const sessionIdRef = useRef<string>("");
   const lastContentRef = useRef<string>("");
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPullingRef = useRef(false);
 
   // ── Plan serialization ──────────────────────────────────────────────────
@@ -113,18 +112,15 @@ export default function App() {
     return data?.files?.["plan.json"]?.content ?? null;
   }
 
-  // ── Push state to Gist (debounced) ──────────────────────────────────────
-  function schedulePush() {
+  // ── Push state to Gist if changed (called on interval) ─────────────────
+  async function maybePush() {
     if (!sessionIdRef.current || isPullingRef.current) return;
-    if (pushTimerRef.current) clearTimeout(pushTimerRef.current);
-    pushTimerRef.current = setTimeout(async () => {
-      const pat = getStoredPat();
-      if (!pat || !sessionIdRef.current) return;
-      const content = JSON.stringify(getPlanState());
-      if (content === lastContentRef.current) return;
-      lastContentRef.current = content;
-      await gistPatch(pat, sessionIdRef.current, content);
-    }, PUSH_DEBOUNCE);
+    const pat = getStoredPat();
+    if (!pat) return;
+    const content = JSON.stringify(getPlanState());
+    if (content === lastContentRef.current) return;
+    lastContentRef.current = content;
+    await gistPatch(pat, sessionIdRef.current, content);
   }
 
   // ── Poll Gist for remote changes ────────────────────────────────────────
@@ -136,7 +132,7 @@ export default function App() {
       isPullingRef.current = true;
       lastContentRef.current = content;
       window.dispatchEvent(new CustomEvent("gc:restore-plan", { detail: plan }));
-      setTimeout(() => { isPullingRef.current = false; }, PUSH_DEBOUNCE + 200);
+      setTimeout(() => { isPullingRef.current = false; }, 3200);
     } catch {
       console.warn("Failed to parse Gist content");
     }
@@ -144,7 +140,10 @@ export default function App() {
 
   function startPolling(gistId: string) {
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    if (pushTimerRef.current) clearInterval(pushTimerRef.current);
     pollTimerRef.current = setInterval(() => pollGist(gistId), POLL_INTERVAL);
+    // Push local changes every 3 seconds if state has changed
+    pushTimerRef.current = setInterval(() => maybePush(), 3000);
   }
 
   function stopSession() {
@@ -207,7 +206,7 @@ export default function App() {
       lastContentRef.current = content;
       isPullingRef.current = true;
       window.dispatchEvent(new CustomEvent("gc:restore-plan", { detail: plan }));
-      setTimeout(() => { isPullingRef.current = false; }, PUSH_DEBOUNCE + 200);
+      setTimeout(() => { isPullingRef.current = false; }, 3200);
     } catch {
       console.warn("Failed to parse session Gist");
     }
@@ -235,17 +234,6 @@ export default function App() {
         console.warn("Failed to restore plan from URL");
       }
     }
-  }, []);
-
-  // ── Wire map/sim update events to session push ──────────────────────────
-  useEffect(() => {
-    const handler = () => schedulePush();
-    window.addEventListener("gc:map-update", handler);
-    window.addEventListener("gc:sim-update", handler);
-    return () => {
-      window.removeEventListener("gc:map-update", handler);
-      window.removeEventListener("gc:sim-update", handler);
-    };
   }, []);
 
   // ── Cleanup on unmount ──────────────────────────────────────────────────
