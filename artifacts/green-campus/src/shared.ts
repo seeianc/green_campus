@@ -5,6 +5,8 @@ export interface SharedState {
   totalMapCost: number;
   totalMapKw: number;
   totalMapCableCm: number;
+  placements: Record<string, Array<{ tech: string; cx: number; cy: number }>>;
+  cables: Record<string, Array<{ x1: number; y1: number; x2: number; y2: number }>>;
 }
 
 export const sharedState: SharedState = {
@@ -14,6 +16,8 @@ export const sharedState: SharedState = {
   totalMapCost: 0,
   totalMapKw: 0,
   totalMapCableCm: 0,
+  placements: {},
+  cables: {},
 };
 
 export function emitMapUpdate() {

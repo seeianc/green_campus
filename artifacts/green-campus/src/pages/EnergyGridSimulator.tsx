@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Chart, registerables } from "chart.js";
-import { sharedState, MAP_TECH_TO_SIM } from "../shared";
+import { sharedState, MAP_TECH_TO_SIM, emitSimUpdate } from "../shared";
 
 Chart.register(...registerables);
 
@@ -719,7 +719,8 @@ export default function EnergyGridSimulator() {
                           <div><span class="label">Carbon Tax <span id="adjCarbonTaxDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCarbonTax" style="font-size: 11px;">$0</span></div>
                         </div>
                       </div>
-                      <div class="e-expense-item"><span class="label">plus: Renewable Revenue (ROI period)</span><span class="value positive" id="costRenewableRevenue">$0</span></div>
+                      <div class="e-expense-item"><span class="label">plus: Annual Grid Sell-Back Revenue</span><span class="value positive" id="costRenewableRevenue">$0</span></div>
+                      <div class="e-expense-item" style="font-size:10px;padding-left:12px;color:var(--text-muted);display:none" id="sellBackDetail"><span id="sellBackKwText">—</span></div>
                       <div class="e-expense-item" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 8px;"><span class="label" style="font-weight: bold;">Remaining Budget</span><span class="value" id="costRemaining" style="font-weight: bold;">$10M</span></div>
                     </div>
                   </div>
@@ -823,6 +824,7 @@ export default function EnergyGridSimulator() {
               <div class="e-chart-wrap" style="max-width:320px;margin:0 auto">
                 <canvas id="sourceChart" height="240"></canvas>
               </div>
+              <div id="sourceChartLegend" style="padding:0 20px 14px;font-size:11px;font-family:'DM Mono',monospace"></div>
             </div>
 
             <div class="e-card">
@@ -1001,7 +1003,13 @@ export default function EnergyGridSimulator() {
         biomass: getVal('biomass'), liIon: getVal('liIon'),
         thermal: getVal('thermal'), flywheel: getVal('flywheel'), caes: getVal('caes'),
         hydrogen: getVal('hydrogen'), v2g: getVal('v2g'), scada: getVal('scada'),
-        cabling: getVal('cabling'),
+        cabling: (() => {
+          const mapMin = Math.round(sharedState.totalMapCableCm);
+          const el = getEl<HTMLInputElement>('cabling');
+          const val = +(el?.value || 0);
+          if (el && val < mapMin) { el.value = String(mapMin); return mapMin; }
+          return val;
+        })(),
         windBuffer: (getEl<HTMLSelectElement>('windBuffer')?.value || 'No'),
         demandPattern: (getEl<HTMLSelectElement>('demandPattern')?.value || 'None'),
         budgetTier: (getEl<HTMLSelectElement>('budgetTier')?.value || 'None'),
@@ -1152,11 +1160,17 @@ export default function EnergyGridSimulator() {
 
       const totalCostAdjustments = geoCostAdjustment + hydroCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment + annualCarbonTaxFee;
 
+      // Hourly net metering: credit any hour where supply > demand at wholesale rate
+      // kwSoldBack is already the sum of per-hour surplus kWh for one day
+      const surplusKwh = kwSoldBack * 365;
+      const annualRenewableRevenue = surplusKwh * WHOLESALE_RATE;
+
       const totalSpent = Object.values(genCosts).reduce((a,b)=>a+b,0)
         + Object.values(storageCosts).reduce((a,b)=>a+b,0)
         + Object.values(emergingCosts).reduce((a,b)=>a+b,0)
         + Object.values(infraCosts).reduce((a,b)=>a+b,0)
-        + annualCarbonTaxFee;
+        + annualCarbonTaxFee
+        - annualRenewableRevenue;
 
       const basePeakDemand = 5000;
       const islandTime = totalStorage / basePeakDemand;
@@ -1186,11 +1200,8 @@ export default function EnergyGridSimulator() {
       };
       const totalAnnualKwh = Object.values(annualKwh).reduce((a, b) => a + b, 0);
 
-      // Net metering cap: own-use saves at retail rate; surplus earns wholesale only
       const annualDemandKwh = demand24.reduce((a, b) => a + b, 0) * 365;
-      const surplusKwh = Math.max(0, totalAnnualKwh - annualDemandKwh);
       const capAdjustment = -surplusKwh * (GRID_RATE - WHOLESALE_RATE);
-      const annualRenewableRevenue = surplusKwh * WHOLESALE_RATE;
       const renewableRevenueProjection = 0;
 
       const roiSavings = {
@@ -1225,7 +1236,7 @@ export default function EnergyGridSimulator() {
       const constructJobs = Math.floor((totalSpent / 2000000) * 10);
       const permRoles = Math.floor((totalSpent / 2000000) * 1);
       const rolesAssigned = s.wSolar + s.wElec + s.wEng;
-      const rolesLeft = permRoles - rolesAssigned;
+      const rolesLeft = Math.max(0, permRoles - rolesAssigned);
       const payroll = s.wSolar*55000 + s.wElec*68000 + s.wEng*72000;
 
       return {
@@ -1414,6 +1425,12 @@ export default function EnergyGridSimulator() {
         hdr.className = 'grid-status-badge' + (r.gridClass==='warn' ? ' warn' : r.gridClass==='danger' ? ' danger' : '');
       }
 
+      // Sync budget tier to shared state so map header shows correct budget
+      if (sharedState.budgetLimit !== r.startBudget) {
+        sharedState.budgetLimit = r.startBudget;
+        emitSimUpdate();
+      }
+
       const supplyEl = getEl('mTotalSupply'); if (supplyEl) supplyEl.textContent = fmtkW(r.actualPeakSupply);
       const storageEl = getEl('mTotalStorage'); if (storageEl) storageEl.textContent = fmtkWh(r.totalStorage);
       const budgetEl = getEl('mBudget'); if (budgetEl) budgetEl.textContent = fmt$(r.startBudget);
@@ -1459,7 +1476,17 @@ export default function EnergyGridSimulator() {
       setAdjItem('adjCrane', r.infraCosts.craneLogistics, 'adjCraneDesc', r.infraCosts.craneLogistics !== 0 ? '(Crane Operator Shortage)' : '');
       setAdjItem('adjCarbonTax', r.annualCarbonTaxFee, 'adjCarbonTaxDesc', r.annualCarbonTaxFee !== 0 ? '($0.10/kWh shortfall × 365 days)' : '');
       
-      setCost('costRenewableRevenue', r.renewableRevenueProjection);
+      setCost('costRenewableRevenue', r.annualRenewableRevenue);
+      const sellBackEl = getEl('sellBackDetail');
+      const sellBackTextEl = getEl('sellBackKwText');
+      if (sellBackEl && sellBackTextEl) {
+        if (r.surplusKwh > 0) {
+          sellBackEl.style.display = 'flex';
+          sellBackTextEl.textContent = `${Math.round(r.kwSoldBack).toLocaleString()} kW daily surplus · ${Math.round(r.surplusKwh / 1000)}K kWh/yr × $0.06 = ${fmt$(r.annualRenewableRevenue)}/yr`;
+        } else {
+          sellBackEl.style.display = 'none';
+        }
+      }
       setCost('costRemaining', r.remaining);
       setCost('costSolar', r.genCosts.solar);
       setCost('costRemaining', r.remaining);
@@ -1569,15 +1596,39 @@ export default function EnergyGridSimulator() {
       // Update donut chart with energy source mix
       if (sourceChartRef.current) {
         const sourceData = [
-          s.solar * 500,           // Solar (500 kW per unit)
-          s.wind * 3000,           // Wind (3000 kW per unit)
-          s.geo * 2000,            // Geo (2000 kW per unit)
-          (s.hydroLow + s.hydroHigh) * 1250,  // Hydro (avg 1250 kW per unit)
-          (s.tidalStd * 500 + s.tidalPP * 600),  // Tidal (mixed: std 500, pinch 600)
-          s.biomass * 1000         // Biomass (1000 kW per unit)
+          s.solar * 500,
+          s.wind * 3000,
+          s.geo * 2000,
+          (s.hydroLow * 500 + s.hydroHigh * 2000),
+          (s.tidalStd * 500 + s.tidalPP * 600),
+          s.biomass * 1000
         ];
         sourceChartRef.current.data.datasets[0].data = sourceData;
         sourceChartRef.current.update('none');
+
+        // Live legend below donut
+        const legendEl = getEl('sourceChartLegend');
+        if (legendEl) {
+          const totalKw = sourceData.reduce((a, b) => a + b, 0);
+          const labels = ['Solar', 'Wind', 'Geo', 'Hydro', 'Tidal', 'Biomass'];
+          const colors = ['#f0b429', '#58a6ff', '#bc8cff', '#39c8e8', '#00c8aa', '#7ee787'];
+          if (totalKw === 0) {
+            legendEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:4px 0">No generation selected</div>';
+          } else {
+            legendEl.innerHTML = labels.map((label, i) => {
+              const kw = sourceData[i];
+              if (kw === 0) return '';
+              const pct = ((kw / totalKw) * 100).toFixed(1);
+              return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f0ede6">
+                <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors[i]};margin-right:6px;vertical-align:middle"></span>${label}</span>
+                <span style="color:${colors[i]};font-weight:600">${kw.toLocaleString()} kW · ${pct}%</span>
+              </div>`;
+            }).filter(Boolean).join('') +
+            `<div style="display:flex;justify-content:space-between;padding:4px 0;font-weight:600;border-top:1px solid var(--border);margin-top:2px">
+              <span>Total Peak</span><span>${totalKw.toLocaleString()} kW</span>
+            </div>`;
+          }
+        }
       }
 
       const setLedger = (id: string, val: number) => { const el = getEl(id); if (el) el.textContent = fmt$(val); };
@@ -1686,7 +1737,12 @@ export default function EnergyGridSimulator() {
         }
       });
       const cablingEl = getEl<HTMLInputElement>('cabling');
-      if (cablingEl) cablingEl.value = String(Math.round(sharedState.totalMapCableCm));
+      if (cablingEl) {
+        const mapMin = Math.round(sharedState.totalMapCableCm);
+        cablingEl.min = String(mapMin);
+        const current = parseFloat(cablingEl.value) || 0;
+        if (current < mapMin) cablingEl.value = String(mapMin);
+      }
       render();
     });
 
@@ -1721,6 +1777,31 @@ export default function EnergyGridSimulator() {
     getEl('simPrintBtn')?.addEventListener('click', () => window.print());
     getEl('simExportBtn')?.addEventListener('click', exportCSV);
     getEl('simResetBtn')?.addEventListener('click', resetAll);
+
+    // Restore plan from shared URL
+    window.addEventListener('gc:restore-plan', (e: Event) => {
+      const { sim, bessHours } = (e as CustomEvent<{ sim?: Record<string, string | number>; bessHours?: number[] }>).detail;
+      if (!sim) return;
+      const numIds = ['solar','wind','geo','hydroLow','hydroHigh','tidalStd','tidalPP','biomass',
+                      'liIon','thermal','flywheel','caes','hydrogen','v2g','scada','cabling','wSolar','wElec','wEng'];
+      numIds.forEach(id => {
+        const el = getEl<HTMLInputElement>(id);
+        if (el && sim[id] !== undefined) el.value = String(sim[id]);
+      });
+      const selectIds = ['windBuffer','demandPattern','budgetTier','workforce','envConstraints','pivotCard'];
+      selectIds.forEach(id => {
+        const el = getEl<HTMLSelectElement>(id);
+        if (el && sim[id] !== undefined) el.value = String(sim[id]);
+      });
+      if (bessHours) {
+        for (let i = 0; i < 24; i++) {
+          const btn = getEl<HTMLElement>(`hourBtn-${i}`);
+          if (btn) btn.classList.toggle('active', bessHours.includes(i));
+        }
+      }
+      revealContent();
+      render();
+    });
 
     // Toggle expense breakdown
     const spentToggle = getEl('spentToggle');

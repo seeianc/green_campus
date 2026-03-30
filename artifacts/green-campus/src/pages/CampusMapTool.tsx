@@ -210,6 +210,7 @@ export default function CampusMapTool() {
             <div class="map-stat" id="statCable">Cable: <span>0 cm</span></div>
             <div class="map-stat" id="statBudget">Budget: <span>$0</span></div>
             <div class="map-stat" id="statIsland">Island: <span>0 h</span></div>
+            <div class="map-stat" id="statForest">Forest: <span>—</span></div>
           </div>
           <button class="map-clear-btn" id="mapClearBtn">✕ Clear Map</button>
         </div>
@@ -221,6 +222,7 @@ export default function CampusMapTool() {
               <button class="map-mode-btn active" id="modPlace">Place</button>
               <button class="map-mode-btn" id="modErase">Erase</button>
               <button class="map-mode-btn" id="modCable">Cable</button>
+              <button class="map-mode-btn" id="modPan">Pan</button>
             </div>
 
             <div class="map-sidebar-section">Generation</div>
@@ -280,6 +282,12 @@ export default function CampusMapTool() {
             <div class="map-legend">
               <div class="map-legend-item"><div class="map-legend-dot" style="background:#ff6e4080;border:1px solid #ff6e40"></div>Cable line</div>
               <div class="map-legend-item"><div class="map-legend-dot" style="background:#ffd70060;border:1px solid #ffd700"></div>Substation</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#2ea04330;border:1px dashed #7ee787"></div>Forest zone</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#00c8aa25;border:1px solid #00c8aa99"></div>Tidal zone</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#d2992215;border:1px dashed #d2992250"></div>Steep terrain</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#dca85020;border:1px solid #dca85099"></div>Building</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#a0a0c025;border:1px solid #a0a0c060"></div>Parking</div>
+              <div class="map-legend-item"><div class="map-legend-dot" style="background:#a0dc5015;border:1px dashed #a0dc5050"></div>Open field</div>
               <div class="map-legend-item"><div class="map-legend-dot" style="background:#f8514940;border:1px dashed #f85149"></div>No-Build zone</div>
               <div class="map-legend-item"><div class="map-legend-dot" style="background:#58a6ff30;border:1px dashed #58a6ff"></div>Wind buffer</div>
             </div>
@@ -294,6 +302,11 @@ export default function CampusMapTool() {
             <div class="map-canvas-wrap" id="canvasWrap">
               <canvas id="bgCanvas"></canvas>
               <canvas id="overlayCanvas" style="position:absolute;top:0;left:0"></canvas>
+            </div>
+            <div style="position:absolute;bottom:12px;left:12px;display:flex;gap:4px;z-index:10">
+              <button id="zoomIn" style="width:28px;height:28px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#e6edf3;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:0">+</button>
+              <button id="zoomReset" style="height:28px;padding:0 8px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#7d8590;font-size:10px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">100%</button>
+              <button id="zoomOut" style="width:28px;height:28px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#e6edf3;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:0">−</button>
             </div>
             <div class="map-info-panel">
               <div class="map-info-row"><span class="map-info-key">Cursor</span><span class="map-info-val" id="infoCursor">–</span></div>
@@ -310,7 +323,11 @@ export default function CampusMapTool() {
     `;
 
     // Initialize the map tool logic
-    initMapTool();
+    try {
+      initMapTool();
+    } catch (e) {
+      console.error('❌ initMapTool crashed:', e);
+    }
 
     return () => {
       style.remove();
@@ -360,91 +377,107 @@ function initMapTool() {
       name: 'RLS — Inland School',
       desc: 'Inland campus, forested hillside, no water access',
       width: 900, height: 1274,
-      substationPx: [490, 260],
+      substationPx: [353, 525],
       features: [
-        { type:'boundary', points:[[220,55],[810,55],[810,440],[680,440],[680,560],[810,560],[810,700],[260,700],[260,580],[220,580]] },
-        { type:'building', rect:[380,200,220,120], label:'Main Building' },
-        { type:'building', rect:[620,200,80,60], label:'Annex' },
-        { type:'field', rect:[280,55,360,140], label:'Athletic Fields' },
-        { type:'forest', rect:[220,450,580,250] },
-        { type:'contour_zone', rect:[220,400,580,300], density:'high' },
+        { type:'forest', points:[[653,533],[559,508],[457,519],[501,594],[432,612],[409,686],[339,684],[275,790],[333,1243],[778,1183],[773,1003],[749,1006],[697,677],[559,690],[543,590],[668,578]] },
+        { type:'building', points:[[362,355],[402,352],[409,329],[433,329],[447,350],[513,358],[519,410],[490,404],[435,409],[460,500],[324,539],[323,488],[350,478],[344,425],[360,419]] },
+        { type:'field', points:[[198,322],[570,304],[559,159],[159,187]] },
+        { type:'field', points:[[216,356],[405,317],[397,335],[296,352],[317,527],[272,546],[233,461]] },
+        { type:'parking', points:[[326,596],[399,615],[396,675],[329,672]] },
+        { type:'parking', points:[[263,737],[269,764],[318,708],[305,581],[377,575],[432,585],[472,561],[435,513],[306,548],[272,554],[294,705]] },
+        { type:'boundary', points:[[147,187],[612,126],[671,573],[549,588],[558,686],[704,678],[749,1003],[776,1003],[779,1181],[339,1238]] },
       ]
     },
     EDS: {
-      name: 'EDS — Penobscot Bay',
-      desc: 'Coastal campus on Penobscot Bay — tidal opportunities',
+      name: 'EDS — On Penobscot Bay',
+      desc: 'Coastal campus on Penobscot Bay',
       width: 950, height: 671,
-      substationPx: [600, 550],
+      substationPx: [440, 500],
       features: [
-        { type:'ocean', rect:[0,0,950,230], label:'Penobscot Bay' },
-        { type:'boundary', points:[[430,230],[810,50],[950,50],[950,700],[430,700],[360,580],[290,520],[430,320]] },
-        { type:'building', rect:[580,520,180,100], label:'School' },
-        { type:'parking', rect:[560,460,120,55] },
-        { type:'forest', rect:[430,310,440,420] },
-        { type:'contour_zone', rect:[360,230,590,310], density:'extreme' },
-        { type:'road', points:[[580,700],[580,620]] },
+        { type:'water', points:[[245,208],[260,285],[245,381],[252,381],[267,302],[256,218]] },
+        { type:'forest', points:[[451,621],[537,566],[546,533],[517,490],[507,465],[513,449],[260,381],[267,238],[300,133],[353,70],[680,358],[598,643]] },
+        { type:'building', points:[[334,432],[449,449],[440,492],[357,479],[350,494],[324,483]] },
+        { type:'field', points:[[462,446],[503,453],[501,482],[541,531],[532,561],[444,617],[394,608],[410,502],[449,503]] },
+        { type:'parking', points:[[313,496],[388,513],[383,607],[293,595]] },
+        { type:'road', points:[[7,548],[641,663],[588,668],[4,564]] },
+        { type:'boundary', points:[[272,225],[264,223],[220,375],[304,399],[250,593],[601,650],[683,356],[354,70],[296,126]] },
       ]
     },
     CES: {
       name: 'CES — River / Tidal',
       desc: 'River with 3+ contour lines = high hydro potential',
       width: 950, height: 671,
-      substationPx: [140, 405],
+      substationPx: [196, 363],
       features: [
-        { type:'water', rect:[740,0,210,800], label:'River' },
-        { type:'water', rect:[840,480,110,320], label:'Tidal River' },
-        { type:'boundary', points:[[100,290],[380,150],[720,200],[720,480],[720,530],[680,600],[140,740],[100,620]] },
-        { type:'building', rect:[100,380,140,100], label:'School' },
-        { type:'parking', rect:[115,300,100,75] },
-        { type:'field', rect:[100,290,620,450], label:'Open Fields' },
-        { type:'forest', rect:[200,0,540,200] },
-        { type:'contour_zone', rect:[650,0,100,400], density:'high' },
-        { type:'road', points:[[100,600],[700,600]] },
-        { type:'road', points:[[100,600],[100,400]] },
-        { type:'tidal_zone', rect:[800,480,150,320] },
+        { type:'forest', points:[[707,263],[765,251],[804,300],[780,317],[784,343],[702,363],[685,326],[522,377],[682,320]] },
+        { type:'field', points:[[228,416],[217,307],[265,320],[344,293],[358,255],[416,240],[502,281],[527,300],[699,274],[677,318],[425,401],[411,376],[347,393],[339,408],[265,430]] },
+        { type:'field', points:[[479,217],[526,259],[609,242],[649,273],[762,250],[690,159]] },
+        { type:'building', points:[[139,335],[160,341],[158,360],[195,367],[192,383],[127,375],[129,378]] },
+        { type:'parking', points:[[132,379],[192,386],[184,409],[124,402]] },
+        { type:'tidal_zone', points:[[877,344],[894,352],[949,401],[932,434],[934,470],[949,670],[906,667],[906,595],[864,645],[863,665],[844,668],[868,601],[893,571],[885,531]] },
+        { type:'water', points:[[887,342],[943,369],[936,313],[893,246],[790,189],[748,85],[749,2],[693,2],[700,117],[714,158]] },
+        { type:'boundary', points:[[97,332],[117,404],[201,416],[277,443],[363,423],[352,398],[410,382],[425,449],[434,442],[422,405],[691,339],[698,376],[788,347],[783,320],[787,313],[808,301],[690,155],[315,254],[317,263]] },
       ]
     },
     LCS: {
       name: 'LCS — Coastal Forest',
       desc: 'Forested coastal campus with steep contours and shoreline access',
       width: 950, height: 671,
-      substationPx: [630, 120],
+      substationPx: [660, 145],
       features: [
-        { type:'ocean', rect:[550,500,400,171], label:'Coastal Water' },
-        { type:'boundary', points:[[180,10],[950,10],[950,390],[700,390],[700,500],[560,500],[420,440],[180,360]] },
-        { type:'building', rect:[570,30,160,110], label:'School' },
-        { type:'parking', rect:[580,145,100,55] },
-        { type:'forest', rect:[0,0,560,500] },
-        { type:'forest', rect:[560,0,390,30] },
-        { type:'contour_zone', rect:[0,0,950,520], density:'high' },
-        { type:'road', points:[[700,390],[700,500]] },
+        { type:'forest', points:[[171,300],[316,213],[339,259],[396,268],[426,255],[402,192],[499,169],[491,114],[546,99],[556,136],[524,149],[537,180],[570,173],[593,237],[581,316],[612,322],[637,375],[750,349],[775,429],[660,445],[506,490],[414,534],[403,576],[275,621],[254,617]] },
+        { type:'field', points:[[585,170],[687,141],[714,240],[731,248],[742,338],[641,367],[612,313],[592,286]] },
+        { type:'building', points:[[585,122],[602,162],[682,135],[674,119],[649,112]] },
+       { type:'parking', points:[[695,88],[672,48],[643,60],[656,94]] },
+       { type:'parking', points:[[562,124],[579,125],[596,158],[569,163]] },
+       { type:'road', points:[[551,92],[558,91],[563,89],[570,105],[647,81],[649,97],[570,118],[556,114]] },
+       { type:'boundary', points:[[170,298],[253,617],[267,613],[274,621],[389,586],[387,576],[399,574],[414,533],[480,519],[475,506],[508,498],[507,488],[655,451],[658,445],[774,427],[693,33],[418,143]] },
       ]
     },
+  
     STG: {
       name: 'STG — Lakeside Campus',
       desc: 'Hillside campus beside a lake — hydro and wind potential',
       width: 900, height: 1274,
-      substationPx: [520, 870],
+      substationPx: [565, 870],
       features: [
-        { type:'water', rect:[0,0,240,980], label:'Lake' },
-        { type:'boundary', points:[[200,30],[860,30],[860,550],[900,550],[900,1100],[380,1100],[240,980],[240,750],[150,600],[200,300]] },
-        { type:'building', rect:[400,800,230,180], label:'School' },
-        { type:'parking', rect:[410,720,150,75] },
-        { type:'field', rect:[500,150,360,350], label:'Open Fields' },
-        { type:'forest', rect:[240,0,660,150] },
-        { type:'forest', rect:[240,500,660,300] },
-        { type:'contour_zone', rect:[200,0,700,800], density:'high' },
-        { type:'road', points:[[380,1100],[380,800]] },
-        { type:'road', points:[[380,950],[240,950]] },
+        { type:'road', points:[[505,948],[534,952],[523,1011],[550,1087],[544,1163],[525,1154]] },
+        { type:'tidal_zone', points:[[297,1060],[462,1216],[466,1270],[366,1270]] },
+        { type:'parking', points:[[451,780],[508,759],[550,913],[532,945],[499,927]] },
+        { type:'building', points:[[534,734],[612,725],[671,859],[665,940],[583,922]] },
+        { type:'field', points:[[508,440],[517,512],[679,515],[694,410]] },
+        { type:'field', points:[[472,657],[567,639],[595,657],[594,705],[481,734],[451,699]] },
+        { type:'forest', points:[[469,734],[418,798],[132,277],[164,234],[354,286],[408,376],[435,349],[411,255],[400,118],[460,61],[760,373],[701,401],[511,430],[484,460],[517,518],[685,524],[703,421],[767,385],[841,463],[609,674],[582,632],[481,644],[447,686]] },
+        { type:'water', points:[[296,987],[342,951],[321,862],[159,648],[138,484],[2,301],[2,454],[68,654],[162,713]] },
+        { type:'water', points:[[10,247],[47,252],[170,196],[327,222],[382,189],[353,85],[388,43],[393,4],[68,3],[-1,84]] },
+        { type:'boundary', points:[[115,268],[152,246],[149,228],[182,208],[246,234],[275,223],[317,234],[326,268],[372,281],[406,368],[423,344],[405,266],[390,129],[362,76],[394,55],[426,91],[454,51],[469,46],[850,464],[613,675],[683,855],[683,951],[704,969],[700,1002],[650,1014],[634,990],[538,1019],[574,1114],[558,1166],[495,1147],[520,1106],[481,1017],[480,919]] },
       ]
     },
   };
+
+  // Calculate bounding box (rect) for all features from their points
+  Object.values(MAPS).forEach(map => {
+    map.features.forEach(feature => {
+      if (feature.points && feature.points.length > 0 && !feature.rect) {
+        const xs = feature.points.map(p => p[0]);
+        const ys = feature.points.map(p => p[1]);
+        const minX = Math.min(...xs);
+        const minY = Math.min(...ys);
+        const maxX = Math.max(...xs);
+        const maxY = Math.max(...ys);
+        feature.rect = [minX, minY, maxX - minX, maxY - minY];
+      }
+    });
+  });
 
   const GRID = 18;
   let currentMap = 'EDS';
   let selectedTech = 'solar';
   let mode = 'place';
   let mapScale = 1;
+  let zoomLevel = 1.0;
+  const MIN_ZOOM = 0.5;
+  const MAX_ZOOM = 5.0;
   type Placement = { tech: string; cx: number; cy: number; id: number; violations: string[] };
   type Cable = { x1: number; y1: number; x2: number; y2: number };
   const placements: Record<string, Placement[]> = {};
@@ -564,6 +597,7 @@ function initMapTool() {
   getEl('modPlace')?.addEventListener('click', () => setMode('place'));
   getEl('modErase')?.addEventListener('click', () => setMode('erase'));
   getEl('modCable')?.addEventListener('click', () => setMode('cable'));
+  getEl('modPan')?.addEventListener('click', () => setMode('pan'));
   getEl('mapClearBtn')?.addEventListener('click', clearAll);
 
   // Tech buttons
@@ -580,8 +614,10 @@ function initMapTool() {
     const cw = container ? container.clientWidth : m.width;
     const ch = container ? container.clientHeight : m.height;
     const aspect = m.width / m.height;
-    let w = cw, h = Math.round(cw / aspect);
-    if (h > ch) { h = ch; w = Math.round(h * aspect); }
+    let fitW = cw, fitH = Math.round(cw / aspect);
+    if (fitH > ch) { fitH = ch; fitW = Math.round(fitH * aspect); }
+    const w = Math.round(fitW * zoomLevel);
+    const h = Math.round(fitH * zoomLevel);
     mapScale = w / m.width;
     bg.width = ov.width = w;
     bg.height = ov.height = h;
@@ -647,28 +683,260 @@ function initMapTool() {
     if (imgLoaded) {
       // Water bodies — blue tint
       m.features.filter(f => f.type === 'water' || f.type === 'ocean').forEach(f => {
-        if (!f.rect) return;
-        const [rx, ry, rw, rh] = f.rect;
-        ctx.fillStyle = f.type === 'ocean' ? 'rgba(20,70,140,0.08)' : 'rgba(30,100,160,0.05)';
-        ctx.fillRect(rx, ry, rw, rh);
-        if (f.label) {
-          ctx.fillStyle = 'rgba(120,200,255,0.9)';
-          ctx.font = 'italic 11px Space Grotesk,sans-serif';
+        ctx.fillStyle = f.type === 'ocean' ? 'rgba(20,70,140,0.08)' : 'rgba(30,100,160,0.10)';
+        ctx.strokeStyle = f.type === 'ocean' ? 'rgba(30,100,200,0.3)' : 'rgba(58,150,200,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(100,180,255,0.75)';
+          ctx.font = 'italic 9px Space Grotesk,sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(f.label, rx + rw / 2, ry + rh / 2);
+          ctx.fillText(f.label || (f.type === 'ocean' ? '🌊 OCEAN' : '💧 WATER'), cx, cy);
+          ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.setLineDash([]);
+          if (f.label) {
+            ctx.fillStyle = 'rgba(120,200,255,0.9)';
+            ctx.font = 'italic 11px Space Grotesk,sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(f.label, rx + rw / 2, ry + rh / 2);
+            ctx.textAlign = 'left';
+          }
+        }
+        ctx.setLineDash([]);
+      });
+
+      // Forest zones (supports both rect and polygon points)
+      m.features.filter(f => f.type === 'forest').forEach(f => {
+        ctx.fillStyle = 'rgba(46,160,67,0.18)';
+        ctx.strokeStyle = 'rgba(126,231,135,0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(126,231,135,0.7)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🌲 FOREST', cx, cy);
+          ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(126,231,135,0.7)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🌲 FOREST', rx + rw / 2, ry + rh / 2);
           ctx.textAlign = 'left';
         }
+        ctx.setLineDash([]);
       });
 
       // Tidal zones
       m.features.filter(f => f.type === 'tidal_zone').forEach(f => {
-        if (!f.rect) return;
-        const [rx, ry, rw, rh] = f.rect;
         ctx.fillStyle = 'rgba(0,200,170,0.15)';
-        ctx.fillRect(rx, ry, rw, rh);
         ctx.strokeStyle = 'rgba(0,200,170,0.6)';
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.setLineDash([6, 4]);
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(0,200,170,0.85)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🌊 TIDAL', cx, cy);
+          ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(0,200,170,0.85)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🌊 TIDAL ZONE', rx + rw / 2, ry + rh / 2);
+          ctx.textAlign = 'left';
+        }
+        ctx.setLineDash([]);
+      });
+
+      // Contour zones — steep terrain
+      m.features.filter(f => f.type === 'contour_zone').forEach(f => {
+        ctx.fillStyle = 'rgba(210,153,34,0.07)';
+        ctx.strokeStyle = 'rgba(210,153,34,0.3)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 6]);
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(210,153,34,0.6)';
+          ctx.font = '9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⛰ STEEP TERRAIN', cx, cy);
+          ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect!;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(210,153,34,0.6)';
+          ctx.font = '9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⛰ STEEP TERRAIN', rx + rw / 2, ry + 14);
+          ctx.textAlign = 'left';
+        }
+        ctx.setLineDash([]);
+      });
+
+      // Buildings
+      m.features.filter(f => f.type === 'building').forEach(f => {
+        ctx.fillStyle = 'rgba(200,160,80,0.12)';
+        ctx.strokeStyle = 'rgba(220,180,100,0.7)';
+        ctx.lineWidth = 1.5;
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
+          ctx.fillStyle = 'rgba(220,180,100,0.9)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🏫 ' + (f.label || 'BUILDING'), cx, cy + 4);
+          ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.fillStyle = 'rgba(220,180,100,0.9)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🏫 ' + (f.label || 'BUILDING'), rx + rw / 2, ry + rh / 2 + 4);
+          ctx.textAlign = 'left';
+        }
+      });
+
+      // Parking
+      m.features.filter(f => f.type === 'parking').forEach(f => {
+        ctx.fillStyle = 'rgba(130,130,160,0.15)';
+        ctx.strokeStyle = 'rgba(160,160,200,0.6)';
+        ctx.lineWidth = 1;
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
+          ctx.fillStyle = 'rgba(160,160,200,0.85)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🅿 PARKING', cx, cy + 4);
+          ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect!;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.fillStyle = 'rgba(160,160,200,0.85)';
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🅿 PARKING', rx + rw / 2, ry + rh / 2 + 4);
+          ctx.textAlign = 'left';
+        }
+      });
+
+      // Open fields
+      m.features.filter(f => f.type === 'field').forEach(f => {
+        ctx.fillStyle = 'rgba(160,220,80,0.08)';
+        ctx.strokeStyle = 'rgba(160,220,80,0.35)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(180,230,100,0.75)';
+          ctx.font = '9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🌾 ' + (f.label || 'OPEN FIELD'), cx, cy);
+          ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(180,230,100,0.75)';
+          ctx.font = '9px Space Grotesk,sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🌾 ' + (f.label || 'OPEN FIELD'), rx + rw / 2, ry + rh / 2);
+          ctx.textAlign = 'left';
+        }
+        ctx.setLineDash([]);
+      });
+
+      // Roads
+      m.features.filter(f => f.type === 'road' && f.points && f.points.length >= 2).forEach(f => {
+        ctx.strokeStyle = 'rgba(200,200,160,0.5)';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(f.points![0][0], f.points![0][1]);
+        f.points!.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+        ctx.stroke();
+        const mid = Math.floor(f.points!.length / 2);
+        const [mx, my] = f.points![mid];
+        ctx.fillStyle = 'rgba(220,220,180,0.85)';
+        ctx.font = '8px Space Grotesk,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🛣 ROAD', mx, my - 6);
+        ctx.textAlign = 'left';
+        ctx.lineCap = 'butt';
       });
 
       // Pinch points
@@ -688,19 +956,34 @@ function initMapTool() {
 
       // No-build zones
       m.features.filter(f => f.type === 'nobuild').forEach(f => {
-        if (!f.rect) return;
-        const [rx, ry, rw, rh] = f.rect;
         ctx.fillStyle = 'rgba(248,81,73,0.2)';
-        ctx.fillRect(rx, ry, rw, rh);
         ctx.strokeStyle = 'rgba(248,81,73,0.8)';
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(rx, ry, rw, rh);
-        if (f.label) {
+        if (f.points && f.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(f.points[0][0], f.points[0][1]);
+          f.points.slice(1).forEach(([px, py]) => ctx.lineTo(px, py));
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          const cx = f.points.reduce((s, p) => s + p[0], 0) / f.points.length;
+          const cy = f.points.reduce((s, p) => s + p[1], 0) / f.points.length;
           ctx.fillStyle = 'rgba(248,81,73,1)';
           ctx.font = 'bold 10px Space Grotesk,sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('⛔ ' + f.label, rx + rw / 2, ry + rh / 2);
+          ctx.fillText('⛔ ' + (f.label || 'NO-BUILD'), cx, cy);
           ctx.textAlign = 'left';
+        } else if (f.rect) {
+          const [rx, ry, rw, rh] = f.rect;
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeRect(rx, ry, rw, rh);
+          if (f.label) {
+            ctx.fillStyle = 'rgba(248,81,73,1)';
+            ctx.font = 'bold 10px Space Grotesk,sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('⛔ ' + f.label, rx + rw / 2, ry + rh / 2);
+            ctx.textAlign = 'left';
+          }
         }
       });
     }
@@ -855,7 +1138,7 @@ function initMapTool() {
         ctx.strokeStyle = '#c8a420';
         ctx.lineWidth = 0.6;
         ctx.globalAlpha = 0.35;
-        for (let i = 0; i < (rh / d) | 0; i++) {
+        for (let i = 0; i < Math.floor(rh / d); i++) {
           const y = ry + i * d + 4;
           ctx.beginPath();
           ctx.moveTo(rx, y);
@@ -1076,11 +1359,7 @@ function initMapTool() {
       const f = features.find(feat => {
         if (feat.type !== type) return false;
         if (type === 'pinch_point') return Math.hypot((feat.cx || 0) - x, (feat.cy || 0) - y) < (feat.r || 0);
-        if (feat.rect) {
-          const r = Array.isArray(feat.rect[0]) ? feat.rect[0] as unknown as number[] : feat.rect;
-          return x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3];
-        }
-        return false;
+        return pointInFeature(x, y, feat);
       });
       if (f) return f;
     }
@@ -1205,7 +1484,76 @@ function initMapTool() {
     const costEl = getEl('infoCableCost'); if (costEl) costEl.textContent = `$${(cableCost / 1000).toFixed(0)}K`;
   }
 
+  function polygonArea(pts: number[][]): number {
+    let area = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const [x1, y1] = pts[i];
+      const [x2, y2] = pts[(i + 1) % pts.length];
+      area += x1 * y2 - x2 * y1;
+    }
+    return Math.abs(area) / 2;
+  }
+
+  function pointInPolygon(px: number, py: number, pts: number[][]): boolean {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  function featureArea(f: Feature): number {
+    if (f.points && f.points.length >= 3) return polygonArea(f.points);
+    if (f.rect) return f.rect[2] * f.rect[3];
+    return 0;
+  }
+
+  function pointInFeature(px: number, py: number, f: Feature): boolean {
+    if (f.points && f.points.length >= 3) return pointInPolygon(px, py, f.points);
+    if (f.rect) return px >= f.rect[0] && px <= f.rect[0] + f.rect[2] && py >= f.rect[1] && py <= f.rect[1] + f.rect[3];
+    return false;
+  }
+
+  function computeForestStats() {
+    const m = MAPS[currentMap];
+    // Campus area via shoelace formula on boundary polygon
+    const boundary = m.features.find(f => f.type === 'boundary' && f.points);
+    let campusArea = 0;
+    if (boundary?.points) {
+      campusArea = polygonArea(boundary.points);
+    } else {
+      campusArea = m.width * m.height;
+    }
+    // Total forested area — supports both polygon points and rect
+    const totalForestArea = m.features
+      .filter(f => f.type === 'forest')
+      .reduce((sum, f) => sum + featureArea(f), 0);
+    const forestPct = campusArea > 0 ? (totalForestArea / campusArea) * 100 : 0;
+    // Cleared forest: placements whose center falls inside any forest feature
+    let clearedArea = 0;
+    (placements[currentMap] || []).forEach(p => {
+      const onForest = m.features.some(f => f.type === 'forest' && pointInFeature(p.cx, p.cy, f));
+      if (onForest) {
+        const t = TECHS[p.tech];
+        const fp = t.squareFootprint > 0 ? t.squareFootprint : 1;
+        clearedArea += fp * GRID * GRID;
+      }
+    });
+    const clearedPct = totalForestArea > 0 ? Math.min(100, (clearedArea / totalForestArea) * 100) : 0;
+    return { forestPct: Math.round(forestPct), clearedPct: parseFloat(clearedPct.toFixed(1)) };
+  }
+
   function updateUI() {
+    // Sync placements/cables to sharedState for plan sharing
+    const mapIds = Object.keys(placements);
+    sharedState.placements = {};
+    sharedState.cables = {};
+    mapIds.forEach(id => {
+      sharedState.placements[id] = placements[id].map(p => ({ tech: p.tech, cx: p.cx, cy: p.cy }));
+      sharedState.cables[id] = cables[id] ? [...cables[id]] : [];
+    });
+
     // Aggregate ALL placements across all maps for cost/kw totals
     const allPlacements = Object.values(placements).flat();
     let totalKw = 0, totalStorage = 0, totalCost = 0;
@@ -1261,6 +1609,20 @@ function initMapTool() {
       budgetEl.innerHTML = `Budget: <span>$${(totalCost / 1e6).toFixed(2)}M / $${budgetM}M</span>`;
     }
     const islandEl = getEl('statIsland'); if (islandEl) islandEl.innerHTML = `Island: <span>${islandTime}h</span>`;
+    const { forestPct, clearedPct } = computeForestStats();
+    const forestEl = getEl('statForest');
+    if (forestEl) {
+      if (forestPct === 0) {
+        forestEl.className = 'map-stat';
+        forestEl.innerHTML = `Forest: <span>none</span>`;
+      } else if (clearedPct === 0) {
+        forestEl.className = 'map-stat';
+        forestEl.innerHTML = `Forest: <span>${forestPct}% of campus</span>`;
+      } else {
+        forestEl.className = 'map-stat ' + (clearedPct > 25 ? 'err' : clearedPct > 10 ? 'warn' : '');
+        forestEl.innerHTML = `Forest: <span>${clearedPct}% cleared</span> <span style="opacity:0.5">(${forestPct}% of campus)</span>`;
+      }
+    }
 
     // Counts panel (current map only for clarity)
     const plist = placements[currentMap] || [];
@@ -1313,8 +1675,11 @@ function initMapTool() {
     getEl('modPlace')?.classList.toggle('active', m === 'place');
     getEl('modErase')?.classList.toggle('active', m === 'erase');
     getEl('modCable')?.classList.toggle('active', m === 'cable');
+    getEl('modPan')?.classList.toggle('active', m === 'pan');
     const wrap = getEl('canvasWrap');
     wrap?.classList.toggle('erase-mode', m === 'erase');
+    const ov = getEl<HTMLCanvasElement>('overlayCanvas');
+    if (ov) ov.style.cursor = m === 'pan' ? 'grab' : '';
   }
 
   function clearAll() {
@@ -1328,8 +1693,22 @@ function initMapTool() {
 
   // Event listeners on overlay canvas
   const overlayCanvas = getEl<HTMLCanvasElement>('overlayCanvas');
+  let panDragging = false;
+  let panStartX = 0, panStartY = 0, panScrollX = 0, panScrollY = 0;
+
   if (overlayCanvas) {
     overlayCanvas.addEventListener('mousedown', (e: MouseEvent) => {
+      if (mode === 'pan') {
+        const container = getEl('mapContainer');
+        if (!container) return;
+        panDragging = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        panScrollX = container.scrollLeft;
+        panScrollY = container.scrollTop;
+        overlayCanvas.style.cursor = 'grabbing';
+        return;
+      }
       const { x, y } = getCanvasPos(e);
       if (mode === 'place') {
         placeUnit(x, y);
@@ -1348,6 +1727,16 @@ function initMapTool() {
     });
 
     overlayCanvas.addEventListener('mousemove', (e: MouseEvent) => {
+      if (mode === 'pan') {
+        if (panDragging) {
+          const container = getEl('mapContainer');
+          if (container) {
+            container.scrollLeft = panScrollX - (e.clientX - panStartX);
+            container.scrollTop  = panScrollY - (e.clientY - panStartY);
+          }
+        }
+        return;
+      }
       const { x, y } = getCanvasPos(e);
       mousePos = { x, y };
       updateInfoPanel(x, y);
@@ -1365,15 +1754,72 @@ function initMapTool() {
       }
     });
 
+    overlayCanvas.addEventListener('mouseup', () => {
+      if (panDragging) {
+        panDragging = false;
+        overlayCanvas.style.cursor = mode === 'pan' ? 'grab' : '';
+      }
+    });
+
     overlayCanvas.addEventListener('mouseleave', () => {
+      panDragging = false;
       mousePos = { x: 0, y: 0 };
       const tooltip = getEl('mapTooltip');
       if (tooltip) tooltip.className = 'map-tooltip hidden';
     });
   }
 
+  // Zoom controls
+  function applyZoom(newZoom: number, pivotX?: number, pivotY?: number) {
+    const container = getEl('mapContainer');
+    if (!container) return;
+    const prevZoom = zoomLevel;
+    zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+    const ratio = zoomLevel / prevZoom;
+    const scrollX = pivotX !== undefined ? pivotX * ratio - (pivotX - container.scrollLeft) : container.scrollLeft * ratio;
+    const scrollY = pivotY !== undefined ? pivotY * ratio - (pivotY - container.scrollTop) : container.scrollTop * ratio;
+    resizeCanvases();
+    drawAll();
+    container.scrollLeft = scrollX;
+    container.scrollTop = scrollY;
+    const btn = getEl('zoomReset');
+    if (btn) btn.textContent = Math.round(zoomLevel * 100) + '%';
+  }
+
+  const mapContainer = getEl('mapContainer');
+  if (mapContainer) {
+    mapContainer.addEventListener('wheel', (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = mapContainer.getBoundingClientRect();
+      const pivotX = e.clientX - rect.left + mapContainer.scrollLeft;
+      const pivotY = e.clientY - rect.top + mapContainer.scrollTop;
+      applyZoom(zoomLevel * (e.deltaY > 0 ? 0.9 : 1.1), pivotX, pivotY);
+    }, { passive: false });
+  }
+
+  getEl('zoomIn')?.addEventListener('click', () => applyZoom(zoomLevel * 1.25));
+  getEl('zoomOut')?.addEventListener('click', () => applyZoom(zoomLevel * 0.8));
+  getEl('zoomReset')?.addEventListener('click', () => applyZoom(1.0));
+
   // Listen for simulator budget changes → refresh map budget display
   window.addEventListener('gc:sim-update', () => updateUI());
+
+  // Restore plan from shared URL
+  window.addEventListener('gc:restore-plan', (e: Event) => {
+    const detail = (e as CustomEvent<{ placements?: Record<string, Array<{ tech: string; cx: number; cy: number }>>; cables?: Record<string, Array<{ x1: number; y1: number; x2: number; y2: number }>> }>).detail;
+    Object.keys(MAPS).forEach(mapId => {
+      placements[mapId] = [];
+      if (detail.placements?.[mapId]) {
+        detail.placements[mapId].forEach(p => {
+          const violations = checkPlacementViolations(p.cx, p.cy, p.tech);
+          placements[mapId].push({ tech: p.tech, cx: p.cx, cy: p.cy, id: Date.now() + Math.random(), violations });
+        });
+      }
+      cables[mapId] = detail.cables?.[mapId] ? [...detail.cables[mapId]] : [];
+    });
+    drawAll();
+    updateUI();
+  });
 
   // Init
   resizeCanvases();
