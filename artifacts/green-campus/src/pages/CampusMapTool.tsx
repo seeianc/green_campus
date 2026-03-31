@@ -1203,8 +1203,8 @@ function initMapTool() {
 
     (cables[currentMap] || []).forEach(seg => {
       ctx.strokeStyle = '#e74c3c';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 5]);
+      ctx.lineWidth = 12;
+      ctx.setLineDash([14, 7]);
       ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
       ctx.setLineDash([]);
       const mid = [(seg.x1 + seg.x2) / 2, (seg.y1 + seg.y2) / 2];
