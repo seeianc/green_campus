@@ -1741,8 +1741,7 @@ export default function EnergyGridSimulator() {
       if (cablingEl) {
         const mapMin = Math.round(sharedState.totalMapCableCm);
         cablingEl.min = String(mapMin);
-        const current = parseFloat(cablingEl.value) || 0;
-        if (current < mapMin) cablingEl.value = String(mapMin);
+        cablingEl.value = String(mapMin);
       }
       render();
     });
