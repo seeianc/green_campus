@@ -1203,8 +1203,10 @@ function initMapTool() {
 
     (cables[currentMap] || []).forEach(seg => {
       ctx.strokeStyle = '#e74c3c';
-      ctx.lineWidth = 14;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 5]);
       ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
+      ctx.setLineDash([]);
       const mid = [(seg.x1 + seg.x2) / 2, (seg.y1 + seg.y2) / 2];
       const px = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1);
       const cm = px / GRID;
@@ -1299,12 +1301,6 @@ function initMapTool() {
       ctx.globalAlpha = 1;
       ctx.fillText(t.symbol, p.cx, p.cy + Math.max(5, r * 0.35));
 
-      const [sx, sy] = MAPS[currentMap].substationPx;
-      ctx.strokeStyle = t.color + '88';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.beginPath(); ctx.moveTo(p.cx, p.cy); ctx.lineTo(sx, sy); ctx.stroke();
-      ctx.setLineDash([]);
 
       // Label with background for readability
       ctx.font = 'bold 11px Space Grotesk,sans-serif';
