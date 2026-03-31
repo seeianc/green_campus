@@ -961,6 +961,11 @@ export default function EnergyGridSimulator() {
     const GEO_PER_UNIT = Array(24).fill(2000);
     const BASE_WIND = [3000,3000,3000,3000,3000,2800,2500,2200,1800,1500,1200,1200,1200,1200,1200,1200,1500,1800,2200,2500,2800,3000,3000,3000];
     const BIOMASS_PER_UNIT = Array(24).fill(1000);
+    // Maine semidiurnal tides: 2 highs + 2 lows per day (~6hr cycle)
+    // Peak generation at mid-tide (max flow); near-zero at slack water (high/low)
+    // Profile: peaks at hrs 3,9,15,21 — zeros at hrs 0,6,12,18
+    const TIDAL_STD_PER_UNIT = [0,125,375,500,375,125,0,125,375,500,375,125,0,125,375,500,375,125,0,125,375,500,375,125];
+    const TIDAL_PP_PER_UNIT  = [0,150,450,600,450,150,0,150,450,600,450,150,0,150,450,600,450,150,0,150,450,600,450,150];
 
     // Grid electricity rate and annual kWh production per unit (basis for ROI)
     const GRID_RATE = 0.22;       // $/kWh — Maine commercial rate (own-use savings)
@@ -971,8 +976,8 @@ export default function EnergyGridSimulator() {
       geo:    14_000_000,  // 2,000 kW @ ~80% capacity factor
       hydroLow: 2_000_000, // 500 kW @ ~46% capacity factor
       hydroHigh:7_500_000, // 2,000 kW @ ~43% capacity factor
-      tidalStd: 1_500_000, // 500 kW @ ~34% capacity factor
-      tidalPP:  1_800_000, // 600 kW @ ~34% capacity factor
+      tidalStd: 2_190_000, // 500 kW peak @ ~50% capacity factor (semidiurnal tide cycle)
+      tidalPP:  2_628_000, // 600 kW peak @ ~50% capacity factor (semidiurnal tide cycle)
       biomass:  7_000_000, // 1,000 kW @ ~80% capacity factor
     };
 
@@ -1097,8 +1102,8 @@ export default function EnergyGridSimulator() {
         supply += s.biomass * BIOMASS_PER_UNIT[i];
         supply += s.hydroLow * 500;
         supply += s.hydroHigh * 2000;
-        supply += s.tidalStd * 500;
-        supply += s.tidalPP * 600;
+        supply += s.tidalStd * TIDAL_STD_PER_UNIT[i];
+        supply += s.tidalPP * TIDAL_PP_PER_UNIT[i];
         if (dischargingHours.includes(i) && hasVarGen) supply += bessHourlyDischarge;
         return Math.round(supply);
       });

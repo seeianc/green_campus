@@ -1204,8 +1204,8 @@ function initMapTool() {
 
     (cables[currentMap] || []).forEach(seg => {
       ctx.strokeStyle = '#e74c3c';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 5]);
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]);
       ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
       ctx.setLineDash([]);
       const mid = [(seg.x1 + seg.x2) / 2, (seg.y1 + seg.y2) / 2];
@@ -1401,7 +1401,12 @@ function initMapTool() {
         if (f.type !== 'road') return false;
         return (f.points || []).some(([rx, ry]) => Math.hypot(rx - x, ry - y) < GRID * 4);
       });
-      if (!nearRoad) violations.push('Biomass should be near a road');
+      if (!nearRoad) violations.push('Biomass must be near a road for fuel delivery trucks');
+      const tooCloseToBuilding = MAPS[currentMap].features.some(f => {
+        if (f.type !== 'building') return false;
+        return (f.points || []).some(([bx, by]) => Math.hypot(bx - x, by - y) < GRID * 3);
+      });
+      if (tooCloseToBuilding) violations.push('Biomass too close to building — exhaust and smoke hazard near windows');
     }
     if (tech === 'wind') {
       MAPS[currentMap].features.forEach(f => {
