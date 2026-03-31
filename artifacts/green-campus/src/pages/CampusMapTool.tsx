@@ -1467,7 +1467,20 @@ function initMapTool() {
       const top = p.cy - span / 2;
       return x >= left && x <= left + span && y >= top && y <= top + span;
     });
-    if (idx >= 0) { plist.splice(idx, 1); drawOverlay(); updateUI(); }
+    if (idx >= 0) {
+      const removed = plist[idx];
+      plist.splice(idx, 1);
+      // Remove any cable whose endpoint is near the erased placement
+      const t = TECHS[removed.tech];
+      const hitRadius = Math.max(t.size * GRID, GRID) * 2;
+      cables[currentMap] = (cables[currentMap] || []).filter(seg => {
+        const nearStart = Math.hypot(seg.x1 - removed.cx, seg.y1 - removed.cy) < hitRadius;
+        const nearEnd   = Math.hypot(seg.x2 - removed.cx, seg.y2 - removed.cy) < hitRadius;
+        return !nearStart && !nearEnd;
+      });
+      drawOverlay();
+      updateUI();
+    }
   }
 
   function updateInfoPanel(x: number, y: number) {
