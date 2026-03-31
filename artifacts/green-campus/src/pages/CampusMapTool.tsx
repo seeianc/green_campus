@@ -1605,14 +1605,8 @@ function initMapTool() {
     });
 
     // Cable costs across all maps — $500/ft ($50K per 100 ft)
+    // MST cables already represent full optimal routing; only count those segments
     let cableFt = 0;
-    Object.entries(placements).forEach(([mapId, plist]) => {
-      const ftPerCm = MAPS[mapId].scale / 30.48;
-      plist.forEach(p => {
-        const [sx, sy] = MAPS[mapId].substationPx;
-        cableFt += (Math.hypot(p.cx - sx, p.cy - sy) / GRID) * ftPerCm;
-      });
-    });
     Object.entries(cables).forEach(([mapId, segs]) => {
       const ftPerCm = MAPS[mapId].scale / 30.48;
       segs.forEach(seg => {
