@@ -491,8 +491,8 @@ function initMapTool() {
   const mapImages: Record<string, HTMLImageElement> = {};
   Object.keys(MAPS).forEach(id => {
     const img = new Image();
-    img.src = `${BASE_URL}maps/${id}.png`;
     img.onload = () => { if (id === currentMap) drawAll(); };
+    img.src = `${BASE_URL}maps/${id}.png`;
     mapImages[id] = img;
   });
 
@@ -1860,6 +1860,19 @@ function initMapTool() {
     drawAll();
     updateUI();
   });
+
+  // Re-resize and redraw when the container becomes visible (e.g. switching from simulator view).
+  // The component mounts hidden (display:none), so the initial resizeCanvases() gets clientWidth=0.
+  const mapContainerEl = getEl('mapContainer');
+  if (mapContainerEl) {
+    const ro = new ResizeObserver(() => {
+      if (mapContainerEl.clientWidth > 0) {
+        resizeCanvases();
+        drawAll();
+      }
+    });
+    ro.observe(mapContainerEl);
+  }
 
   // Init
   resizeCanvases();
