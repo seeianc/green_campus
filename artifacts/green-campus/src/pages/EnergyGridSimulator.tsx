@@ -1033,7 +1033,7 @@ export default function EnergyGridSimulator() {
       const isMigratoryBird = s.envConstraints === 'Migratory Bird';
       const isVernalPool = s.envConstraints === 'Vernal Pool';
 
-      const migratoryBirdViolation = isMigratoryBird && s.wind > 0;
+      const migratoryBirdViolation = isMigratoryBird && sharedState.windSensitiveZoneCount > 0;
       const vernalPoolViolation = isVernalPool && s.geo > 0;
 
       // Polar Vortex demand threshold — must be declared before infraCosts
@@ -1567,9 +1567,10 @@ export default function EnergyGridSimulator() {
       if (r.isSupplyChain) alerts.push({ cls: 'warn', msg: '📦 Supply Chain Crisis: Li-Ion BESS cost doubled to $1M/unit.' });
       if (r.isCarbonTax && r.annualCarbonTaxFee > 0) alerts.push({ cls: 'warn', msg: '🌿 Carbon Tax: ' + fmt$(r.annualCarbonTaxFee) + '/yr fee on ' + Math.round(r.annualCarbonTaxFee / 0.10 / 365).toLocaleString() + ' kWh daily shortfall.' });
       if (r.isCarbonTax && r.annualCarbonTaxFee === 0) alerts.push({ cls: 'ok', msg: '✅ Carbon Tax: Grid is 100% renewable — no carbon tax fee applies.' });
-      if (r.migratoryBirdViolation) alerts.push({ cls: 'danger', msg: '🐦 VIOLATION — Migratory Bird Ordinance: Wind turbines are prohibited. Remove wind turbines.' });
+      if (r.migratoryBirdViolation) alerts.push({ cls: 'danger', msg: '🐦 VIOLATION — Migratory Bird Ordinance: Wind turbines in forested areas disrupt migration corridors. Relocate to fields, parking lots, or open water.' });
       if (r.vernalPoolViolation) alerts.push({ cls: 'danger', msg: '🌿 VIOLATION — Vernal Pool Protection: No Geothermal permitted. Remove geothermal.' });
-      if (r.isMigratoryBird && !r.migratoryBirdViolation) alerts.push({ cls: 'warn', msg: '🐦 Migratory Bird Ordinance active: Wind turbines may only be placed in developed areas.' });
+      if (r.isMigratoryBird && !r.migratoryBirdViolation && s.wind > 0) alerts.push({ cls: 'ok', msg: '🐦 Migratory Bird Ordinance: Wind turbine placement compliant — sited in permitted zones (fields, parking, open water).' });
+      if (r.isMigratoryBird && !r.migratoryBirdViolation && s.wind === 0) alerts.push({ cls: 'warn', msg: '🐦 Migratory Bird Ordinance active: Wind turbines permitted in fields, parking lots, and open water — not in forested areas.' });
       if (r.isVernalPool && !r.vernalPoolViolation) alerts.push({ cls: 'warn', msg: '🌿 Vernal Pool Protection active: Geothermal is banned. Max 25% of forested land may be cleared.' });
       if (r.nightOwlViolation) alerts.push({ cls: 'danger', msg: '🌙 VIOLATION — Night Owl Campus: Solar requires at least 2 Li-Ion BESS units for evening storage. Add BESS.' });
       if (r.isNightOwl && !r.nightOwlViolation && s.solar > 0) alerts.push({ cls: 'ok', msg: '🌙 Night Owl Campus: Solar + BESS requirement met. ✅' });

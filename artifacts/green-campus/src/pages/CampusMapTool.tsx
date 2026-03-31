@@ -382,7 +382,7 @@ function initMapTool() {
         { type:'forest', points:[[653,533],[559,508],[457,519],[501,594],[432,612],[409,686],[339,684],[275,790],[333,1243],[778,1183],[773,1003],[749,1006],[697,677],[559,690],[543,590],[668,578]] },
         { type:'building', points:[[362,355],[402,352],[409,329],[433,329],[447,350],[513,358],[519,410],[490,404],[435,409],[460,500],[324,539],[323,488],[350,478],[344,425],[360,419]] },
         { type:'field', points:[[198,322],[570,304],[559,159],[159,187]] },
-        { type:'field', points:[[216,356],[405,317],[397,335],[296,352],[317,527],[272,546],[233,461]] },
+        { type:'field', points:[[520,334],[586,513],[653,494],[586,320]] },        { type:'parking', points:[[215,347],[444,316],[390,338],[293,351],[316,536],[274,546],[235,466]] },
         { type:'parking', points:[[326,596],[399,615],[396,675],[329,672]] },
         { type:'parking', points:[[263,737],[269,764],[318,708],[305,581],[377,575],[432,585],[472,561],[435,513],[306,548],[272,554],[294,705]] },
         { type:'boundary', points:[[147,187],[612,126],[671,573],[549,588],[558,686],[704,678],[749,1003],[776,1003],[779,1181],[339,1238]] },
@@ -405,7 +405,7 @@ function initMapTool() {
     },
     CES: {
       name: 'CES — River / Tidal',
-      desc: 'River with 3+ contour lines = high hydro potential',
+      desc: 'Tidal River nearby = high hydro potential',
       width: 950, height: 671,
       substationPx: [196, 363],
       features: [
@@ -421,7 +421,7 @@ function initMapTool() {
     },
     LCS: {
       name: 'LCS — Coastal Forest',
-      desc: 'Forested coastal campus with steep contours and shoreline access',
+      desc: 'Heavily forested campus with field and nearby pond',
       width: 950, height: 671,
       substationPx: [660, 145],
       features: [
@@ -437,7 +437,7 @@ function initMapTool() {
   
     STG: {
       name: 'STG — Lakeside Campus',
-      desc: 'Hillside campus beside a lake — hydro and wind potential',
+      desc: 'Hillside campus beside a marsh and tidal zone',
       width: 900, height: 1274,
       substationPx: [565, 870],
       features: [
@@ -1373,9 +1373,9 @@ function initMapTool() {
       tidal_zone: '✓ Tidal turbine zone',
       pinch_point: '⭐ 20% tidal power bonus!',
       building: '⚠ Restricted — no wind buffer',
-      forest: 'Forested — wind restrictions may apply',
+      forest: '⚠ Forested — wind turbines violate Migratory Bird Ordinance',
       field: '✓ Good for Solar/Wind/Geothermal',
-      parking: '✓ Good for Solar arrays',
+      parking: '✓ Good for Solar/Wind arrays',
       road: '✓ Road access — Biomass suitable',
       nobuild: '✗ No-Build zone',
       contour_zone: 'Steep terrain — check hydro potential',
@@ -1422,6 +1422,9 @@ function initMapTool() {
           if (d < 5 * GRID) violations.push('Wind buffer touches building — $200K fee');
         }
       });
+      if (zone && zone.type === 'forest') {
+        violations.push('Migratory Bird Ordinance: turbines not permitted in forested areas');
+      }
     }
     return violations;
   }
@@ -1583,11 +1586,23 @@ function initMapTool() {
     totalCost += cableCm * CABLE_COST_PER_CM;
     if (totalKw > 3000) totalCost += 500000;
 
+    // Count wind turbines in ecologically sensitive zones (forest, wetland)
+    let windSensitive = 0;
+    Object.keys(placements).forEach(mapId => {
+      placements[mapId].forEach(p => {
+        if (p.tech === 'wind') {
+          const z = getZoneAt(p.cx, p.cy);
+          if (z && (z.type === 'forest' || z.type === 'wetland')) windSensitive++;
+        }
+      });
+    });
+
     // Sync to shared state so Grid Simulator can read it
     sharedState.techCounts = counts;
     sharedState.totalMapCost = totalCost;
     sharedState.totalMapKw = totalKw;
     sharedState.totalMapCableCm = cableCm;
+    sharedState.windSensitiveZoneCount = windSensitive;
     emitMapUpdate();
 
     const budgetLimit = sharedState.budgetLimit;
