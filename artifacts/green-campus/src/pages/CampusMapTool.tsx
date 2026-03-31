@@ -1216,24 +1216,6 @@ function initMapTool() {
       ctx.fillText(cm.toFixed(1) + 'cm', mid[0], mid[1] - 3);
     });
 
-    // Draw substation marker
-    const sub = MAPS[currentMap].substationPx as [number, number];
-    if (sub) {
-      ctx.save();
-      ctx.fillStyle = '#f0b429';
-      ctx.strokeStyle = '#0d1117';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(sub[0] - 14, sub[1] - 10, 28, 20, 3);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#0d1117';
-      ctx.font = 'bold 10px JetBrains Mono,monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚡SUB', sub[0], sub[1]);
-      ctx.restore();
-    }
-
     plist.filter(p => p.tech === 'wind').forEach(p => {
       ctx.beginPath(); ctx.arc(p.cx, p.cy, 5 * GRID, 0, Math.PI * 2);
       ctx.fillStyle = '#58a6ff35'; ctx.fill();
