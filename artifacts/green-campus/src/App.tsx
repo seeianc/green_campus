@@ -59,7 +59,7 @@ export default function App() {
       const btn = document.getElementById(`hourBtn-${i}`);
       if (btn && btn.classList.contains("active")) bessHours.push(i);
     }
-    return { v: 1, placements: sharedState.placements, cables: sharedState.cables, sim, bessHours };
+    return { v: 1, placements: sharedState.placements, sim, bessHours };
   }
 
   // ── Snapshot share (URL-based, no session) ──────────────────────────────

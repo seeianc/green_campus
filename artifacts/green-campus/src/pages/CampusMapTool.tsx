@@ -221,7 +221,6 @@ export default function CampusMapTool() {
             <div class="map-mode-row">
               <button class="map-mode-btn active" id="modPlace">Place</button>
               <button class="map-mode-btn" id="modErase">Erase</button>
-              <button class="map-mode-btn" id="modCable">Cable</button>
               <button class="map-mode-btn" id="modPan">Pan</button>
             </div>
 
@@ -596,7 +595,6 @@ function initMapTool() {
   // Mode buttons
   getEl('modPlace')?.addEventListener('click', () => setMode('place'));
   getEl('modErase')?.addEventListener('click', () => setMode('erase'));
-  getEl('modCable')?.addEventListener('click', () => setMode('cable'));
   getEl('modPan')?.addEventListener('click', () => setMode('pan'));
   getEl('mapClearBtn')?.addEventListener('click', clearAll);
 
@@ -1216,10 +1214,22 @@ function initMapTool() {
       ctx.fillText(cm.toFixed(1) + 'cm', mid[0], mid[1] - 3);
     });
 
-    if (mode === 'cable' && cableStart) {
-      ctx.strokeStyle = '#e74c3c88';
-      ctx.lineWidth = 14;
-      ctx.beginPath(); ctx.moveTo(cableStart.x, cableStart.y); ctx.lineTo(mousePos.x, mousePos.y); ctx.stroke();
+    // Draw substation marker
+    const sub = MAPS[currentMap].substationPx as [number, number];
+    if (sub) {
+      ctx.save();
+      ctx.fillStyle = '#f0b429';
+      ctx.strokeStyle = '#0d1117';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(sub[0] - 14, sub[1] - 10, 28, 20, 3);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#0d1117';
+      ctx.font = 'bold 10px JetBrains Mono,monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚡SUB', sub[0], sub[1]);
+      ctx.restore();
     }
 
     plist.filter(p => p.tech === 'wind').forEach(p => {
@@ -1438,8 +1448,42 @@ function initMapTool() {
       id: Date.now() + Math.random(),
       violations
     });
+    buildOptimalCables();
     drawOverlay();
     updateUI();
+  }
+
+  function buildOptimalCables() {
+    const plist = placements[currentMap] || [];
+    const sub = MAPS[currentMap].substationPx as [number, number];
+    if (!sub || plist.length === 0) { cables[currentMap] = []; return; }
+
+    // Nodes: index 0 = substation, rest = placements
+    const nodes: Array<[number, number]> = [
+      [sub[0], sub[1]],
+      ...plist.map(p => [p.cx, p.cy] as [number, number]),
+    ];
+
+    // Prim's MST — finds minimum total cable length connecting all units to substation
+    const inTree = new Set<number>([0]);
+    const result: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+
+    while (inTree.size < nodes.length) {
+      let bestDist = Infinity;
+      let bestI = -1, bestJ = -1;
+      inTree.forEach(i => {
+        nodes.forEach((_, j) => {
+          if (inTree.has(j)) return;
+          const d = Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]);
+          if (d < bestDist) { bestDist = d; bestI = i; bestJ = j; }
+        });
+      });
+      if (bestJ === -1) break;
+      result.push({ x1: nodes[bestI][0], y1: nodes[bestI][1], x2: nodes[bestJ][0], y2: nodes[bestJ][1] });
+      inTree.add(bestJ);
+    }
+
+    cables[currentMap] = result;
   }
 
   function eraseUnit(x: number, y: number) {
@@ -1468,16 +1512,8 @@ function initMapTool() {
       return x >= left && x <= left + span && y >= top && y <= top + span;
     });
     if (idx >= 0) {
-      const removed = plist[idx];
       plist.splice(idx, 1);
-      // Remove any cable whose endpoint is near the erased placement
-      const t = TECHS[removed.tech];
-      const hitRadius = Math.max(t.size * GRID, GRID) * 2;
-      cables[currentMap] = (cables[currentMap] || []).filter(seg => {
-        const nearStart = Math.hypot(seg.x1 - removed.cx, seg.y1 - removed.cy) < hitRadius;
-        const nearEnd   = Math.hypot(seg.x2 - removed.cx, seg.y2 - removed.cy) < hitRadius;
-        return !nearStart && !nearEnd;
-      });
+      buildOptimalCables();
       drawOverlay();
       updateUI();
     }
@@ -1694,15 +1730,13 @@ function initMapTool() {
     selectedTech = tech;
     document.querySelectorAll('.map-tech-btn').forEach(b => b.classList.remove('active'));
     getEl(`btn-${tech}`)?.classList.add('active');
-    if (mode !== 'place' && mode !== 'cable') setMode('place');
+    if (mode !== 'place') setMode('place');
   }
 
   function setMode(m: string) {
     mode = m;
-    if (m !== 'cable') cableStart = null;
     getEl('modPlace')?.classList.toggle('active', m === 'place');
     getEl('modErase')?.classList.toggle('active', m === 'erase');
-    getEl('modCable')?.classList.toggle('active', m === 'cable');
     getEl('modPan')?.classList.toggle('active', m === 'pan');
     const wrap = getEl('canvasWrap');
     wrap?.classList.toggle('erase-mode', m === 'erase');
@@ -1742,15 +1776,8 @@ function initMapTool() {
         placeUnit(x, y);
       } else if (mode === 'erase') {
         eraseUnit(x, y);
-      } else if (mode === 'cable') {
-        if (!cableStart) {
-          cableStart = { x, y };
-        } else {
-          cables[currentMap].push({ x1: cableStart.x, y1: cableStart.y, x2: x, y2: y });
-          cableStart = null;
-          drawOverlay();
-          updateUI();
-        }
+      } else if (false) {
+        // cable mode removed — cables are auto-routed via MST
       }
     });
 
@@ -1843,8 +1870,11 @@ function initMapTool() {
           placements[mapId].push({ tech: p.tech, cx: p.cx, cy: p.cy, id: Date.now() + Math.random(), violations });
         });
       }
-      cables[mapId] = detail.cables?.[mapId] ? [...detail.cables[mapId]] : [];
     });
+    // Rebuild cables via MST for each map (cables are derived, not saved)
+    const savedMap = currentMap;
+    Object.keys(MAPS).forEach(mapId => { currentMap = mapId; buildOptimalCables(); });
+    currentMap = savedMap;
     drawAll();
     updateUI();
   });
