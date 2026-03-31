@@ -8,6 +8,7 @@ export interface SharedState {
   placements: Record<string, Array<{ tech: string; cx: number; cy: number }>>;
   cables: Record<string, Array<{ x1: number; y1: number; x2: number; y2: number }>>;
   windSensitiveZoneCount: number;
+  mapViolations: string[];
 }
 
 export const sharedState: SharedState = {
@@ -20,6 +21,7 @@ export const sharedState: SharedState = {
   placements: {},
   cables: {},
   windSensitiveZoneCount: 0,
+  mapViolations: [],
 };
 
 export function emitMapUpdate() {

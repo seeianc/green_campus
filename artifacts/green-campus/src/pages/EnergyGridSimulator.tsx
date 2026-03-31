@@ -1603,6 +1603,11 @@ export default function EnergyGridSimulator() {
       if (r.solarStorageViolation) alerts.push({ cls: 'danger', msg: `☀️ VIOLATION — Solar Storage Requirement: ${s.solar} solar unit(s) require ${r.requiredStorageForSolar.toLocaleString()} kWh of storage. Current total storage: ${r.totalStorage.toLocaleString()} kWh. Add storage to comply.` });
       if (s.solar > 0 && !r.solarStorageViolation) alerts.push({ cls: 'ok', msg: `☀️ Solar Storage Requirement met: ${r.totalStorage.toLocaleString()} kWh storage ≥ ${r.requiredStorageForSolar.toLocaleString()} kWh required. ✅` });
 
+      // Map siting violations (from CampusMapTool)
+      sharedState.mapViolations.forEach(v => {
+        alerts.push({ cls: 'danger', msg: `🗺 Map Siting: ${v}` });
+      });
+
       const stack = getEl('alertsStack');
       if (stack) {
         stack.innerHTML = alerts.length === 0

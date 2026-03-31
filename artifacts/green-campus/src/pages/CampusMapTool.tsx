@@ -277,6 +277,11 @@ export default function CampusMapTool() {
               <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px">No placements yet</div>
             </div>
 
+            <div class="map-sidebar-section" id="violationsSectionHeader">Violations</div>
+            <div class="map-violations-panel" id="violationsPanel">
+              <div class="map-no-violations">✓ No violations</div>
+            </div>
+
             <div class="map-sidebar-section">Legend</div>
             <div class="map-legend">
               <div class="map-legend-item"><div class="map-legend-dot" style="background:#ff6e4080;border:1px solid #ff6e40"></div>Cable line</div>
@@ -291,10 +296,6 @@ export default function CampusMapTool() {
               <div class="map-legend-item"><div class="map-legend-dot" style="background:#58a6ff30;border:1px dashed #58a6ff"></div>Wind buffer</div>
             </div>
 
-            <div class="map-sidebar-section">Violations</div>
-            <div class="map-violations-panel" id="violationsPanel">
-              <div class="map-no-violations">✓ No violations</div>
-            </div>
           </div>
 
           <div class="map-container" id="mapContainer">
@@ -382,9 +383,10 @@ function initMapTool() {
         { type:'forest', points:[[653,533],[559,508],[457,519],[501,594],[432,612],[409,686],[339,684],[275,790],[333,1243],[778,1183],[773,1003],[749,1006],[697,677],[559,690],[543,590],[668,578]] },
         { type:'building', points:[[362,355],[402,352],[409,329],[433,329],[447,350],[513,358],[519,410],[490,404],[435,409],[460,500],[324,539],[323,488],[350,478],[344,425],[360,419]] },
         { type:'field', points:[[198,322],[570,304],[559,159],[159,187]] },
-        { type:'field', points:[[520,334],[586,513],[653,494],[586,320]] },        { type:'parking', points:[[215,347],[444,316],[390,338],[293,351],[316,536],[274,546],[235,466]] },
+        { type:'field', points:[[520,334],[586,513],[653,494],[586,320]] },        
+        { type:'parking', points:[[215,347],[444,316],[390,338],[293,351],[316,536],[274,546],[235,466]] },
         { type:'parking', points:[[326,596],[399,615],[396,675],[329,672]] },
-        { type:'parking', points:[[263,737],[269,764],[318,708],[305,581],[377,575],[432,585],[472,561],[435,513],[306,548],[272,554],[294,705]] },
+        { type:'road', points:[[263,737],[269,764],[318,708],[305,581],[377,575],[432,585],[472,561],[435,513],[306,548],[272,554],[294,705]] },
         { type:'boundary', points:[[147,187],[612,126],[671,573],[549,588],[558,686],[704,678],[749,1003],[776,1003],[779,1181],[339,1238]] },
       ]
     },
@@ -1374,6 +1376,20 @@ function initMapTool() {
     return descs[type] || '';
   }
 
+  // Minimum distance from point (px,py) to any edge of a polygon
+  function pointToPolygonDist(px: number, py: number, points: number[][]): number {
+    let minDist = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const [ax, ay] = points[i];
+      const [bx, by] = points[(i + 1) % points.length];
+      const dx = bx - ax, dy = by - ay;
+      const lenSq = dx * dx + dy * dy;
+      const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+      minDist = Math.min(minDist, Math.hypot(px - (ax + t * dx), py - (ay + t * dy)));
+    }
+    return minDist;
+  }
+
   function checkPlacementViolations(x: number, y: number, tech: string): string[] {
     const violations: string[] = [];
     const zone = getZoneAt(x, y);
@@ -1397,15 +1413,14 @@ function initMapTool() {
       }
     }
     if (tech === 'biomass') {
-      const nearRoad = MAPS[currentMap].features.some(f => {
-        if (f.type !== 'road') return false;
-        return (f.points || []).some(([rx, ry]) => Math.hypot(rx - x, ry - y) < GRID * 4);
-      });
-      if (!nearRoad) violations.push('Biomass must be near a road for fuel delivery trucks');
-      const tooCloseToBuilding = MAPS[currentMap].features.some(f => {
-        if (f.type !== 'building') return false;
-        return (f.points || []).some(([bx, by]) => Math.hypot(bx - x, by - y) < GRID * 3);
-      });
+      const roads = MAPS[currentMap].features.filter(f => f.type === 'road' && (f.points || []).length >= 2);
+      if (roads.length > 0) {
+        const nearRoad = roads.some(f => pointToPolygonDist(x, y, f.points!) < GRID * 5);
+        if (!nearRoad) violations.push('Biomass must be near a road for fuel delivery trucks');
+      }
+      const tooCloseToBuilding = MAPS[currentMap].features.some(f =>
+        f.type === 'building' && (f.points || []).length >= 2 && pointToPolygonDist(x, y, f.points!) < GRID * 3
+      );
       if (tooCloseToBuilding) violations.push('Biomass too close to building — exhaust and smoke hazard near windows');
     }
     if (tech === 'wind') {
@@ -1698,11 +1713,17 @@ function initMapTool() {
     if (totalCost > budgetLimit) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - budgetLimit) / 1e6).toFixed(2)}M`);
 
     const vp = getEl('violationsPanel');
+    const vh = getEl('violationsSectionHeader');
     if (vp) {
       vp.innerHTML = allViolations.length
         ? allViolations.map(v => `<div class="map-violation">⚠ ${v}</div>`).join('')
         : '<div class="map-no-violations">✓ No violations</div>';
     }
+    if (vh) {
+      vh.style.color = allViolations.length ? 'var(--danger)' : '';
+      vh.textContent = allViolations.length ? `Violations (${allViolations.length})` : 'Violations';
+    }
+    sharedState.mapViolations = [...allViolations];
 
     // Unused import suppressor
     void MAP_TECH_TO_SIM;
