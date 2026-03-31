@@ -586,7 +586,7 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="liIon" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Thermal Storage</div><div class="e-input-sub">2,500 kWh/unit · $1M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Stores heat/cold for HVAC loads — reduces Polar Vortex peak demand</div></div>
+                  <div><div class="e-input-label">Thermal Storage</div><div class="e-input-sub">2,500 kWh/unit · $1M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Stores heat/cold for HVAC loads — reduces Polar Vortex peak demand · eliminates heating oil costs when charged by excess wind/hydro/tidal</div></div>
                   <input class="e-qty-input" type="number" id="thermal" value="0" min="0" max="10">
                 </div>
                 <div class="e-input-row">
@@ -594,7 +594,7 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="flywheel" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">CAES</div><div class="e-input-sub">5,000 kWh/unit · $2M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Compressed Air Energy Storage — maximizes island mode duration during grid outages</div></div>
+                  <div><div class="e-input-label">CAES</div><div class="e-input-sub">5,000 kWh/unit · $2M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Compressed Air Energy Storage — maximizes island mode duration · stores seasonal spring surplus for winter peak demand reduction</div></div>
                   <input class="e-qty-input" type="number" id="caes" value="0" min="0" max="10">
                 </div>
               </div>
@@ -873,6 +873,14 @@ export default function EnergyGridSimulator() {
                     <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lPivotDesc">No active penalty or bonus</div>
                   </div>
                   <span class="val" id="lPivot">$0</span>
+                </div>
+                <div class="e-ledger-row" id="lThermalOilRow" style="display:none">
+                  <div><div>Thermal — Heating Oil Offset</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lThermalOilDesc">—</div></div>
+                  <span class="val pos" id="lThermalOil">$0</span>
+                </div>
+                <div class="e-ledger-row" id="lCaesSeasonalRow" style="display:none">
+                  <div><div>CAES — Seasonal Peak Shaving</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lCaesSeasonalDesc">—</div></div>
+                  <span class="val pos" id="lCaesSeasonal">$0</span>
                 </div>
                 <div class="e-ledger-row" style="font-size:15px"><span>Net Annual Savings</span><span class="val pos" id="lFinal">$0</span></div>
               </div>
@@ -1220,7 +1228,16 @@ export default function EnergyGridSimulator() {
       const baseAnnualSavings = Object.values(roiSavings).reduce((a,b)=>a+b,0) + capAdjustment;
       const pivotImpact = isCarbonTax ? -annualCarbonTaxFee :
                           (isAIHub && totalStorage === 0) ? -50000 : 0;
-      const finalSavings = baseAnnualSavings + pivotImpact;
+
+      // Thermal storage: eliminates heating oil costs when charged by excess wind/hydro/tidal
+      const hasThermalSource = s.wind > 0 || s.hydroLow > 0 || s.hydroHigh > 0 || s.tidalStd > 0 || s.tidalPP > 0;
+      const thermalHeatingOilSavings = (s.thermal > 0 && hasThermalSource) ? s.thermal * 75000 : 0;
+
+      // CAES: stores seasonal spring surplus for winter peak demand reduction
+      const hasCaesSource = s.wind > 0 || s.hydroLow > 0 || s.hydroHigh > 0 || s.tidalStd > 0 || s.tidalPP > 0 || s.solar > 0;
+      const caesSeasonalSavings = (s.caes > 0 && hasCaesSource) ? s.caes * 30000 : 0;
+
+      const finalSavings = baseAnnualSavings + pivotImpact + thermalHeatingOilSavings + caesSeasonalSavings;
       const roi = finalSavings > 0 ? (totalSpent / finalSavings).toFixed(2) : null;
       const remaining = startBudget - totalSpent;
 
@@ -1251,7 +1268,7 @@ export default function EnergyGridSimulator() {
         annualRenewableRevenue, renewableRevenueProjection,
         totalCostAdjustments, geoCostAdjustment, hydroCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment, annualCarbonTaxFee,
         annualKwh, totalAnnualKwh, annualDemandKwh, surplusKwh, capAdjustment,
-        roiSavings, baseAnnualSavings, pivotImpact, finalSavings, roi,
+        roiSavings, baseAnnualSavings, pivotImpact, thermalHeatingOilSavings, caesSeasonalSavings, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
         grantCompliant, isGrant, isPolar, polarDemandThreshold, isAIHub, isMaint, isSupplyChain, isCarbonTax, infraCosts, genCosts, storageCosts, emergingCosts,
         migratoryBirdViolation, vernalPoolViolation,
@@ -1666,6 +1683,18 @@ export default function EnergyGridSimulator() {
         if (r.isCarbonTax) pivotDescEl.textContent = `Carbon Tax scenario: annual fee on fossil fuel baseline`;
         else if (r.isAIHub && r.totalStorage === 0) pivotDescEl.textContent = 'AI Hub scenario: storage required — $50K/yr reliability penalty';
         else pivotDescEl.textContent = 'No active scenario penalty or bonus';
+      }
+      const thermalOilRow = getEl('lThermalOilRow');
+      if (thermalOilRow) thermalOilRow.style.display = r.thermalHeatingOilSavings > 0 ? '' : 'none';
+      if (r.thermalHeatingOilSavings > 0) {
+        setLedger('lThermalOil', r.thermalHeatingOilSavings);
+        const d = getEl('lThermalOilDesc'); if (d) d.textContent = `Thermal units charged by wind/hydro/tidal — heating oil displaced`;
+      }
+      const caesRow = getEl('lCaesSeasonalRow');
+      if (caesRow) caesRow.style.display = r.caesSeasonalSavings > 0 ? '' : 'none';
+      if (r.caesSeasonalSavings > 0) {
+        setLedger('lCaesSeasonal', r.caesSeasonalSavings);
+        const d = getEl('lCaesSeasonalDesc'); if (d) d.textContent = `Spring surplus stored, discharged at winter demand peaks`;
       }
       setLedger('lFinal', r.finalSavings);
 
