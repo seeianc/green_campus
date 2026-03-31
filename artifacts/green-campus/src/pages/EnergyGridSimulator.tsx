@@ -626,7 +626,7 @@ export default function EnergyGridSimulator() {
               <div class="e-card-header"><div class="dot" style="background:#8f6a3a"></div>Infrastructure & Fees</div>
               <div class="e-card-body">
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Cabling Length (cm)</div><div class="e-input-sub">$50K per cm</div></div>
+                  <div><div class="e-input-label">Cabling Length (ft)</div><div class="e-input-sub">$500 per ft</div></div>
                   <input class="e-qty-input" type="number" id="cabling" value="0" min="0">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
@@ -1004,7 +1004,7 @@ export default function EnergyGridSimulator() {
         thermal: getVal('thermal'), flywheel: getVal('flywheel'), caes: getVal('caes'),
         hydrogen: getVal('hydrogen'), v2g: getVal('v2g'), scada: getVal('scada'),
         cabling: (() => {
-          const mapMin = Math.round(sharedState.totalMapCableCm);
+          const mapMin = Math.round(sharedState.totalMapCableFt);
           const el = getEl<HTMLInputElement>('cabling');
           const val = +(el?.value || 0);
           if (el && val < mapMin) { el.value = String(mapMin); return mapMin; }
@@ -1070,7 +1070,7 @@ export default function EnergyGridSimulator() {
       } : { hydrogen: 0, v2g: 0, scada: 0 };
 
       const infraCosts = {
-        cabling: s.cabling * 50000,
+        cabling: s.cabling * 500, // $500/ft = $50K per 100 ft
         craneLogistics: s.wind > 0 && isCrane ? 500000 : 0,
         windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
         utilityFee: totalPeakSupply > 3000 ? 500000 : 0,
@@ -1739,7 +1739,7 @@ export default function EnergyGridSimulator() {
       });
       const cablingEl = getEl<HTMLInputElement>('cabling');
       if (cablingEl) {
-        const mapMin = Math.round(sharedState.totalMapCableCm);
+        const mapMin = Math.round(sharedState.totalMapCableFt);
         cablingEl.min = String(mapMin);
         cablingEl.value = String(mapMin);
       }

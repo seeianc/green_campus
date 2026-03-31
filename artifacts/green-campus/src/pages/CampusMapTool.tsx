@@ -207,7 +207,7 @@ export default function CampusMapTool() {
           <div class="map-header-stats">
             <div class="map-stat" id="statPower">Power: <span>0 kW</span></div>
             <div class="map-stat" id="statStorage">Storage: <span>0 kWh</span></div>
-            <div class="map-stat" id="statCable">Cable: <span>0 cm</span></div>
+            <div class="map-stat" id="statCable">Cable: <span>0 ft</span></div>
             <div class="map-stat" id="statBudget">Budget: <span>$0</span></div>
             <div class="map-stat" id="statIsland">Island: <span>0 h</span></div>
             <div class="map-stat" id="statForest">Forest: <span>—</span></div>
@@ -367,6 +367,7 @@ function initMapTool() {
     desc: string;
     width: number;
     height: number;
+    scale: number; // map scale denominator (e.g. 3048 means 1:3048, so 1 cm = 100 ft)
     substationPx: [number, number];
     features: Feature[];
   };
@@ -375,7 +376,7 @@ function initMapTool() {
     RLS: {
       name: 'RLS — Inland School',
       desc: 'Inland campus, forested hillside, no water access',
-      width: 900, height: 1274,
+      width: 900, height: 1274, scale: 3048,
       substationPx: [353, 525],
       features: [
         { type:'forest', points:[[653,533],[559,508],[457,519],[501,594],[432,612],[409,686],[339,684],[275,790],[333,1243],[778,1183],[773,1003],[749,1006],[697,677],[559,690],[543,590],[668,578]] },
@@ -390,7 +391,7 @@ function initMapTool() {
     EDS: {
       name: 'EDS — On Penobscot Bay',
       desc: 'Coastal campus on Penobscot Bay',
-      width: 950, height: 671,
+      width: 950, height: 671, scale: 3048,
       substationPx: [440, 500],
       features: [
         { type:'water', points:[[245,208],[260,285],[245,381],[252,381],[267,302],[256,218]] },
@@ -405,7 +406,7 @@ function initMapTool() {
     CES: {
       name: 'CES — River / Tidal',
       desc: 'Tidal River nearby = high hydro potential',
-      width: 950, height: 671,
+      width: 950, height: 671, scale: 4048,
       substationPx: [196, 363],
       features: [
         { type:'forest', points:[[707,263],[765,251],[804,300],[780,317],[784,343],[702,363],[685,326],[522,377],[682,320]] },
@@ -421,7 +422,7 @@ function initMapTool() {
     LCS: {
       name: 'LCS — Coastal Forest',
       desc: 'Heavily forested campus with field and nearby pond',
-      width: 950, height: 671,
+      width: 950, height: 671, scale: 5213,
       substationPx: [660, 145],
       features: [
         { type:'forest', points:[[171,300],[316,213],[339,259],[396,268],[426,255],[402,192],[499,169],[491,114],[546,99],[556,136],[524,149],[537,180],[570,173],[593,237],[581,316],[612,322],[637,375],[750,349],[775,429],[660,445],[506,490],[414,534],[403,576],[275,621],[254,617]] },
@@ -437,7 +438,7 @@ function initMapTool() {
     STG: {
       name: 'STG — Lakeside Campus',
       desc: 'Hillside campus beside a marsh and tidal zone',
-      width: 900, height: 1274,
+      width: 900, height: 1274, scale: 3448,
       substationPx: [565, 870],
       features: [
         { type:'road', points:[[505,948],[534,952],[523,1011],[550,1087],[544,1163],[525,1154]] },
@@ -672,7 +673,7 @@ function initMapTool() {
     ctx.strokeStyle = imgLoaded ? 'rgba(0,0,0,0.5)' : 'transparent';
     ctx.lineWidth = 2;
     for (let x = 0; x < m.width; x += GRID * 5) {
-      const label = (x / GRID) + 'cm';
+      const label = Math.round((x / GRID) * m.scale / 30.48) + 'ft';
       if (imgLoaded) ctx.strokeText(label, x + 2, 12);
       ctx.fillText(label, x + 2, 12);
     }
@@ -1203,17 +1204,18 @@ function initMapTool() {
 
     (cables[currentMap] || []).forEach(seg => {
       ctx.strokeStyle = '#e74c3c';
-      ctx.lineWidth = 12;
-      ctx.setLineDash([14, 7]);
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 5]);
       ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
       ctx.setLineDash([]);
       const mid = [(seg.x1 + seg.x2) / 2, (seg.y1 + seg.y2) / 2];
       const px = Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1);
       const cm = px / GRID;
+      const ft = Math.round(cm * MAPS[currentMap].scale / 30.48);
       ctx.fillStyle = '#e74c3caa';
       ctx.font = '8px JetBrains Mono,monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(cm.toFixed(1) + 'cm', mid[0], mid[1] - 3);
+      ctx.fillText(ft + 'ft', mid[0], mid[1] - 3);
     });
 
     plist.filter(p => p.tech === 'wind').forEach(p => {
@@ -1505,12 +1507,13 @@ function initMapTool() {
     const displayY = mode === 'place' && selectedTech ? snapToGridCell(x, y, selectedTech).y : y;
     const distPx = Math.hypot(displayX - sx, displayY - sy);
     const distCm = distPx / GRID;
-    const CABLE_COST_PER_CM = 50000; // $50K per cm
-    const cableCost = distCm * CABLE_COST_PER_CM;
+    const ftPerCm2 = MAPS[currentMap].scale / 30.48;
+    const cableCost = (distCm * ftPerCm2) * 500; // $500/ft = $50K per 100 ft
     const zone = getZoneAt(x, y);
-    const cursorEl = getEl('infoCursor'); if (cursorEl) cursorEl.textContent = `${(displayX / GRID).toFixed(1)}, ${(displayY / GRID).toFixed(1)} cm`;
+    const ftPerCm = MAPS[currentMap].scale / 30.48;
+    const cursorEl = getEl('infoCursor'); if (cursorEl) cursorEl.textContent = `${Math.round(displayX / GRID * ftPerCm)}ft, ${Math.round(displayY / GRID * ftPerCm)}ft`;
     const zoneEl = getEl('infoZone'); if (zoneEl) zoneEl.textContent = zone ? (zone.label || zone.type) : 'open land';
-    const distEl = getEl('infoDist'); if (distEl) distEl.textContent = `${distCm.toFixed(1)} cm`;
+    const distEl = getEl('infoDist'); if (distEl) distEl.textContent = `${Math.round(distCm * ftPerCm)} ft`;
     const costEl = getEl('infoCableCost'); if (costEl) costEl.textContent = `$${(cableCost / 1000).toFixed(0)}K`;
   }
 
@@ -1596,21 +1599,23 @@ function initMapTool() {
       counts[p.tech] = (counts[p.tech] || 0) + 1;
     });
 
-    // Cable costs across all maps
-    let cableCm = 0;
+    // Cable costs across all maps — $500/ft ($50K per 100 ft)
+    let cableFt = 0;
     Object.entries(placements).forEach(([mapId, plist]) => {
+      const ftPerCm = MAPS[mapId].scale / 30.48;
       plist.forEach(p => {
         const [sx, sy] = MAPS[mapId].substationPx;
-        cableCm += Math.hypot(p.cx - sx, p.cy - sy) / GRID;
+        cableFt += (Math.hypot(p.cx - sx, p.cy - sy) / GRID) * ftPerCm;
       });
     });
-    Object.values(cables).forEach(segs => {
+    Object.entries(cables).forEach(([mapId, segs]) => {
+      const ftPerCm = MAPS[mapId].scale / 30.48;
       segs.forEach(seg => {
-        cableCm += Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / GRID;
+        cableFt += (Math.hypot(seg.x2 - seg.x1, seg.y2 - seg.y1) / GRID) * ftPerCm;
       });
     });
-    const CABLE_COST_PER_CM = 50000; // $50K per cm — must match EnergyGridSimulator
-    totalCost += cableCm * CABLE_COST_PER_CM;
+    const CABLE_COST_PER_FT = 500; // $500/ft = $50K per 100 ft
+    totalCost += cableFt * CABLE_COST_PER_FT;
     if (totalKw > 3000) totalCost += 500000;
 
     // Count wind turbines in ecologically sensitive zones (forest, wetland)
@@ -1628,7 +1633,7 @@ function initMapTool() {
     sharedState.techCounts = counts;
     sharedState.totalMapCost = totalCost;
     sharedState.totalMapKw = totalKw;
-    sharedState.totalMapCableCm = cableCm;
+    sharedState.totalMapCableFt = cableFt;
     sharedState.windSensitiveZoneCount = windSensitive;
     emitMapUpdate();
 
@@ -1643,7 +1648,7 @@ function initMapTool() {
     }
 
     const storageEl = getEl('statStorage'); if (storageEl) storageEl.innerHTML = `Storage: <span>${totalStorage.toLocaleString()} kWh</span>`;
-    const cableEl = getEl('statCable'); if (cableEl) cableEl.innerHTML = `Cable: <span>${cableCm.toFixed(1)} cm</span>`;
+    const cableEl = getEl('statCable'); if (cableEl) cableEl.innerHTML = `Cable: <span>${Math.round(cableFt)} ft</span>`;
     const budgetEl = getEl('statBudget');
     if (budgetEl) {
       const over = totalCost > budgetLimit;

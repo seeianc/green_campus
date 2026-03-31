@@ -4,7 +4,7 @@ export interface SharedState {
   techCounts: Record<string, number>;
   totalMapCost: number;
   totalMapKw: number;
-  totalMapCableCm: number;
+  totalMapCableFt: number;
   placements: Record<string, Array<{ tech: string; cx: number; cy: number }>>;
   cables: Record<string, Array<{ x1: number; y1: number; x2: number; y2: number }>>;
   windSensitiveZoneCount: number;
@@ -16,7 +16,7 @@ export const sharedState: SharedState = {
   techCounts: {},
   totalMapCost: 0,
   totalMapKw: 0,
-  totalMapCableCm: 0,
+  totalMapCableFt: 0,
   placements: {},
   cables: {},
   windSensitiveZoneCount: 0,
