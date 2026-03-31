@@ -122,12 +122,12 @@ export default function CampusMapTool() {
       .map-count-val { font-family: 'JetBrains Mono',monospace; font-weight: 600; color: var(--accent); }
 
       .map-violations-panel {
-        padding: 8px 10px; background: #1c1010; border-radius: 5px; border: 1px solid #3a1a1a;
-        overflow-y: auto;
+        padding: 10px 12px; background: #1c1010; border-radius: 5px; border: 1px solid #3a1a1a;
+        overflow-y: auto; min-height: 80px;
       }
-      .map-violation { font-size: 12px; color: var(--danger); padding: 5px 0; border-bottom: 1px solid #2a1010; line-height: 1.4; }
+      .map-violation { font-size: 12px; color: var(--danger); padding: 7px 0; border-bottom: 1px solid #2a1010; line-height: 1.5; }
       .map-violation:last-child { border-bottom: none; }
-      .map-no-violations { font-size: 11px; color: var(--accent); padding: 2px 0; }
+      .map-no-violations { font-size: 11px; color: var(--accent); padding: 4px 0; }
 
       .map-container {
         flex: 1;
