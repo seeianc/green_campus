@@ -1711,7 +1711,7 @@ function initMapTool() {
       }
     });
     if (totalKw > 3000) allViolations.unshift('⚡ Utility upgrade required (+$500K)');
-    if (totalStorage < 2000 && allPlacements.length > 0) allViolations.push('⚠ Need 2,000+ kWh for Grid-Down resilience');
+    if (totalStorage < 2000 && allPlacements.length > 0) allViolations.push(`⚠ Grid-Down Resilience: only ${totalStorage.toLocaleString()} kWh of storage placed on map (need 2,000+ kWh) — simulator inputs don't count here; place BESS, Flywheel, or CAES units directly on the map`);
     if (totalCost > budgetLimit) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - budgetLimit) / 1e6).toFixed(2)}M`);
 
     const vp = getEl('violationsPanel');
