@@ -1587,19 +1587,21 @@ function initMapTool() {
       .filter(f => f.type === 'forest')
       .reduce((sum, f) => sum + featureArea(f), 0);
     const forestPct = campusArea > 0 ? (totalForestArea / campusArea) * 100 : 0;
-    // Cleared forest: placements whose center falls inside any forest feature
-    let clearedArea = 0;
+    // Convert totalForestArea from px² to sq ft for consistent comparison
+    const ftPerGrid = m.scale / 30.48;          // real-world ft per 1 cm on map
+    const pixPerFt = GRID / ftPerGrid;           // canvas pixels per foot
+    const sqFtPerPx2 = 1 / (pixPerFt * pixPerFt); // sq ft per pixel²
+    const totalForestAreaSqFt = totalForestArea * sqFtPerPx2;
+    // Cleared forest: sum footprints (in sq ft) of placements inside any forest feature
+    let clearedAreaSqFt = 0;
     (placements[currentMap] || []).forEach(p => {
       const onForest = m.features.some(f => f.type === 'forest' && pointInFeature(p.cx, p.cy, f));
       if (onForest) {
         const t = TECHS[p.tech];
-        const ftPerGrid = m.scale / 30.48;
-        const pixPerFt = GRID / ftPerGrid;
-        const sqFt = t.squareFootprint > 0 ? t.squareFootprint : 100;
-        clearedArea += sqFt * pixPerFt * pixPerFt;
+        clearedAreaSqFt += t.squareFootprint > 0 ? t.squareFootprint : 100;
       }
     });
-    const clearedPct = totalForestArea > 0 ? Math.min(100, (clearedArea / totalForestArea) * 100) : 0;
+    const clearedPct = totalForestAreaSqFt > 0 ? Math.min(100, (clearedAreaSqFt / totalForestAreaSqFt) * 100) : 0;
     return { forestPct: Math.round(forestPct), clearedPct: parseFloat(clearedPct.toFixed(1)) };
   }
 
