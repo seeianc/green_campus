@@ -227,7 +227,7 @@ export default function CampusMapTool() {
             <div class="map-sidebar-section">Generation</div>
             <button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
               <span class="map-tech-dot" style="background:#f0b429"></span>
-              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M · 500 sq ft</div></div>
+              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M · 1.1 acres (5 sq)</div></div>
             </button>
             <button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
               <span class="map-tech-dot" style="background:#58a6ff"></span>
@@ -235,7 +235,7 @@ export default function CampusMapTool() {
             </button>
             <button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
               <span class="map-tech-dot" style="background:#bc8cff"></span>
-              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 1,300 sq ft</div></div>
+              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 3 acres (13 sq)</div></div>
             </button>
             <button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
@@ -251,25 +251,25 @@ export default function CampusMapTool() {
             </button>
             <button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
               <span class="map-tech-dot" style="background:#7ee787"></span>
-              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M · 1,300 sq ft</div></div>
+              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M · 3 acres (13 sq)</div></div>
             </button>
 
             <div class="map-sidebar-section">Storage</div>
             <button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
               <span class="map-tech-dot" style="background:#ff8c8c"></span>
-              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K · 25 sq ft</div></div>
+              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K · 5,000 sq ft</div></div>
             </button>
             <button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
               <span class="map-tech-dot" style="background:#ffb347"></span>
-              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M · 100 sq ft</div></div>
+              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M · 10,000 sq ft</div></div>
             </button>
             <button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
               <span class="map-tech-dot" style="background:#da8fff"></span>
-              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K · 100 sq ft</div></div>
+              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K · 10,000 sq ft</div></div>
             </button>
             <button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
               <span class="map-tech-dot" style="background:#84fab0"></span>
-              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M · 400 sq ft</div></div>
+              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M · 20,000 sq ft</div></div>
             </button>
 
             <div class="map-sidebar-section">Placements</div>
@@ -339,17 +339,17 @@ export default function CampusMapTool() {
 
 function initMapTool() {
   const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferFt: number; squareFootprint: number }> = {
-    solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:500 },
-    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:0 },
-    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:1300 },
-    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:100 },
-    hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:100 },
-    tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:100 },
-    biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferFt:0,   squareFootprint:1300 },
-    bess:     { name:'BESS',         color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferFt:0,   squareFootprint:25 },
-    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferFt:0,   squareFootprint:100 },
-    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferFt:0,   squareFootprint:100 },
-    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferFt:0,   squareFootprint:400 },
+    solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000 },
+    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000 },
+    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:130000 },
+    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
+    hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
+    tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000 },
+    biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferFt:0,   squareFootprint:130000 },
+    bess:     { name:'BESS',         color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferFt:0,   squareFootprint:5000 },
+    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000 },
+    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000 },
+    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferFt:0,   squareFootprint:20000 },
   };
 
   type Feature = {
