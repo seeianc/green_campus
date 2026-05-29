@@ -24,6 +24,8 @@ jobs:
           cache: pnpm
       
       - run: pnpm install
+        env:
+          npm_config_user_agent: pnpm/11.5.0
       
       - run: pnpm --filter @workspace/green-campus run build
         env:
