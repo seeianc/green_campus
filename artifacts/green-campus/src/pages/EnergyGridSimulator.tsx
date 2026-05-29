@@ -928,6 +928,33 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
+              <div class="e-card-header"><div class="dot" style="background:#2a6e4e"></div>CO₂ Offset · ISO-NE Marginal Rate</div>
+              <div class="e-card-body">
+                <div class="e-metrics-grid">
+                  <div class="e-metric full" style="grid-column:1/-1">
+                    <div class="e-metric-label">Annual CO₂ Offset</div>
+                    <div class="e-metric-value positive" id="co2TotalMt">—</div>
+                    <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:2px">metric tons CO₂/yr</div>
+                  </div>
+                  <div class="e-metric">
+                    <div class="e-metric-label">Cars Off Road</div>
+                    <div class="e-metric-value" id="co2Cars">—</div>
+                    <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:2px">vehicles/yr equiv.</div>
+                  </div>
+                  <div class="e-metric">
+                    <div class="e-metric-label">Trees Equivalent</div>
+                    <div class="e-metric-value" id="co2Trees">—</div>
+                    <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:2px">mature trees × 1 yr</div>
+                  </div>
+                </div>
+                <div id="co2Breakdown"></div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:10px;line-height:1.6">
+                  ISO-NE marginal rate: 392 g CO₂/kWh (natural gas displacement) · Biomass treated as carbon-neutral
+                </div>
+              </div>
+            </div>
+
+            <div class="e-card">
               <div class="e-card-header"><div class="dot" style="background:#6a6a6a"></div>Export Results</div>
               <div class="e-btn-row">
                 <button class="e-btn primary" id="simPrintBtn">🖨️ Print / Save as PDF</button>
@@ -1707,6 +1734,61 @@ export default function EnergyGridSimulator() {
       const permRolesEl = getEl('wPermRoles'); if (permRolesEl) permRolesEl.textContent = r.permRoles.toLocaleString();
       const rolesLeftEl = getEl('wRolesLeft'); if (rolesLeftEl) rolesLeftEl.textContent = String(r.rolesLeft);
       setLedger('wPayroll', r.payroll);
+
+      // CO2 offset — ISO-NE marginal rate (natural gas displacement)
+      const CO2_G_PER_KWH = 392;
+      const co2Mt = (
+        r.annualKwh.solar  * CO2_G_PER_KWH +
+        r.annualKwh.wind   * CO2_G_PER_KWH +
+        r.annualKwh.geo    * CO2_G_PER_KWH +
+        r.annualKwh.hydro  * CO2_G_PER_KWH +
+        r.annualKwh.tidal  * CO2_G_PER_KWH
+        // biomass: carbon-neutral, 0 net offset
+      ) / 1_000_000;
+
+      const co2TotalEl = getEl('co2TotalMt');
+      if (co2TotalEl) co2TotalEl.textContent = co2Mt > 0 ? Math.round(co2Mt).toLocaleString() : '—';
+      const co2CarsEl = getEl('co2Cars');
+      if (co2CarsEl) co2CarsEl.textContent = co2Mt > 0 ? Math.round(co2Mt / 4.6).toLocaleString() : '—';
+      const co2TreesEl = getEl('co2Trees');
+      if (co2TreesEl) co2TreesEl.textContent = co2Mt > 0 ? Math.round(co2Mt * 1000 / 22).toLocaleString() : '—';
+
+      const co2BreakdownEl = getEl('co2Breakdown');
+      if (co2BreakdownEl) {
+        const techRows = [
+          { label: 'Solar PV',    kwh: r.annualKwh.solar },
+          { label: 'Wind',        kwh: r.annualKwh.wind  },
+          { label: 'Geothermal',  kwh: r.annualKwh.geo   },
+          { label: 'Hydro',       kwh: r.annualKwh.hydro },
+          { label: 'Tidal',       kwh: r.annualKwh.tidal },
+          { label: 'Biomass',     kwh: r.annualKwh.biomass, neutral: true },
+        ].filter(t => t.kwh > 0);
+
+        if (techRows.length === 0) {
+          co2BreakdownEl.innerHTML = '';
+        } else {
+          const maxMt = Math.max(...techRows.map(t => t.neutral ? 0 : (t.kwh * CO2_G_PER_KWH / 1_000_000)), 0.001);
+          co2BreakdownEl.innerHTML = `
+            <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px">
+              <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px">By Source</div>
+              ${techRows.map(t => {
+                const mt = t.neutral ? 0 : t.kwh * CO2_G_PER_KWH / 1_000_000;
+                const pct = Math.round((mt / maxMt) * 100);
+                return `<div style="margin-bottom:8px">
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+                    <span>${t.label}${t.neutral ? ' <span style="font-size:10px;color:var(--text-muted)">(carbon-neutral)</span>' : ''}</span>
+                    <span style="font-family:var(--mono);color:${t.neutral ? 'var(--text-muted)' : 'var(--accent)'}">
+                      ${t.neutral ? '—' : Math.round(mt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style="height:5px;background:#ede9e0;border-radius:3px;overflow:hidden">
+                    <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;transition:width 0.3s"></div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>`;
+        }
+      }
     }
 
     function exportCSV() {
