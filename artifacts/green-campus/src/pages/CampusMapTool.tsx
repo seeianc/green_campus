@@ -121,13 +121,6 @@ export default function CampusMapTool() {
       .map-count-label { color: var(--muted); }
       .map-count-val { font-family: 'JetBrains Mono',monospace; font-weight: 600; color: var(--accent); }
 
-      .map-violations-panel {
-        padding: 10px 12px; background: #1c1010; border-radius: 5px; border: 1px solid #3a1a1a;
-        overflow-y: auto; min-height: 80px;
-      }
-      .map-violation { font-size: 12px; color: var(--danger); padding: 7px 0; border-bottom: 1px solid #2a1010; line-height: 1.5; }
-      .map-violation:last-child { border-bottom: none; }
-      .map-no-violations { font-size: 11px; color: var(--accent); padding: 4px 0; }
 
       .map-container {
         flex: 1;
@@ -275,11 +268,6 @@ export default function CampusMapTool() {
             <div class="map-sidebar-section">Placements</div>
             <div class="map-counts" id="countsPanel">
               <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px">No placements yet</div>
-            </div>
-
-            <div class="map-sidebar-section" id="violationsSectionHeader">Violations</div>
-            <div class="map-violations-panel" id="violationsPanel">
-              <div class="map-no-violations">✓ No violations</div>
             </div>
 
             <div class="map-sidebar-section">Legend</div>
@@ -1719,17 +1707,6 @@ function initMapTool() {
     // Utility upgrade fee is shown on the balance sheet — not a siting violation
     if (totalCost > budgetLimit) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - budgetLimit) / 1e6).toFixed(2)}M`);
 
-    const vp = getEl('violationsPanel');
-    const vh = getEl('violationsSectionHeader');
-    if (vp) {
-      vp.innerHTML = allViolations.length
-        ? allViolations.map(v => `<div class="map-violation">⚠ ${v}</div>`).join('')
-        : '<div class="map-no-violations">✓ No violations</div>';
-    }
-    if (vh) {
-      vh.style.color = allViolations.length ? 'var(--danger)' : '';
-      vh.textContent = allViolations.length ? `Violations (${allViolations.length})` : 'Violations';
-    }
     sharedState.mapViolations = [...allViolations];
 
     // Unused import suppressor
