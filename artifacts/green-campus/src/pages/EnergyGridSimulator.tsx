@@ -2025,8 +2025,12 @@ export default function EnergyGridSimulator() {
       });
     };
 
+    const hasAnyUnits = () =>
+      ['solar','wind','geo','hydroLow','hydroHigh','tidalStd','biomass','liIon','thermal','flywheel','caes']
+        .some(id => +(getEl<HTMLInputElement>(id)?.value || 0) > 0);
+
     const revealContent = () => {
-      if (!contentRevealed && checkAllCardsFilled()) {
+      if (!contentRevealed && (checkAllCardsFilled() || hasAnyUnits())) {
         const sidebar = getEl('additionalSidebar');
         const content = getEl('additionalContent');
         if (sidebar) sidebar.style.display = 'flex';
@@ -2038,9 +2042,11 @@ export default function EnergyGridSimulator() {
 
     requiredDataCards.forEach(id => {
       const el = getEl<HTMLSelectElement>(id);
-      if (el) {
-        el.addEventListener('change', revealContent);
-      }
+      if (el) el.addEventListener('change', revealContent);
+    });
+
+    document.querySelectorAll<HTMLInputElement>('.e-qty-input').forEach(el => {
+      el.addEventListener('input', revealContent);
     });
 
     getEl('simPrintBtn')?.addEventListener('click', () => window.print());
