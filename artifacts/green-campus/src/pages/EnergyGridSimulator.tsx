@@ -1794,26 +1794,101 @@ export default function EnergyGridSimulator() {
     function exportCSV() {
       const s = getState();
       const r = calc(s);
-      const rows = [
-        ['Field','Value'],
+      const CO2_G_PER_KWH = 392;
+      const co2Mt = (r.annualKwh.solar + r.annualKwh.wind + r.annualKwh.geo + r.annualKwh.hydro + r.annualKwh.tidal) * CO2_G_PER_KWH / 1_000_000;
+      const rows: (string | number)[][] = [
+        // Scenario settings
+        ['SCENARIO SETTINGS',''],
+        ['Demand Pattern', s.demandPattern],
+        ['Budget Tier', s.budgetTier],
+        ['Starting Budget ($)', r.startBudget],
+        ['Workforce Scenario', s.workforce],
+        ['Environmental Constraint', s.envConstraints],
+        ['Pivot Card', s.pivotCard],
+        ['Wind Buffer Fee Applied', s.windBuffer],
+        [],
+        // Generation units
+        ['GENERATION UNITS',''],
+        ['Solar PV (units)', s.solar],
+        ['Wind (units)', s.wind],
+        ['Geothermal (units)', s.geo],
+        ['Hydro Low Head (units)', s.hydroLow],
+        ['Hydro High Head (units)', s.hydroHigh],
+        ['Tidal (units)', s.tidalStd],
+        ['Biomass (units)', s.biomass],
+        [],
+        // Storage & emerging tech
+        ['STORAGE & EMERGING TECH',''],
+        ['Li-Ion BESS (units)', s.liIon],
+        ['Thermal Storage (units)', s.thermal],
+        ['Mechanical Flywheel (units)', s.flywheel],
+        ['CAES (units)', s.caes],
+        ['Green Hydrogen Electrolyzer (units)', s.hydrogen],
+        ['V2G (units)', s.v2g],
+        ['SCADA (units)', s.scada],
+        ['Cabling (ft)', s.cabling],
+        [],
+        // Grid performance
+        ['GRID PERFORMANCE',''],
+        ['Grid Status', r.gridStatus],
+        ['Rated Peak Capacity (kW)', r.totalPeakSupply],
         ['Actual Peak Supply (kW)', r.actualPeakSupply],
-        ['Rated Capacity (kW)', r.totalPeakSupply],
         ['Total Storage (kWh)', r.totalStorage],
-        ['Starting Budget', r.startBudget],
-        ['Total Spent', r.totalSpent],
-        ['Remaining Budget', r.remaining],
-        ['Island Time (hrs)', r.islandTime.toFixed(2)],
-        ['Base Annual Savings', r.baseAnnualSavings],
-        ['Final Adjusted Savings', r.finalSavings],
+        ['Island Mode Duration (hrs)', r.islandTime.toFixed(2)],
+        [],
+        // Annual generation
+        ['ANNUAL GENERATION',''],
+        ['Solar Annual Generation (kWh)', r.annualKwh.solar],
+        ['Wind Annual Generation (kWh)', r.annualKwh.wind],
+        ['Geothermal Annual Generation (kWh)', r.annualKwh.geo],
+        ['Hydro Annual Generation (kWh)', r.annualKwh.hydro],
+        ['Tidal Annual Generation (kWh)', r.annualKwh.tidal],
+        ['Biomass Annual Generation (kWh)', r.annualKwh.biomass],
+        ['Total Annual Generation (kWh)', r.totalAnnualKwh],
+        ['Campus Annual Demand (kWh)', r.annualDemandKwh],
+        ['Surplus kWh Sold Back', r.surplusKwh],
+        [],
+        // Financial summary
+        ['FINANCIAL SUMMARY',''],
+        ['Total Spent ($)', r.totalSpent],
+        ['Remaining Budget ($)', r.remaining],
+        ['Solar Annual Savings ($)', r.roiSavings.solar],
+        ['Wind Annual Savings ($)', r.roiSavings.wind],
+        ['Geothermal Annual Savings ($)', r.roiSavings.geo],
+        ['Hydro Annual Savings ($)', r.roiSavings.hydro],
+        ['Tidal Annual Savings ($)', r.roiSavings.tidal],
+        ['Biomass Annual Savings ($)', r.roiSavings.biomass],
+        ['Base Annual Savings ($)', r.baseAnnualSavings],
+        ['Renewable Sell-Back Revenue ($)', r.annualRenewableRevenue],
+        ['Thermal Heating Oil Savings ($)', r.thermalHeatingOilSavings],
+        ['CAES Seasonal Savings ($)', r.caesSeasonalSavings],
+        ['Pivot Card Impact ($)', r.pivotImpact],
+        ['Carbon Tax Fee ($)', r.annualCarbonTaxFee],
+        ['Final Adjusted Savings ($)', r.finalSavings],
         ['ROI Break-Even (yrs)', r.roi || 'N/A'],
+        [],
+        // Workforce
+        ['WORKFORCE',''],
         ['Construction Jobs', r.constructJobs],
         ['Permanent Roles', r.permRoles],
-        ['Grid Status', r.gridStatus],
+        ['Solar Techs Assigned', s.wSolar],
+        ['Electricians Assigned', s.wElec],
+        ['Wind/Marine/Hydro Engineers Assigned', s.wEng],
+        ['Total Payroll Injection ($)', r.payroll],
         [],
+        // CO2 offset
+        ['CO2 OFFSET (ISO-NE 392 g/kWh marginal rate)',''],
+        ['Annual CO2 Offset (metric tons)', Math.round(co2Mt)],
+        ['Cars Removed Equivalent', Math.round(co2Mt / 4.6)],
+        ['Trees Planted Equivalent', Math.round(co2Mt * 1000 / 22)],
+        ['NE Homes Powered', Math.round(r.totalAnnualKwh / 7500)],
+        [],
+        // Hourly profile
+        ['HOURLY DEMAND & SUPPLY',''],
         ['Hour','Demand (kW)','Supply (kW)'],
-        ...HOURS.map((h, i) => [h+':00', r.demand24[i], r.supply24[i]])
+        ...HOURS.map((h, i) => [`${h}:00`, r.demand24[i], r.supply24[i]])
       ];
-      const csv = rows.map(r => r.join(',')).join('\n');
+      const csv = rows.map(row => row.map(v => `"${v}"`).join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
