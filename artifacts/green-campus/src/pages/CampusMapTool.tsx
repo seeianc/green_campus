@@ -232,7 +232,7 @@ export default function CampusMapTool() {
             </button>
             <button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
-              <div><div>Hydro (Low)</div><div class="map-tech-meta">500kW · $4M · water</div></div>
+              <div><div>Hydro (Low)</div><div class="map-tech-meta">500kW · $1M · water</div></div>
             </button>
             <button class="map-tech-btn" id="btn-hydroH" style="color:#0099cc">
               <span class="map-tech-dot" style="background:#0099cc"></span>
@@ -330,7 +330,7 @@ function initMapTool() {
     solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000 },
     wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000 },
     geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:130000 },
-    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
+    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
     hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
     tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000 },
     biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferFt:0,   squareFootprint:130000 },
