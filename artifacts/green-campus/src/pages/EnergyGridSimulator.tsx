@@ -1924,6 +1924,56 @@ export default function EnergyGridSimulator() {
       el.addEventListener('change', render);
     });
 
+    // Map placement reminder toast
+    const MAP_TECH_LABELS: Record<string, string> = {
+      solar: 'Solar PV', wind: 'Wind Turbine', geo: 'Geothermal',
+      hydroLow: 'Hydro (Low Head)', hydroHigh: 'Hydro (High Head)',
+      tidalStd: 'Tidal', biomass: 'Biomass',
+      liIon: 'Li-Ion BESS', thermal: 'Thermal Storage',
+      flywheel: 'Mechanical Flywheel', caes: 'CAES',
+    };
+
+    const toast = document.createElement('div');
+    toast.id = 'mapReminderToast';
+    toast.style.cssText = 'display:none;position:fixed;bottom:24px;right:24px;z-index:9999;background:#1a3a22;border:1px solid #3fb950;color:#7ee787;padding:12px 16px;border-radius:6px;font-size:13px;font-family:var(--sans);max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,0.4);transition:opacity 0.3s';
+    toast.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">🗺</span><span id="mapReminderText" style="flex:1;line-height:1.4"></span><button id="mapReminderClose" style="background:none;border:none;color:#7ee787;cursor:pointer;font-size:18px;padding:0;line-height:1;margin-left:4px">×</button></div>';
+    document.body.appendChild(toast);
+
+    let toastTimer: ReturnType<typeof setTimeout> | null = null;
+    let suppressToast = false;
+
+    function showMapReminder(techName: string) {
+      if (suppressToast) return;
+      const textEl = document.getElementById('mapReminderText');
+      if (textEl) textEl.textContent = `Don't forget to place ${techName} on the Map to keep both views in sync.`;
+      toast.style.display = 'block';
+      toast.style.opacity = '1';
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => { toast.style.display = 'none'; }, 300); }, 5000);
+    }
+
+    document.getElementById('mapReminderClose')?.addEventListener('click', () => {
+      if (toastTimer) clearTimeout(toastTimer);
+      toast.style.display = 'none';
+    });
+
+    const prevVals: Record<string, number> = {};
+    Object.keys(MAP_TECH_LABELS).forEach(id => {
+      prevVals[id] = +(getEl<HTMLInputElement>(id)?.value || 0);
+    });
+
+    Object.keys(MAP_TECH_LABELS).forEach(id => {
+      getEl<HTMLInputElement>(id)?.addEventListener('input', () => {
+        const newVal = +(getEl<HTMLInputElement>(id)?.value || 0);
+        if (newVal > prevVals[id]) showMapReminder(MAP_TECH_LABELS[id]);
+        prevVals[id] = newVal;
+      });
+    });
+
+    // Suppress toast during map sync and plan restore
+    window.addEventListener('gc:map-update', () => { suppressToast = true; setTimeout(() => { suppressToast = false; }, 500); });
+    window.addEventListener('gc:restore-plan', () => { suppressToast = true; setTimeout(() => { suppressToast = false; }, 3500); });
+
     // Sync map placements → simulator inputs
     window.addEventListener('gc:map-update', () => {
       const counts = sharedState.techCounts;
