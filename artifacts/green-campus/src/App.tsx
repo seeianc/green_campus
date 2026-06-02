@@ -42,7 +42,7 @@ export default function App() {
 
   // ── Plan serialization ──────────────────────────────────────────────────
   function getPlanState(): object {
-    const numIds = ["solar","wind","geo","hydroLow","hydroHigh","tidalStd","tidalPP","biomass",
+    const numIds = ["solar","wind","geo","hydroLow","hydroHigh","tidalStd","biomass",
                     "liIon","thermal","flywheel","caes","hydrogen","v2g","scada","cabling","wSolar","wElec","wEng"];
     const selectIds = ["windBuffer","demandPattern","budgetTier","workforce","envConstraints","pivotCard"];
     const sim: Record<string, string | number> = {};

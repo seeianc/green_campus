@@ -564,12 +564,8 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="hydroHigh" value="0" min="0" max="10">
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Tidal (Standard)</div><div class="e-input-sub">500 kW/unit · $1.5M combined</div></div>
+                  <div><div class="e-input-label">Tidal</div><div class="e-input-sub">500 kW/unit · $1.5M each</div></div>
                   <input class="e-qty-input" type="number" id="tidalStd" value="0" min="0" max="20">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Tidal (Pinch Point)</div><div class="e-input-sub">600 kW/unit · $1.5M combined</div></div>
-                  <input class="e-qty-input" type="number" id="tidalPP" value="0" min="0" max="20">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
                   <div><div class="e-input-label">Biomass</div><div class="e-input-sub">1,000 kW/unit · $3.5M each</div></div>
@@ -1000,7 +996,6 @@ export default function EnergyGridSimulator() {
     // Peak generation at mid-tide (max flow); near-zero at slack water (high/low)
     // Profile: peaks at hrs 3,9,15,21 — zeros at hrs 0,6,12,18
     const TIDAL_STD_PER_UNIT = [0,125,375,500,375,125,0,125,375,500,375,125,0,125,375,500,375,125,0,125,375,500,375,125];
-    const TIDAL_PP_PER_UNIT  = [0,150,450,600,450,150,0,150,450,600,450,150,0,150,450,600,450,150,0,150,450,600,450,150];
 
     // Grid electricity rate and annual kWh production per unit (basis for ROI)
     const GRID_RATE = 0.22;       // $/kWh — Maine commercial rate (own-use savings)
@@ -1012,7 +1007,6 @@ export default function EnergyGridSimulator() {
       hydroLow: 2_000_000, // 500 kW @ ~46% capacity factor
       hydroHigh:7_500_000, // 2,000 kW @ ~43% capacity factor
       tidalStd: 2_190_000, // 500 kW peak @ ~50% capacity factor (semidiurnal tide cycle)
-      tidalPP:  2_628_000, // 600 kW peak @ ~50% capacity factor (semidiurnal tide cycle)
       biomass:  7_000_000, // 1,000 kW @ ~80% capacity factor
     };
 
@@ -1039,7 +1033,7 @@ export default function EnergyGridSimulator() {
       return {
         solar: getVal('solar'), wind: getVal('wind'), geo: getVal('geo'),
         hydroLow: getVal('hydroLow'), hydroHigh: getVal('hydroHigh'),
-        tidalStd: getVal('tidalStd'), tidalPP: getVal('tidalPP'),
+        tidalStd: getVal('tidalStd'),
         biomass: getVal('biomass'), liIon: getVal('liIon'),
         thermal: getVal('thermal'), flywheel: getVal('flywheel'), caes: getVal('caes'),
         hydrogen: getVal('hydrogen'), v2g: getVal('v2g'), scada: getVal('scada'),
@@ -1082,7 +1076,7 @@ export default function EnergyGridSimulator() {
       const totalPeakSupply =
         s.solar*500 + s.wind*3000 + s.geo*2000 +
         s.hydroLow*500 + s.hydroHigh*2000 +
-        s.tidalStd*500 + s.tidalPP*600 + s.biomass*1000;
+        s.tidalStd*500 + s.biomass*1000;
 
       const totalStorage =
         s.liIon*1000 + s.thermal*2500 + s.flywheel*1000 + s.caes*5000;
@@ -1094,7 +1088,7 @@ export default function EnergyGridSimulator() {
         wind: s.wind * 2500000,
         geo: s.geo * 5000000 * (isHydroHub ? 0.8 : 1),
         hydro: s.hydroLow * 1000000 * (isHydroHub ? 0.8 : 1) + s.hydroHigh * 4000000 * (isHydroHub ? 0.8 : 1),
-        tidal: (s.tidalStd + s.tidalPP) * 1500000,
+        tidal: s.tidalStd * 1500000,
         biomass: s.biomass * 3500000,
       };
       const storageCosts = {
@@ -1138,7 +1132,6 @@ export default function EnergyGridSimulator() {
         supply += s.hydroLow * 500;
         supply += s.hydroHigh * 2000;
         supply += s.tidalStd * TIDAL_STD_PER_UNIT[i];
-        supply += s.tidalPP * TIDAL_PP_PER_UNIT[i];
         if (dischargingHours.includes(i) && hasVarGen) supply += bessHourlyDischarge;
         return Math.round(supply);
       });
@@ -1220,7 +1213,7 @@ export default function EnergyGridSimulator() {
       if (isGridDown) {
         if (totalStorage >= 2000) { gridStatus = '✅ SURVIVED: Island Mode Active'; gridClass = 'ok'; }
         else { gridStatus = '⚠️ FATAL CRISIS: Storage under 2,000 kWh!'; gridClass = 'danger'; }
-      } else if ((s.wind > 0 || s.tidalStd > 0 || s.tidalPP > 0) && s.flywheel === 0) {
+      } else if ((s.wind > 0 || s.tidalStd > 0) && s.flywheel === 0) {
         gridStatus = '⚠️ WARNING: Flickering Power! Add Flywheels.'; gridClass = 'warn';
       } else {
         gridStatus = '✅ Grid Stable'; gridClass = 'ok';
@@ -1235,7 +1228,7 @@ export default function EnergyGridSimulator() {
         wind:    s.wind     * ANNUAL_KWH_PER_UNIT.wind,
         geo:     s.geo      * ANNUAL_KWH_PER_UNIT.geo,
         hydro:   s.hydroLow * ANNUAL_KWH_PER_UNIT.hydroLow + s.hydroHigh * ANNUAL_KWH_PER_UNIT.hydroHigh,
-        tidal:   s.tidalStd * ANNUAL_KWH_PER_UNIT.tidalStd + s.tidalPP  * ANNUAL_KWH_PER_UNIT.tidalPP,
+        tidal:   s.tidalStd * ANNUAL_KWH_PER_UNIT.tidalStd,
         biomass: s.biomass  * ANNUAL_KWH_PER_UNIT.biomass,
       };
       const totalAnnualKwh = Object.values(annualKwh).reduce((a, b) => a + b, 0);
@@ -1257,11 +1250,11 @@ export default function EnergyGridSimulator() {
                           (isAIHub && totalStorage === 0) ? -50000 : 0;
 
       // Thermal storage: eliminates heating oil costs when charged by excess wind/hydro/tidal
-      const hasThermalSource = s.wind > 0 || s.hydroLow > 0 || s.hydroHigh > 0 || s.tidalStd > 0 || s.tidalPP > 0;
+      const hasThermalSource = s.wind > 0 || s.hydroLow > 0 || s.hydroHigh > 0 || s.tidalStd > 0;
       const thermalHeatingOilSavings = (s.thermal > 0 && hasThermalSource) ? s.thermal * 75000 : 0;
 
       // CAES: stores seasonal spring surplus for winter peak demand reduction
-      const hasCaesSource = s.wind > 0 || s.hydroLow > 0 || s.hydroHigh > 0 || s.tidalStd > 0 || s.tidalPP > 0 || s.solar > 0;
+      const hasCaesSource = s.wind > 0 || s.hydroLow > 0 || s.hydroHigh > 0 || s.tidalStd > 0 || s.solar > 0;
       const caesSeasonalSavings = (s.caes > 0 && hasCaesSource) ? s.caes * 30000 : 0;
 
       const finalSavings = baseAnnualSavings + pivotImpact + thermalHeatingOilSavings + caesSeasonalSavings;
@@ -1678,7 +1671,7 @@ export default function EnergyGridSimulator() {
           s.wind * 3000,
           s.geo * 2000,
           (s.hydroLow * 500 + s.hydroHigh * 2000),
-          (s.tidalStd * 500 + s.tidalPP * 600),
+          (s.tidalStd * 500),
           s.biomass * 1000
         ];
         sourceChartRef.current.data.datasets[0].data = sourceData;
@@ -1921,7 +1914,7 @@ export default function EnergyGridSimulator() {
 
     function resetAll() {
       if (!confirm('Reset all inputs to zero?')) return;
-      ['solar','wind','geo','hydroLow','hydroHigh','tidalStd','tidalPP','biomass',
+      ['solar','wind','geo','hydroLow','hydroHigh','tidalStd','biomass',
        'liIon','thermal','flywheel','caes','hydrogen','v2g','scada','cabling',
        'wSolar','wElec','wEng'].forEach(id => {
         const el = getEl<HTMLInputElement>(id);
@@ -2057,7 +2050,7 @@ export default function EnergyGridSimulator() {
     window.addEventListener('gc:restore-plan', (e: Event) => {
       const { sim, bessHours } = (e as CustomEvent<{ sim?: Record<string, string | number>; bessHours?: number[] }>).detail;
       if (!sim) return;
-      const numIds = ['solar','wind','geo','hydroLow','hydroHigh','tidalStd','tidalPP','biomass',
+      const numIds = ['solar','wind','geo','hydroLow','hydroHigh','tidalStd','biomass',
                       'liIon','thermal','flywheel','caes','hydrogen','v2g','scada','cabling','wSolar','wElec','wEng'];
       numIds.forEach(id => {
         const el = getEl<HTMLInputElement>(id);
