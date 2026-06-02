@@ -1630,6 +1630,29 @@ export default function EnergyGridSimulator() {
       if (r.solarStorageViolation) alerts.push({ cls: 'danger', msg: `☀️ VIOLATION — Solar Storage Requirement: ${s.solar} solar unit(s) require ${r.requiredStorageForSolar.toLocaleString()} kWh of storage. Current total storage: ${r.totalStorage.toLocaleString()} kWh. Add storage to comply.` });
       if (s.solar > 0 && !r.solarStorageViolation) alerts.push({ cls: 'ok', msg: `☀️ Solar Storage Requirement met: ${r.totalStorage.toLocaleString()} kWh storage ≥ ${r.requiredStorageForSolar.toLocaleString()} kWh required. ✅` });
 
+      // Unplaced units — simulator count exceeds map placement count
+      const mc = sharedState.techCounts;
+      const unplaced: string[] = [];
+      ([
+        [s.solar,     mc.solar    || 0, 'Solar PV'],
+        [s.wind,      mc.wind     || 0, 'Wind Turbine'],
+        [s.geo,       mc.geo      || 0, 'Geothermal'],
+        [s.hydroLow,  mc.hydroL   || 0, 'Hydro (Low Head)'],
+        [s.hydroHigh, mc.hydroH   || 0, 'Hydro (High Head)'],
+        [s.tidalStd,  mc.tidal    || 0, 'Tidal'],
+        [s.biomass,   mc.biomass  || 0, 'Biomass'],
+        [s.liIon,     mc.bess     || 0, 'Li-Ion BESS'],
+        [s.thermal,   mc.thermal  || 0, 'Thermal Storage'],
+        [s.flywheel,  mc.flywheel || 0, 'Flywheel'],
+        [s.caes,      mc.caes     || 0, 'CAES'],
+      ] as [number, number, string][]).forEach(([simCount, mapCount, name]) => {
+        const diff = simCount - mapCount;
+        if (diff > 0) unplaced.push(`${name} (${diff} unplaced)`);
+      });
+      if (unplaced.length > 0) {
+        alerts.push({ cls: 'warn', msg: `🗺 Map Placement needed: ${unplaced.join(' · ')} — switch to the Map tab to place these units.` });
+      }
+
       // Map siting violations (from CampusMapTool)
       sharedState.mapViolations.forEach(v => {
         alerts.push({ cls: 'danger', msg: `🗺 Map Siting: ${v}` });
