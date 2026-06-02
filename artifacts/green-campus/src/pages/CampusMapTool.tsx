@@ -1409,10 +1409,11 @@ function initMapTool() {
         const nearRoad = roads.some(f => pointToPolygonDist(x, y, f.points!) < GRID * 5);
         if (!nearRoad) violations.push('Biomass must be near a road for fuel delivery trucks');
       }
+      const biomassBufferPx = 200 / (MAPS[currentMap].scale / 30.48) * GRID;
       const tooCloseToBuilding = MAPS[currentMap].features.some(f =>
-        f.type === 'building' && (f.points || []).length >= 2 && pointToPolygonDist(x, y, f.points!) < GRID * 3
+        f.type === 'building' && (f.points || []).length >= 2 && pointToPolygonDist(x, y, f.points!) < biomassBufferPx
       );
-      if (tooCloseToBuilding) violations.push('Biomass too close to building — exhaust and smoke hazard near windows');
+      if (tooCloseToBuilding) violations.push('Biomass too close to building — exhaust and smoke hazard near windows (200 ft buffer)');
     }
     if (tech === 'wind') {
       MAPS[currentMap].features.forEach(f => {
