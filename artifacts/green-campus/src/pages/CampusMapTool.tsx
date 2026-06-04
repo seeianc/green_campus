@@ -1561,36 +1561,25 @@ function initMapTool() {
     return false;
   }
 
-  function computeForestStats() {
-    const m = MAPS[currentMap];
-    // Campus area via shoelace formula on boundary polygon
+  function computeForestStats(mapId = currentMap) {
+    const m = MAPS[mapId];
     const boundary = m.features.find(f => f.type === 'boundary' && f.points);
-    let campusArea = 0;
-    if (boundary?.points) {
-      campusArea = polygonArea(boundary.points);
-    } else {
-      campusArea = m.width * m.height;
-    }
-    // Total forested area — supports both polygon points and rect
+    let campusArea = boundary?.points ? polygonArea(boundary.points) : m.width * m.height;
     const totalForestArea = m.features
       .filter(f => f.type === 'forest')
       .reduce((sum, f) => sum + featureArea(f), 0);
     const forestPct = campusArea > 0 ? (totalForestArea / campusArea) * 100 : 0;
-    // Convert totalForestArea from px² to sq ft for consistent comparison
-    const ftPerGrid = m.scale / 30.48;          // real-world ft per 1 cm on map
-    const pixPerFt = GRID / ftPerGrid;           // canvas pixels per foot
-    const sqFtPerPx2 = 1 / (pixPerFt * pixPerFt); // sq ft per pixel²
-    const totalForestAreaSqFt = totalForestArea * sqFtPerPx2;
-    // Cleared forest: sum footprints (in sq ft) of placements inside any forest feature
-    let clearedAreaSqFt = 0;
-    (placements[currentMap] || []).forEach(p => {
+    // Use pixel footprint (size × GRID)² for clearing — removes scale dependency so all
+    // maps behave consistently regardless of their real-world scale denominator.
+    let clearedAreaPx2 = 0;
+    (placements[mapId] || []).forEach(p => {
       const onForest = m.features.some(f => f.type === 'forest' && pointInFeature(p.cx, p.cy, f));
       if (onForest) {
-        const t = TECHS[p.tech];
-        clearedAreaSqFt += t.squareFootprint > 0 ? t.squareFootprint : 100;
+        const sizePx = TECHS[p.tech].size * GRID;
+        clearedAreaPx2 += sizePx * sizePx;
       }
     });
-    const clearedPct = totalForestAreaSqFt > 0 ? Math.min(100, (clearedAreaSqFt / totalForestAreaSqFt) * 100) : 0;
+    const clearedPct = totalForestArea > 0 ? Math.min(100, (clearedAreaPx2 / totalForestArea) * 100) : 0;
     return { forestPct: Math.round(forestPct), clearedPct: parseFloat(clearedPct.toFixed(1)) };
   }
 
@@ -1707,6 +1696,16 @@ function initMapTool() {
     });
     // Utility upgrade fee is shown on the balance sheet — not a siting violation
     if (totalCost > budgetLimit) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - budgetLimit) / 1e6).toFixed(2)}M`);
+
+    // Forest clearing — check every map independently
+    Object.keys(MAPS).forEach(mapId => {
+      const hasForest = MAPS[mapId].features.some(f => f.type === 'forest');
+      if (!hasForest) return;
+      const { clearedPct } = computeForestStats(mapId);
+      if (clearedPct > 25) {
+        allViolations.push(`🌿 VIOLATION — ${MAPS[mapId].name}: ${clearedPct.toFixed(1)}% of forest cleared — max 25% permitted (Vernal Pool Protection).`);
+      }
+    });
 
     sharedState.mapViolations = [...allViolations];
 
