@@ -1606,7 +1606,8 @@ function initMapTool() {
       const t = TECHS[p.tech];
       totalKw += t.kw;
       totalStorage += t.storageKwh;
-      totalCost += t.cost;
+      const hubDiscount = sharedState.hydroHubActive && (p.tech === 'geo' || p.tech === 'hydroL' || p.tech === 'hydroH') ? 0.8 : 1;
+      totalCost += t.cost * hubDiscount;
       counts[p.tech] = (counts[p.tech] || 0) + 1;
     });
 

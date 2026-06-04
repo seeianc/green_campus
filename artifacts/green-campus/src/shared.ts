@@ -9,6 +9,7 @@ export interface SharedState {
   cables: Record<string, Array<{ x1: number; y1: number; x2: number; y2: number }>>;
   windSensitiveZoneCount: number;
   mapViolations: string[];
+  hydroHubActive: boolean;
 }
 
 export const sharedState: SharedState = {
@@ -22,6 +23,7 @@ export const sharedState: SharedState = {
   cables: {},
   windSensitiveZoneCount: 0,
   mapViolations: [],
+  hydroHubActive: false,
 };
 
 export function emitMapUpdate() {

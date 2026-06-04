@@ -1290,7 +1290,7 @@ export default function EnergyGridSimulator() {
         annualKwh, totalAnnualKwh, annualDemandKwh, surplusKwh, capAdjustment,
         roiSavings, baseAnnualSavings, pivotImpact, thermalHeatingOilSavings, caesSeasonalSavings, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
-        grantCompliant, isGrant, isPolar, polarDemandThreshold, isAIHub, isMaint, isSupplyChain, isCarbonTax, infraCosts, genCosts, storageCosts, emergingCosts,
+        grantCompliant, isGrant, isPolar, polarDemandThreshold, isAIHub, isMaint, isSupplyChain, isCarbonTax, isHydroHub, infraCosts, genCosts, storageCosts, emergingCosts,
         migratoryBirdViolation, vernalPoolViolation,
         isMigratoryBird, isVernalPool,
         solarStorageViolation, requiredStorageForSolar,
@@ -1470,6 +1470,10 @@ export default function EnergyGridSimulator() {
       // Sync budget tier to shared state so map header shows correct budget
       if (sharedState.budgetLimit !== r.startBudget) {
         sharedState.budgetLimit = r.startBudget;
+        emitSimUpdate();
+      }
+      if (sharedState.hydroHubActive !== r.isHydroHub) {
+        sharedState.hydroHubActive = r.isHydroHub;
         emitSimUpdate();
       }
 
