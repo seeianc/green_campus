@@ -1571,10 +1571,15 @@ function initMapTool() {
     const forestPct = campusArea > 0 ? (totalForestArea / campusArea) * 100 : 0;
     // Use pixel footprint (size × GRID)² for clearing — removes scale dependency so all
     // maps behave consistently regardless of their real-world scale denominator.
+    // Deduplicate by grid cell so stacked placements at the same location don't double-count.
     let clearedAreaPx2 = 0;
+    const seenCells = new Set<string>();
     (placements[mapId] || []).forEach(p => {
+      const key = `${p.cx},${p.cy}`;
+      if (seenCells.has(key)) return;
       const onForest = m.features.some(f => f.type === 'forest' && pointInFeature(p.cx, p.cy, f));
       if (onForest) {
+        seenCells.add(key);
         const sizePx = TECHS[p.tech].size * GRID;
         clearedAreaPx2 += sizePx * sizePx;
       }
