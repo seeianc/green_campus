@@ -24,17 +24,18 @@ export default function EnergyGridSimulator() {
       @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
       .energy-sim {
-        --bg: #f5f4f0;
-        --surface: #ffffff;
-        --border: #e2e0d8;
-        --text: #1a1917;
-        --text-muted: #6b6960;
-        --accent: #2a6e4e;
-        --accent-light: #e8f2ec;
-        --warn: #c45c1a;
-        --warn-light: #fdf0e8;
-        --danger: #b83232;
-        --danger-light: #fdeaea;
+        --bg: #1e2228;
+        --surface: #252c36;
+        --border: #3a4149;
+        --text: #cdd9e5;
+        --text-muted: #8b949e;
+        --accent: #3fb950;
+        --accent-light: #1a3a22;
+        --accent-muted: #2d4a3a;
+        --warn: #e3b341;
+        --warn-light: #3a2f1a;
+        --danger: #f85149;
+        --danger-light: #3a1f1f;
         --mono: 'DM Mono', monospace;
         --sans: 'DM Sans', sans-serif;
         font-family: var(--sans);
@@ -52,8 +53,8 @@ export default function EnergyGridSimulator() {
       }
 
       .energy-sim-header {
-        background: var(--text);
-        color: white;
+        background: #252c36;
+        color: var(--text);
         padding: 18px 32px;
         display: flex;
         align-items: center;
@@ -142,7 +143,7 @@ export default function EnergyGridSimulator() {
         gap: 8px;
         align-items: center;
         padding: 7px 0;
-        border-bottom: 1px solid #f0ede6;
+        border-bottom: 1px solid var(--border);
       }
       .e-input-row:last-child { border-bottom: none; }
       .e-input-label { font-size: 13px; color: var(--text); }
@@ -157,13 +158,13 @@ export default function EnergyGridSimulator() {
         padding: 5px 8px;
         width: 100%;
         text-align: right;
-        background: #fafaf8;
+        background: #1a1f27;
         color: var(--text);
         transition: border-color 0.15s;
       }
-      .e-qty-input:focus { outline: none; border-color: var(--accent); background: white; }
+      .e-qty-input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 
-      .e-select-row { padding: 8px 0; border-bottom: 1px solid #f0ede6; }
+      .e-select-row { padding: 8px 0; border-bottom: 1px solid var(--border); }
       .e-select-row:last-child { border-bottom: none; }
       .e-select-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
 
@@ -174,7 +175,7 @@ export default function EnergyGridSimulator() {
         border: 1px solid var(--border);
         border-radius: 4px;
         padding: 6px 10px;
-        background: #fafaf8;
+        background: #1a1f27;
         color: var(--text);
         cursor: pointer;
         transition: border-color 0.15s;
@@ -188,7 +189,7 @@ export default function EnergyGridSimulator() {
       }
       .e-metric {
         padding: 12px;
-        background: #fafaf8;
+        background: #1a1f27;
         border-radius: 6px;
         border: 1px solid var(--border);
       }
@@ -265,24 +266,24 @@ export default function EnergyGridSimulator() {
         align-items: flex-start;
         gap: 8px;
       }
-      .e-alert.ok { background: var(--accent-light); color: #1a4a32; border: 1px solid #b8dfc8; }
-      .e-alert.warn { background: var(--warn-light); color: #7a3010; border: 1px solid #f0c0a0; }
-      .e-alert.danger { background: var(--danger-light); color: #7a1010; border: 1px solid #f0b0b0; }
+      .e-alert.ok { background: var(--accent-light); color: #7ee787; border: 1px solid #2d5a3e; }
+      .e-alert.warn { background: var(--warn-light); color: #e3b341; border: 1px solid #6b531a; }
+      .e-alert.danger { background: var(--danger-light); color: #f85149; border: 1px solid #6b2828; }
       .e-alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
       .e-alerts-stack { display: flex; flex-direction: column; gap: 8px; }
 
       .e-chart-wrap { padding: 20px; }
 
       .budget-bar-wrap { margin-top: 8px; }
-      .budget-bar-track { height: 8px; background: #ede9e0; border-radius: 4px; overflow: hidden; margin: 4px 0; }
+      .budget-bar-track { height: 8px; background: #30363d; border-radius: 4px; overflow: hidden; margin: 4px 0; }
       .budget-bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.3s ease; }
       .budget-bar-fill.over { background: var(--danger); }
       .budget-bar-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
 
       .workforce-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-      .workforce-item { background: #fafaf8; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+      .workforce-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
       .workforce-item label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
-      .workforce-item input { width: 100%; font-family: var(--mono); font-size: 14px; border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; text-align: right; background: white; }
+      .workforce-item input { width: 100%; font-family: var(--mono); font-size: 14px; border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; text-align: right; background: #1a1f27; color: var(--text); }
       .workforce-item input:focus { outline: none; border-color: var(--accent); }
       .workforce-item .salary { font-size: 10px; color: var(--text-muted); margin-top: 2px; font-family: var(--mono); }
 
@@ -291,7 +292,7 @@ export default function EnergyGridSimulator() {
         justify-content: space-between;
         align-items: center;
         padding: 7px 0;
-        border-bottom: 1px solid #f0ede6;
+        border-bottom: 1px solid var(--border);
         font-size: 13px;
       }
       .e-ledger-row:last-child { border-bottom: none; font-weight: 600; }
@@ -303,12 +304,12 @@ export default function EnergyGridSimulator() {
         display: inline-flex; align-items: center; gap: 6px;
         padding: 8px 16px; border-radius: 5px;
         font-family: var(--sans); font-size: 13px; font-weight: 500;
-        border: 1px solid var(--border); background: white;
+        border: 1px solid var(--border); background: var(--surface);
         cursor: pointer; transition: all 0.15s; color: var(--text);
       }
-      .e-btn:hover { background: #f5f3ed; border-color: #ccc; }
-      .e-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
-      .e-btn.primary:hover { background: #235f42; }
+      .e-btn:hover { background: #1c2429; border-color: #484f58; }
+      .e-btn.primary { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+      .e-btn.primary:hover { background: #3ac244; }
       .e-btn-row { display: flex; gap: 8px; padding: 14px 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 
       .e-section-divider {
@@ -337,7 +338,7 @@ export default function EnergyGridSimulator() {
         font-weight: 600;
         border: 1px solid var(--border);
         border-radius: 4px;
-        background: white;
+        background: #1a1f27;
         color: var(--text-muted);
         cursor: pointer;
         transition: all 0.15s;
@@ -545,60 +546,25 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div id="additionalSidebar" style="display:none;flex-direction:column;gap:16px">
-            <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#3a8f5f"></div>Generation Technology</div>
-              <div class="e-card-body">
-                <div class="e-section-divider">Renewable Sources</div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Solar PV Blocks</div><div class="e-input-sub">500 kW/unit · $1M each</div></div>
-                  <input class="e-qty-input" type="number" id="solar" value="0" min="0" max="50">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Wind Turbine</div><div class="e-input-sub">3,000 kW/unit · $2.5M each</div></div>
-                  <input class="e-qty-input" type="number" id="wind" value="0" min="0" max="20">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Geothermal Site</div><div class="e-input-sub">2,000 kW/unit · $5M each</div></div>
-                  <input class="e-qty-input" type="number" id="geo" value="0" min="0" max="10">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Small Hydro (Low)</div><div class="e-input-sub">500 kW/unit · $1M each</div></div>
-                  <input class="e-qty-input" type="number" id="hydroLow" value="0" min="0" max="20">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Small Hydro (High)</div><div class="e-input-sub">2,000 kW/unit · $4M combined</div></div>
-                  <input class="e-qty-input" type="number" id="hydroHigh" value="0" min="0" max="10">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Tidal</div><div class="e-input-sub">500 kW/unit · $1.5M each</div></div>
-                  <input class="e-qty-input" type="number" id="tidalStd" value="0" min="0" max="20">
-                </div>
-                <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">Biomass</div><div class="e-input-sub">1,000 kW/unit · $3.5M each</div></div>
-                  <input class="e-qty-input" type="number" id="biomass" value="0" min="0" max="10">
-                </div>
-              </div>
+            <!-- Hidden inputs for gen/storage — driven by map placements via gc:map-update -->
+            <div style="display:none">
+              <input type="number" id="solar"    value="0" min="0" max="50">
+              <input type="number" id="wind"     value="0" min="0" max="20">
+              <input type="number" id="geo"      value="0" min="0" max="10">
+              <input type="number" id="hydroLow" value="0" min="0" max="20">
+              <input type="number" id="hydroHigh" value="0" min="0" max="10">
+              <input type="number" id="tidalStd" value="0" min="0" max="20">
+              <input type="number" id="biomass"  value="0" min="0" max="10">
+              <input type="number" id="liIon"    value="0" min="0" max="20">
+              <input type="number" id="thermal"  value="0" min="0" max="10">
+              <input type="number" id="flywheel" value="0" min="0" max="20">
+              <input type="number" id="caes"     value="0" min="0" max="10">
             </div>
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#5a7abf"></div>Storage Technology</div>
-              <div class="e-card-body">
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Lithium-Ion BESS</div><div class="e-input-sub">1,000 kWh/unit · $500K each</div><div class="e-input-sub" style="color:var(--accent-muted)">Fast response — ideal for solar evening storage &amp; peak shaving</div></div>
-                  <input class="e-qty-input" type="number" id="liIon" value="0" min="0" max="20">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Thermal Storage</div><div class="e-input-sub">2,500 kWh/unit · $1M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Stores heat/cold for HVAC loads — reduces Polar Vortex peak demand · eliminates heating oil costs when charged by excess wind/hydro/tidal</div></div>
-                  <input class="e-qty-input" type="number" id="thermal" value="0" min="0" max="10">
-                </div>
-                <div class="e-input-row">
-                  <div><div class="e-input-label">Mechanical Flywheels</div><div class="e-input-sub">1,000 kWh/unit · $300K each</div><div class="e-input-sub" style="color:var(--accent-muted)">Eliminates voltage flicker from intermittent sources — smooths power quality</div></div>
-                  <input class="e-qty-input" type="number" id="flywheel" value="0" min="0" max="20">
-                </div>
-                <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">CAES</div><div class="e-input-sub">5,000 kWh/unit · $2M each</div><div class="e-input-sub" style="color:var(--accent-muted)">Compressed Air Energy Storage — maximizes island mode duration · stores seasonal spring surplus for winter peak demand reduction</div></div>
-                  <input class="e-qty-input" type="number" id="caes" value="0" min="0" max="10">
-                </div>
+              <div class="e-card-header"><div class="dot" style="background:#3a8f5f"></div>Placed Units</div>
+              <div class="e-card-body" id="placedUnitsList" style="padding:10px 16px">
+                <div style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">No units placed yet</div>
               </div>
             </div>
 
@@ -2002,6 +1968,38 @@ export default function EnergyGridSimulator() {
     window.addEventListener('gc:restore-plan', () => { suppressToast = true; setTimeout(() => { suppressToast = false; }, 3500); });
 
     // Sync map placements → simulator inputs
+    const PLACED_LABELS: Record<string, string> = {
+      solar:'Solar PV', wind:'Wind', geo:'Geothermal', hydroLow:'Hydro Low',
+      hydroHigh:'Hydro High', tidal:'Tidal', biomass:'Biomass',
+      liIon:'BESS', thermal:'Thermal', flywheel:'Flywheel', caes:'CAES',
+    };
+    const PLACED_COLORS: Record<string, string> = {
+      solar:'#f0b429', wind:'#58a6ff', geo:'#bc8cff', hydroLow:'#39c8e8',
+      hydroHigh:'#0099cc', tidal:'#00c8aa', biomass:'#7ee787',
+      liIon:'#ff8c8c', thermal:'#ffb347', flywheel:'#da8fff', caes:'#84fab0',
+    };
+    function updatePlacedUnits() {
+      const panel = getEl('placedUnitsList');
+      if (!panel) return;
+      const counts = sharedState.techCounts;
+      const entries = Object.entries(PLACED_LABELS)
+        .map(([k, label]) => ({ k, label, n: counts[k] || 0 }))
+        .filter(e => e.n > 0);
+      if (entries.length === 0) {
+        panel.innerHTML = '<div style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">No units placed yet</div>';
+        return;
+      }
+      panel.innerHTML = entries.map(({ k, label, n }) =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
+          <span style="display:flex;align-items:center;gap:6px;font-size:12px">
+            <span style="width:7px;height:7px;border-radius:50%;background:${PLACED_COLORS[k]};flex-shrink:0;display:inline-block"></span>
+            ${label}
+          </span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">${n}</span>
+        </div>`
+      ).join('') + '<div style="border-bottom:none"></div>';
+    }
+
     window.addEventListener('gc:map-update', () => {
       const counts = sharedState.techCounts;
       Object.entries(MAP_TECH_TO_SIM).forEach(([mapTech, simId]) => {
@@ -2016,6 +2014,7 @@ export default function EnergyGridSimulator() {
         cablingEl.min = String(mapMin);
         cablingEl.value = String(mapMin);
       }
+      updatePlacedUnits();
       render();
     });
 

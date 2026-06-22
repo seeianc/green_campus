@@ -206,7 +206,7 @@ export default function App() {
     function onMouseMove(e: MouseEvent) {
       if (!isDraggingRef.current || !splitContainerRef.current) return;
       const rect = splitContainerRef.current.getBoundingClientRect();
-      const pct = ((e.clientX - rect.left) / rect.width) * 100;
+      const pct = ((e.clientY - rect.top) / rect.height) * 100;
       setSplitPct(Math.min(80, Math.max(20, pct)));
     }
     function onMouseUp() { isDraggingRef.current = false; }
@@ -317,37 +317,37 @@ export default function App() {
         )}
       </nav>
 
-      <div ref={splitContainerRef} style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "row", minHeight: 0 }}>
-        <div style={{ width: `${splitPct}%`, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <div ref={splitContainerRef} style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <div style={{ height: `${splitPct}%`, overflow: "hidden", display: "flex", flexDirection: "column", minWidth: 0 }}>
           <EnergyGridSimulator />
         </div>
         <div
           onMouseDown={() => { isDraggingRef.current = true; }}
           style={{
-            width: "12px",
+            height: "12px",
             flexShrink: 0,
-            background: "#30363d",
-            cursor: "col-resize",
+            background: "#484f58",
+            cursor: "row-resize",
             transition: "background 0.15s",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#1c2a3a"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "#30363d"; }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#2d5a8e"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "#484f58"; }}
         >
           <div style={{
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
             gap: "3px",
             pointerEvents: "none",
           }}>
             {[0,1,2,3,4].map(i => (
-              <div key={i} style={{ width: "3px", height: "3px", borderRadius: "50%", background: "#7d8590" }} />
+              <div key={i} style={{ width: "3px", height: "3px", borderRadius: "50%", background: "#adbac7" }} />
             ))}
           </div>
         </div>
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minWidth: 0 }}>
           <CampusMapTool />
         </div>
       </div>
