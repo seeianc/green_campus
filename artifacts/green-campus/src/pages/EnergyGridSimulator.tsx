@@ -47,6 +47,8 @@ export default function EnergyGridSimulator() {
         display: flex;
         flex-direction: column;
         min-height: 0;
+        container-type: inline-size;
+        container-name: sim;
       }
 
       .energy-sim-header {
@@ -95,11 +97,10 @@ export default function EnergyGridSimulator() {
       .grid-status-badge.danger { background: #3a1f1f; color: #e87070; }
 
       .energy-sim-main {
-        max-width: 1200px;
         margin: 0 auto;
         padding: 28px 24px;
         display: grid;
-        grid-template-columns: 320px 1fr;
+        grid-template-columns: clamp(220px, 28%, 320px) 1fr;
         gap: 24px;
         align-items: start;
         min-height: 0;
@@ -350,8 +351,13 @@ export default function EnergyGridSimulator() {
         font-weight: 700;
       }
 
-      @media (max-width: 900px) {
+      @container sim (max-width: 900px) {
         .energy-sim-main { grid-template-columns: 1fr; }
+      }
+      @container sim (max-width: 560px) {
+        .e-metrics-grid { grid-template-columns: 1fr; }
+        .workforce-grid { grid-template-columns: 1fr 1fr; }
+        .energy-sim-main { padding: 16px 12px; gap: 16px; }
       }
 
       @media print {
@@ -650,9 +656,6 @@ export default function EnergyGridSimulator() {
                   </select>
                 </div>
               </div>
-            </div>
-            <div class="energy-logo-card">
-              <img src="${logoPath}" alt="REF Logo" />
             </div>
             </div>
 
@@ -957,6 +960,10 @@ export default function EnergyGridSimulator() {
                 <button class="e-btn" id="simExportBtn">⬇ Export CSV</button>
                 <button class="e-btn" id="simResetBtn">↺ Reset All</button>
               </div>
+            </div>
+
+            <div style="width:160px;margin:4px auto 8px;border-radius:8px;overflow:hidden;flex-shrink:0">
+              <img src="${logoPath}" alt="REF Logo" style="width:100%;height:100%;object-fit:cover;display:block" />
             </div>
 
           </div>

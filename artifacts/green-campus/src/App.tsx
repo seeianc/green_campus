@@ -28,10 +28,10 @@ function generateId(): string {
 const CLIENT_ID = generateId();
 
 export default function App() {
-  const [showMap, setShowMap] = useState(false);
   const [shareLabel, setShareLabel] = useState("🔗 Share Plan");
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionLabel, setSessionLabel] = useState("⚡ Start Session");
+  const [splitPct, setSplitPct] = useState(58);
 
   const sessionIdRef = useRef<string>("");
   const sessionUrlRef = useRef<string>("");
@@ -39,6 +39,8 @@ export default function App() {
   const pushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPullingRef = useRef(false);
   const dbListenerRef = useRef<ReturnType<typeof ref> | null>(null);
+  const isDraggingRef = useRef(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
 
   // ── Plan serialization ──────────────────────────────────────────────────
   function getPlanState(): object {
@@ -199,6 +201,23 @@ export default function App() {
     };
   }, []);
 
+  // ── Split-pane drag ─────────────────────────────────────────────────────
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      if (!isDraggingRef.current || !splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const pct = ((e.clientX - rect.left) / rect.width) * 100;
+      setSplitPct(Math.min(80, Math.max(20, pct)));
+    }
+    function onMouseUp() { isDraggingRef.current = false; }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d1117" }}>
       <nav style={{
@@ -296,32 +315,41 @@ export default function App() {
             {sessionLabel}
           </button>
         )}
-        <button
-          onClick={() => setShowMap(v => !v)}
-          style={{
-            marginRight: "12px",
-            padding: "5px 14px",
-            borderRadius: "4px",
-            border: `1px solid ${showMap ? "#3fb950" : "#30363d"}`,
-            background: showMap ? "#1a3a22" : "transparent",
-            color: showMap ? "#3fb950" : "#e6edf3",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: 600,
-            fontFamily: "'Space Grotesk', sans-serif",
-            letterSpacing: "0.04em",
-            transition: "all 0.15s",
-          }}
-        >
-          {showMap ? "⚡ SIMULATOR" : "🗺 MAP"}
-        </button>
       </nav>
 
-      <div style={{ flex: 1, overflow: "hidden", display: showMap ? "none" : "flex", flexDirection: "column", minHeight: 0 }}>
-        <EnergyGridSimulator />
-      </div>
-      <div style={{ flex: 1, overflow: "hidden", display: showMap ? "flex" : "none", flexDirection: "column", minHeight: 0 }}>
-        <CampusMapTool />
+      <div ref={splitContainerRef} style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "row", minHeight: 0 }}>
+        <div style={{ width: `${splitPct}%`, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <EnergyGridSimulator />
+        </div>
+        <div
+          onMouseDown={() => { isDraggingRef.current = true; }}
+          style={{
+            width: "12px",
+            flexShrink: 0,
+            background: "#30363d",
+            cursor: "col-resize",
+            transition: "background 0.15s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#1c2a3a"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "#30363d"; }}
+        >
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+            pointerEvents: "none",
+          }}>
+            {[0,1,2,3,4].map(i => (
+              <div key={i} style={{ width: "3px", height: "3px", borderRadius: "50%", background: "#7d8590" }} />
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <CampusMapTool />
+        </div>
       </div>
     </div>
   );

@@ -84,7 +84,7 @@ export default function CampusMapTool() {
       .map-main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
       .map-sidebar {
-        width: 300px;
+        width: 220px;
         flex-shrink: 0;
         background: var(--surface);
         border-right: 1px solid var(--border);
@@ -220,7 +220,7 @@ export default function CampusMapTool() {
             <div class="map-sidebar-section">Generation</div>
             <button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
               <span class="map-tech-dot" style="background:#f0b429"></span>
-              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M · 1.1 acres (5 sq)</div></div>
+              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M</div></div>
             </button>
             <button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
               <span class="map-tech-dot" style="background:#58a6ff"></span>
@@ -228,7 +228,7 @@ export default function CampusMapTool() {
             </button>
             <button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
               <span class="map-tech-dot" style="background:#bc8cff"></span>
-              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 3 acres (13 sq)</div></div>
+              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 3 acres</div></div>
             </button>
             <button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
@@ -244,25 +244,25 @@ export default function CampusMapTool() {
             </button>
             <button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
               <span class="map-tech-dot" style="background:#7ee787"></span>
-              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M · 3 acres (13 sq)</div></div>
+              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M</div></div>
             </button>
 
             <div class="map-sidebar-section">Storage</div>
             <button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
               <span class="map-tech-dot" style="background:#ff8c8c"></span>
-              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K · 5,000 sq ft</div></div>
+              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K</div></div>
             </button>
             <button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
               <span class="map-tech-dot" style="background:#ffb347"></span>
-              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M · 10,000 sq ft</div></div>
+              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M</div></div>
             </button>
             <button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
               <span class="map-tech-dot" style="background:#da8fff"></span>
-              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K · 10,000 sq ft</div></div>
+              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K</div></div>
             </button>
             <button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
               <span class="map-tech-dot" style="background:#84fab0"></span>
-              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M · 20,000 sq ft</div></div>
+              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M</div></div>
             </button>
 
             <div class="map-sidebar-section">Placements</div>
