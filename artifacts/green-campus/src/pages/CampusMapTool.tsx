@@ -122,13 +122,25 @@ export default function CampusMapTool() {
       .map-count-val { font-family: 'JetBrains Mono',monospace; font-weight: 600; color: var(--accent); }
 
 
-      .map-container {
-        flex: 1;
-        overflow: auto;
+      .map-area {
         position: relative;
-        background: #0a1628;
+        flex: 1;
+        overflow: hidden;
         min-height: 0;
       }
+      .map-container {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background: #0a1628;
+      }
+      .map-pin {
+        position: absolute;
+        z-index: 20;
+        pointer-events: auto;
+      }
+      .map-pin.bottom-left  { bottom: 12px; left: 12px; }
+      .map-pin.bottom-right { bottom: 12px; right: 12px; }
       .map-canvas-wrap {
         position: relative;
         display: inline-block;
@@ -146,7 +158,6 @@ export default function CampusMapTool() {
       .map-tooltip.hidden { display: none; }
 
       .map-info-panel {
-        position: absolute; bottom: 12px; right: 12px;
         background: rgba(22,27,34,.95); border: 1px solid var(--border);
         padding: 10px 12px; border-radius: 6px; font-size: 10px;
         font-family: 'JetBrains Mono',monospace; pointer-events: none; min-width: 160px;
@@ -286,17 +297,19 @@ export default function CampusMapTool() {
 
           </div>
 
-          <div class="map-container" id="mapContainer">
-            <div class="map-canvas-wrap" id="canvasWrap">
-              <canvas id="bgCanvas"></canvas>
-              <canvas id="overlayCanvas" style="position:absolute;top:0;left:0"></canvas>
+          <div class="map-area">
+            <div class="map-container" id="mapContainer">
+              <div class="map-canvas-wrap" id="canvasWrap">
+                <canvas id="bgCanvas"></canvas>
+                <canvas id="overlayCanvas" style="position:absolute;top:0;left:0"></canvas>
+              </div>
             </div>
-            <div style="position:absolute;bottom:12px;left:12px;display:flex;gap:4px;z-index:10">
+            <div class="map-pin bottom-left" style="display:flex;gap:4px">
               <button id="zoomIn" style="width:28px;height:28px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#e6edf3;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:0">+</button>
               <button id="zoomReset" style="height:28px;padding:0 8px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#7d8590;font-size:10px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">100%</button>
               <button id="zoomOut" style="width:28px;height:28px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#e6edf3;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:0">−</button>
             </div>
-            <div class="map-info-panel">
+            <div class="map-pin bottom-right map-info-panel">
               <div class="map-info-row"><span class="map-info-key">Cursor</span><span class="map-info-val" id="infoCursor">–</span></div>
               <div class="map-info-row"><span class="map-info-key">Zone</span><span class="map-info-val" id="infoZone">–</span></div>
               <div class="map-info-row"><span class="map-info-key">Distance to sub</span><span class="map-info-val" id="infoDist">–</span></div>
