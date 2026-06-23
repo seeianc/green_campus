@@ -282,8 +282,8 @@ export default function CampusMapTool() {
             <div class="map-sidebar-section">Storage</div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
               <span class="map-tech-dot" style="background:#ff8c8c"></span>
-              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K</div></div>
-            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('bess')" title="View Lithium-Ion BESS card">&#x1F3B4;</button></div>
+              <div><div>Lithium Ion</div><div class="map-tech-meta">1000kWh · $500K</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('bess')" title="View Lithium Ion card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
               <span class="map-tech-dot" style="background:#ffb347"></span>
               <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M</div></div>
@@ -360,18 +360,18 @@ export default function CampusMapTool() {
 }
 
 function initMapTool() {
-  const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferFt: number; squareFootprint: number }> = {
-    solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000 },
-    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000 },
-    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:130000 },
-    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
-    hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
-    tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000 },
-    biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferFt:0,   squareFootprint:130000 },
-    bess:     { name:'BESS',         color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferFt:0,   squareFootprint:5000 },
-    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000 },
-    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000 },
-    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferFt:0,   squareFootprint:20000 },
+  const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferFt: number; squareFootprint: number; placedRadiusFt: number; placedWidthFt?: number; placedHeightFt?: number; constructionWidthFt?: number; constructionHeightFt?: number }> = {
+    solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000,  placedRadiusFt:75,  placedWidthFt:250, placedHeightFt:175 },
+    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000,   placedRadiusFt:50  },
+    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:40,  placedWidthFt:100, placedHeightFt:50, constructionWidthFt:400, constructionHeightFt:325 },
+    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
+    hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:40  },
+    tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:20  },
+    biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferFt:0,   squareFootprint:130000, placedRadiusFt:75,  placedWidthFt:150, placedHeightFt:100 },
+    bess:     { name:'Lithium Ion',   color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:25  },
+    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
+    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
+    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferFt:0,   squareFootprint:20000,  placedRadiusFt:25  },
   };
 
   type Feature = {
@@ -399,7 +399,7 @@ function initMapTool() {
     RLS: {
       name: 'RLS — Inland School',
       desc: 'Inland campus, forested hillside, no water access',
-      width: 900, height: 1274, scale: 3048,
+      width: 900, height: 1274, scale: 893,
       substationPx: [353, 525],
       features: [
         { type:'forest', points:[[653,533],[559,508],[457,519],[501,594],[432,612],[409,686],[339,684],[275,790],[333,1243],[778,1183],[773,1003],[749,1006],[697,677],[559,690],[543,590],[668,578]] },
@@ -415,7 +415,7 @@ function initMapTool() {
     EDS: {
       name: 'EDS — On Penobscot Bay',
       desc: 'Coastal campus on Penobscot Bay',
-      width: 950, height: 671, scale: 3048,
+      width: 950, height: 671, scale: 1274,
       substationPx: [440, 500],
       features: [
         { type:'ocean', points:[[0,0],[600,0],[400,50],[300,90],[260,175],[245,280],[240,381],[0,381]] },
@@ -431,7 +431,7 @@ function initMapTool() {
     CES: {
       name: 'CES — River / Tidal',
       desc: 'Tidal River nearby = high hydro potential',
-      width: 950, height: 671, scale: 4048,
+      width: 950, height: 671, scale: 1677,
       substationPx: [196, 363],
       features: [
         { type:'forest', points:[[707,263],[765,251],[804,300],[780,317],[784,343],[702,363],[685,326],[522,377],[682,320]] },
@@ -449,7 +449,7 @@ function initMapTool() {
     LCS: {
       name: 'LCS — Lakeside Forest',
       desc: 'Heavily forested campus with field and nearby pond',
-      width: 950, height: 671, scale: 5213,
+      width: 950, height: 671, scale: 2201,
       substationPx: [660, 145],
       features: [
         { type:'forest', points:[[171,300],[316,213],[339,259],[396,268],[426,255],[402,192],[499,169],[491,114],[546,99],[556,136],[524,149],[537,180],[570,173],[593,237],[581,316],[612,322],[637,375],[750,349],[775,429],[660,445],[506,490],[414,534],[403,576],[275,621],[254,617]] },
@@ -465,7 +465,7 @@ function initMapTool() {
     STG: {
       name: 'STG — Lakeside Coastal Campus',
       desc: 'Hillside campus beside a marsh and tidal zone',
-      width: 900, height: 1274, scale: 3448,
+      width: 900, height: 1274, scale: 1240,
       substationPx: [565, 870],
       features: [
         { type:'road', points:[[505,948],[534,952],[523,1011],[550,1087],[544,1163],[525,1154]] },
@@ -500,12 +500,13 @@ function initMapTool() {
   const GRID = 18;
   let currentMap = 'EDS';
   let selectedTech = 'solar';
+  let pendingRotation = 0;
   let mode = 'place';
   let mapScale = 1;
   let zoomLevel = 1.0;
   const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 5.0;
-  type Placement = { tech: string; cx: number; cy: number; id: number; violations: string[] };
+  type Placement = { tech: string; cx: number; cy: number; id: number; violations: string[]; rotation?: number };
   type Cable = { x1: number; y1: number; x2: number; y2: number };
   const placements: Record<string, Placement[]> = {};
   const cables: Record<string, Cable[]> = {};
@@ -1253,75 +1254,101 @@ function initMapTool() {
 
     plist.forEach(p => {
       const t = TECHS[p.tech];
-      const r = (t.size * GRID) / 2;
+      const ftPerCell = MAPS[currentMap].scale / 30.48;
+      const r = Math.max(8, t.placedRadiusFt / ftPerCell * GRID);
 
+      // Drop shadow
       ctx.save();
-      ctx.globalAlpha = 0.4;
+      ctx.globalAlpha = 0.35;
       ctx.fillStyle = '#000';
       ctx.beginPath(); ctx.ellipse(p.cx, p.cy + r + 2, r * 0.8, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
+      // Placed unit — real-world scaled shape
       ctx.globalAlpha = 1;
-      ctx.fillStyle = t.color + 'dd';
+      ctx.fillStyle = t.color + '70';
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 6;
 
-      if (p.tech === 'wind') {
-        ctx.beginPath();
-        ctx.arc(p.cx, p.cy, Math.max(r, 8), 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke();
-      } else {
-        const cells = FOOTPRINT_CELLS[p.tech];
-        if (cells) {
-          const minX = Math.min(...cells.map(([x]) => x));
-          const maxX = Math.max(...cells.map(([x]) => x));
-          const minY = Math.min(...cells.map(([, y]) => y));
-          const maxY = Math.max(...cells.map(([, y]) => y));
-          const widthCells = maxX - minX + 1;
-          const heightCells = maxY - minY + 1;
-          const left = p.cx - (widthCells * GRID) / 2;
-          const top = p.cy - (heightCells * GRID) / 2;
+      if (t.placedWidthFt && t.placedHeightFt) {
+        const hw = Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2;
+        const hh = Math.max(8,  t.placedHeightFt / ftPerCell * GRID) / 2;
+        const rot = ((p.rotation || 0) * Math.PI) / 180;
 
-          cells.forEach(([cx, cy]) => {
-            const px = left + cx * GRID;
-            const py = top + cy * GRID;
-            ctx.fillStyle = p.tech === 'solar' ? '#1a5aaa' : t.color + 'aa';
-            ctx.fillRect(px, py, GRID, GRID);
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(px + 0.5, py + 0.5, GRID - 1, GRID - 1);
-          });
-        } else {
-          const span = Math.max(0.5, t.size) * GRID;
-          const left = p.cx - span / 2;
-          const top = p.cy - span / 2;
-          ctx.fillStyle = t.color + 'aa';
-          ctx.fillRect(left, top, span, span);
-          ctx.strokeStyle = '#fff';
+        ctx.save();
+        ctx.translate(p.cx, p.cy);
+        ctx.rotate(rot);
+
+        // Construction zone rectangle (geothermal only)
+        if (t.constructionWidthFt && t.constructionHeightFt) {
+          const chw = Math.max(16, t.constructionWidthFt  / ftPerCell * GRID) / 2;
+          const chh = Math.max(12, t.constructionHeightFt / ftPerCell * GRID) / 2;
+          ctx.beginPath();
+          ctx.roundRect(-chw, -chh, chw * 2, chh * 2, 4);
+          ctx.fillStyle = t.color + '38';
+          ctx.fill();
+          ctx.strokeStyle = t.color;
           ctx.lineWidth = 2;
-          ctx.strokeRect(left + 0.5, top + 0.5, span - 1, span - 1);
+          ctx.setLineDash([6, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.fillStyle = t.color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText('construction zone', 0, -chh + 12);
         }
+
+        // Main rectangle
+        ctx.fillStyle = t.color + '70';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(-hw, -hh, hw * 2, hh * 2, 3);
+        ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.max(10, Math.round(hh * 0.9))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(t.symbol, 0, 0);
+
+        ctx.restore();
+
+        // Label always upright, positioned above the visual bounding box
+        const rot90 = p.rotation === 90 || p.rotation === 270;
+        const visHalfH = rot90 ? hw : hh;
+        const labelY = p.cy - visHalfH - 5;
+        ctx.font = 'bold 10px Space Grotesk,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        const labelW = ctx.measureText(t.name).width + 8;
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
+        ctx.fillStyle = t.color;
+        ctx.fillText(t.name, p.cx, labelY);
+      } else {
+        // Circle for all other techs
+        ctx.beginPath();
+        ctx.arc(p.cx, p.cy, r, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.max(10, Math.round(r * 0.9))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(t.symbol, p.cx, p.cy);
+        ctx.textBaseline = 'alphabetic';
+        const labelY = p.cy - r - 5;
+        ctx.font = 'bold 10px Space Grotesk,sans-serif';
+        const labelW = ctx.measureText(t.name).width + 8;
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
+        ctx.fillStyle = t.color;
+        ctx.fillText(t.name, p.cx, labelY);
       }
-
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.max(13, r)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.globalAlpha = 1;
-      ctx.fillText(t.symbol, p.cx, p.cy + Math.max(5, r * 0.35));
-
-
-      // Label with background for readability
-      ctx.font = 'bold 11px Space Grotesk,sans-serif';
-      ctx.textAlign = 'center';
-      const labelY = p.cy - Math.max(r, 8) - 6;
-      const labelW = ctx.measureText(t.name).width + 8;
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
-      ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
-      ctx.fillStyle = t.color;
-      ctx.fillText(t.name, p.cx, labelY);
 
       ctx.globalAlpha = 1;
     });
@@ -1335,34 +1362,67 @@ function initMapTool() {
       const _boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
       const isOutside = !_waterTechs.includes(selectedTech) && !(selectedTech === 'wind' && _isWaterZone) && !!_boundary?.points && !pointInPolygon(snapped.x, snapped.y, _boundary.points);
       canvas.style.cursor = isOutside ? 'not-allowed' : 'crosshair';
-      ctx.globalAlpha = 0.4;
-      ctx.fillStyle = isOutside ? '#f85149' : t.color;
-      if (selectedTech === 'wind') {
+
+      const ghostColor = isOutside ? '#f85149' : t.color;
+      const ftPerCellG = MAPS[currentMap].scale / 30.48;
+
+      const ghostRot = (pendingRotation * Math.PI) / 180;
+
+      // Construction zone ghost (geo)
+      if (t.constructionWidthFt && t.constructionHeightFt) {
+        const chw = Math.max(16, t.constructionWidthFt  / ftPerCellG * GRID) / 2;
+        const chh = Math.max(12, t.constructionHeightFt / ftPerCellG * GRID) / 2;
+        ctx.globalAlpha = 0.55;
+        ctx.save();
+        ctx.translate(snapped.x, snapped.y);
+        ctx.rotate(ghostRot);
+        ctx.fillStyle = ghostColor + '55';
+        ctx.strokeStyle = ghostColor;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
         ctx.beginPath();
-        ctx.arc(snapped.x, snapped.y, Math.max(8, (t.size * GRID) / 2), 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const cells = FOOTPRINT_CELLS[selectedTech];
-        if (cells) {
-          const minX = Math.min(...cells.map(([x]) => x));
-          const maxX = Math.max(...cells.map(([x]) => x));
-          const minY = Math.min(...cells.map(([, y]) => y));
-          const maxY = Math.max(...cells.map(([, y]) => y));
-          const widthCells = maxX - minX + 1;
-          const heightCells = maxY - minY + 1;
-          const left = snapped.x - (widthCells * GRID) / 2;
-          const top = snapped.y - (heightCells * GRID) / 2;
-          cells.forEach(([cx, cy]) => {
-            const px = left + cx * GRID;
-            const py = top + cy * GRID;
-            ctx.fillRect(px, py, GRID, GRID);
-          });
-        } else {
-          const span = Math.max(0.5, t.size) * GRID;
-          const left = snapped.x - span / 2;
-          const top = snapped.y - span / 2;
-          ctx.fillRect(left, top, span, span);
+        ctx.roundRect(-chw, -chh, chw * 2, chh * 2, 4);
+        ctx.fill(); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = '9px Space Grotesk,sans-serif';
+        ctx.fillStyle = ghostColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('construction zone', 0, -chh + 12);
+        ctx.restore();
+      }
+
+      // Main shape ghost — mirrors placed unit exactly
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = ghostColor + 'cc';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      if (t.placedWidthFt && t.placedHeightFt) {
+        const hw = Math.max(12, t.placedWidthFt  / ftPerCellG * GRID) / 2;
+        const hh = Math.max(8,  t.placedHeightFt / ftPerCellG * GRID) / 2;
+        ctx.save();
+        ctx.translate(snapped.x, snapped.y);
+        ctx.rotate(ghostRot);
+        ctx.beginPath();
+        ctx.roundRect(-hw, -hh, hw * 2, hh * 2, 3);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+        // Rotation badge
+        if (pendingRotation !== 0) {
+          ctx.globalAlpha = 0.9;
+          const rot90 = pendingRotation === 90 || pendingRotation === 270;
+          const visHalfH = rot90 ? hw : hh;
+          ctx.font = 'bold 10px Space Grotesk,sans-serif';
+          ctx.fillStyle = ghostColor;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText(`↻ ${pendingRotation}°`, snapped.x, snapped.y - visHalfH - 6);
         }
+      } else {
+        const r = Math.max(8, t.placedRadiusFt / ftPerCellG * GRID);
+        ctx.beginPath();
+        ctx.arc(snapped.x, snapped.y, r, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
       }
       ctx.globalAlpha = 1;
     } else if (mode !== 'pan') {
@@ -1512,7 +1572,7 @@ function initMapTool() {
     placements[currentMap].push({
       tech: selectedTech, cx: snapped.x, cy: snapped.y,
       id: Date.now() + Math.random(),
-      violations
+      violations, rotation: pendingRotation
     });
     buildOptimalCables();
     drawOverlay();
@@ -1580,6 +1640,27 @@ function initMapTool() {
     if (idx >= 0) {
       plist.splice(idx, 1);
       buildOptimalCables();
+      drawOverlay();
+      updateUI();
+    }
+  }
+
+  function rotateUnit(x: number, y: number) {
+    const plist = placements[currentMap];
+    if (!plist?.length) return;
+    const ftPerCell = MAPS[currentMap].scale / 30.48;
+    let bestIdx = -1, bestDist = Infinity;
+    plist.forEach((p, i) => {
+      const t = TECHS[p.tech];
+      const hitR = t.placedWidthFt
+        ? Math.max(Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2,
+                   Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2) + 6
+        : Math.max(8, t.placedRadiusFt / ftPerCell * GRID) + 6;
+      const dist = Math.hypot(p.cx - x, p.cy - y);
+      if (dist < hitR && dist < bestDist) { bestDist = dist; bestIdx = i; }
+    });
+    if (bestIdx >= 0) {
+      plist[bestIdx].rotation = (((plist[bestIdx].rotation || 0) + 90) % 360);
       drawOverlay();
       updateUI();
     }
@@ -1814,6 +1895,7 @@ function initMapTool() {
 
   function selectTech(tech: string) {
     selectedTech = tech;
+    pendingRotation = 0;
     document.querySelectorAll('.map-tech-btn').forEach(b => b.classList.remove('active'));
     getEl(`btn-${tech}`)?.classList.add('active');
     if (mode !== 'place') setMode('place');
@@ -1907,6 +1989,17 @@ function initMapTool() {
       mousePos = { x: 0, y: 0 };
       const tooltip = getEl('mapTooltip');
       if (tooltip) tooltip.className = 'map-tooltip hidden';
+    });
+
+    overlayCanvas.addEventListener('contextmenu', (e: MouseEvent) => {
+      e.preventDefault();
+      const { x, y } = getCanvasPos(e);
+      if (mode === 'place' && TECHS[selectedTech]?.placedWidthFt) {
+        pendingRotation = (pendingRotation + 90) % 360;
+        drawOverlay();
+      } else {
+        rotateUnit(x, y);
+      }
     });
   }
 

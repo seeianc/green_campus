@@ -701,7 +701,7 @@ export default function EnergyGridSimulator() {
                           <div><span class="label">Hydro <span id="adjTidalDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjTidal" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjLiIonItem">
-                          <div><span class="label">Li-Ion <span id="adjLiIonDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjLiIon" style="font-size: 11px;">$0</span></div>
+                          <div><span class="label">Lithium Ion <span id="adjLiIonDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjLiIon" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjPivotItem">
                           <div><span class="label">Pivot Penalty <span id="adjPivotDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjPivot" style="font-size: 11px;">$0</span></div>
@@ -743,9 +743,9 @@ export default function EnergyGridSimulator() {
                       <div class="e-expense-item"><span class="label">Biomass</span><span class="value" id="costBiomass">$0</span></div>
                       
                       <div class="e-expense-item category"><span class="label">STORAGE</span></div>
-                      <div class="e-expense-item"><span class="label">Li-Ion BESS</span><span class="value" id="costLiIon">$0</span></div>
+                      <div class="e-expense-item"><span class="label">Lithium Ion</span><span class="value" id="costLiIon">$0</span></div>
                       <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="costLiIonAdjItem">
-                        <div><span class="label">Li-Ion Adjustment <span id="costLiIonAdjDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="costLiIonAdj" style="font-size: 11px;">$0</span></div>
+                        <div><span class="label">Lithium Ion Adjustment <span id="costLiIonAdjDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="costLiIonAdj" style="font-size: 11px;">$0</span></div>
                       </div>
                       <div class="e-expense-item"><span class="label">Thermal</span><span class="value" id="costThermal">$0</span></div>
                       <div class="e-expense-item"><span class="label">Flywheel</span><span class="value" id="costFlywheel">$0</span></div>
@@ -1633,7 +1633,7 @@ export default function EnergyGridSimulator() {
       }
       if (r.isAIHub) alerts.push({ cls: 'warn', msg: '⚡ AI Learning Hub: Campus demand increased by 1,500 kW every hour — new peak demand is 6,500 kW.' });
       if (r.isMaint) alerts.push({ cls: 'warn', msg: '🔧 Maintenance Crisis: Solar and Wind output reduced to 75%.' + (r.infraCosts.pivotPenalty > 0 ? ' $500K repair fee applied.' : '') });
-      if (r.isSupplyChain) alerts.push({ cls: 'warn', msg: '📦 Supply Chain Crisis: Li-Ion BESS cost doubled to $1M/unit.' });
+      if (r.isSupplyChain) alerts.push({ cls: 'warn', msg: '📦 Supply Chain Crisis: Lithium Ion BESS cost doubled to $1M/unit.' });
       if (r.isCarbonTax && r.annualCarbonTaxFee > 0) alerts.push({ cls: 'warn', msg: '🌿 Carbon Tax: ' + fmt$(r.annualCarbonTaxFee) + '/yr fee on ' + Math.round(r.annualCarbonTaxFee / 0.10 / 365).toLocaleString() + ' kWh daily shortfall.' });
       if (r.isCarbonTax && r.annualCarbonTaxFee === 0) alerts.push({ cls: 'ok', msg: '✅ Carbon Tax: Grid is 100% renewable — no carbon tax fee applies.' });
       if (r.migratoryBirdViolation) alerts.push({ cls: 'danger', msg: '🐦 VIOLATION — Migratory Bird Ordinance: Wind turbines in forested areas disrupt migration corridors. Relocate to fields, parking lots, or open water.' });
@@ -1641,9 +1641,9 @@ export default function EnergyGridSimulator() {
       if (r.isMigratoryBird && !r.migratoryBirdViolation && s.wind > 0) alerts.push({ cls: 'ok', msg: '🐦 Migratory Bird Ordinance: Wind turbine placement compliant — sited in permitted zones (fields, parking, open water).' });
       if (r.isMigratoryBird && !r.migratoryBirdViolation && s.wind === 0) alerts.push({ cls: 'warn', msg: '🐦 Migratory Bird Ordinance active: Wind turbines permitted in fields, parking lots, and open water — not in forested areas.' });
       if (r.isVernalPool && !r.vernalPoolViolation) alerts.push({ cls: 'warn', msg: '🌿 Vernal Pool Protection active: Geothermal is banned. Max 25% of forested land may be cleared.' });
-      if (r.nightOwlViolation) alerts.push({ cls: 'danger', msg: '🌙 VIOLATION — Night Owl Campus: Solar requires at least 2 Li-Ion BESS units for evening storage. Add BESS.' });
-      if (r.isNightOwl && !r.nightOwlViolation && s.solar > 0) alerts.push({ cls: 'ok', msg: '🌙 Night Owl Campus: Solar + BESS requirement met. ✅' });
-      if (r.isNightOwl && s.solar === 0) alerts.push({ cls: 'warn', msg: '🌙 Night Owl Campus: No solar selected — BESS requirement does not apply.' });
+      if (r.nightOwlViolation) alerts.push({ cls: 'danger', msg: '🌙 VIOLATION — Night Owl Campus: Solar requires at least 2 Lithium Ion units for evening storage. Add Lithium Ion.' });
+      if (r.isNightOwl && !r.nightOwlViolation && s.solar > 0) alerts.push({ cls: 'ok', msg: '🌙 Night Owl Campus: Solar + Lithium Ion requirement met. ✅' });
+      if (r.isNightOwl && s.solar === 0) alerts.push({ cls: 'warn', msg: '🌙 Night Owl Campus: No solar selected — Lithium Ion requirement does not apply.' });
       if (r.mornRushViolation) alerts.push({ cls: 'danger', msg: `⏰ VIOLATION — Morning Rush: Solar + Wind = ${Math.round(r.solarWindFraction * 100)}% of supply. Add storage or increase geo/hydro/biomass to resolve.` });
       if (r.isMornRush && !r.mornRushViolation && r.solarWindFraction > 0.50) alerts.push({ cls: 'ok', msg: `⏰ Morning Rush: Solar + Wind at ${Math.round(r.solarWindFraction * 100)}% — storage solution in place. ✅` });
       if (r.isMornRush && r.solarWindFraction <= 0.50) alerts.push({ cls: 'ok', msg: `⏰ Morning Rush: Solar + Wind at ${Math.round(r.solarWindFraction * 100)}% of supply — within the 50% threshold. ✅` });
@@ -1661,7 +1661,7 @@ export default function EnergyGridSimulator() {
         [s.hydroHigh, mc.hydroH   || 0, 'Hydro (High Head)'],
         [s.tidalStd,  mc.tidal    || 0, 'Tidal'],
         [s.biomass,   mc.biomass  || 0, 'Biomass'],
-        [s.liIon,     mc.bess     || 0, 'Li-Ion BESS'],
+        [s.liIon,     mc.bess     || 0, 'Lithium Ion'],
         [s.thermal,   mc.thermal  || 0, 'Thermal Storage'],
         [s.flywheel,  mc.flywheel || 0, 'Flywheel'],
         [s.caes,      mc.caes     || 0, 'CAES'],
@@ -1862,7 +1862,7 @@ export default function EnergyGridSimulator() {
         [],
         // Storage & emerging tech
         ['STORAGE & EMERGING TECH',''],
-        ['Li-Ion BESS (units)', s.liIon],
+        ['Lithium Ion (units)', s.liIon],
         ['Thermal Storage (units)', s.thermal],
         ['Mechanical Flywheel (units)', s.flywheel],
         ['CAES (units)', s.caes],
@@ -1974,7 +1974,7 @@ export default function EnergyGridSimulator() {
       solar: 'Solar PV', wind: 'Wind Turbine', geo: 'Geothermal',
       hydroLow: 'Hydro (Low Head)', hydroHigh: 'Hydro (High Head)',
       tidalStd: 'Tidal', biomass: 'Biomass',
-      liIon: 'Li-Ion BESS', thermal: 'Thermal Storage',
+      liIon: 'Lithium Ion', thermal: 'Thermal Storage',
       flywheel: 'Mechanical Flywheel', caes: 'CAES',
     };
 
@@ -2023,7 +2023,7 @@ export default function EnergyGridSimulator() {
     const PLACED_LABELS: Record<string, string> = {
       solar:'Solar PV', wind:'Wind', geo:'Geothermal', hydroLow:'Hydro Low',
       hydroHigh:'Hydro High', tidal:'Tidal', biomass:'Biomass',
-      liIon:'BESS', thermal:'Thermal', flywheel:'Flywheel', caes:'CAES',
+      liIon:'Lithium Ion', thermal:'Thermal', flywheel:'Flywheel', caes:'CAES',
     };
     const PLACED_COLORS: Record<string, string> = {
       solar:'#f0b429', wind:'#58a6ff', geo:'#bc8cff', hydroLow:'#39c8e8',
