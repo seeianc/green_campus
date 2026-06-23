@@ -1126,15 +1126,6 @@ export default function EnergyGridSimulator() {
         scada: s.scada * 500000,
       } : { hydrogen: 0, v2g: 0, scada: 0 };
 
-      const infraCosts = {
-        cabling: s.cabling * 500, // $500/ft = $50K per 100 ft
-        craneLogistics: s.wind > 0 && isCrane ? 500000 : 0,
-        windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
-        utilityFee: totalPeakSupply > 3000 ? 500000 : 0,
-        pivotPenalty: (isMaint && (s.solar > 0 || s.wind > 0)) ? 500000 :
-                      (isPolar && polarDemandThreshold && totalPeakSupply < polarDemandThreshold) ? 300000 : 0,
-      };
-
       // Hydrogen electrolyzer boosts solar & wind output by 30%
       const hydrogenBoost = isGrant && s.hydrogen > 0 ? 1.3 : 1;
       const windMult = hydrogenBoost * (isMaint ? 0.75 : 1);
@@ -1179,6 +1170,17 @@ export default function EnergyGridSimulator() {
         if (isGrant && s.v2g > 0) d = Math.min(d, 4750);
         return Math.round(d);
       });
+
+      const campusPeakDemand = Math.max(...demand24);
+
+      const infraCosts = {
+        cabling: s.cabling * 500,
+        craneLogistics: s.wind > 0 && isCrane ? 500000 : 0,
+        windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
+        utilityFee: totalPeakSupply > campusPeakDemand ? 500000 : 0,
+        pivotPenalty: (isMaint && (s.solar > 0 || s.wind > 0)) ? 500000 :
+                      (isPolar && polarDemandThreshold && totalPeakSupply < polarDemandThreshold) ? 300000 : 0,
+      };
 
       const kwSoldBack = supply24_temp.reduce((total, supply, i) => {
         const demand = demand24[i];
@@ -1305,7 +1307,7 @@ export default function EnergyGridSimulator() {
       const payroll = s.wSolar*55000 + s.wElec*68000 + s.wEng*72000;
 
       return {
-        totalPeakSupply, actualPeakSupply, totalStorage, startBudget, totalSpent, remaining,
+        totalPeakSupply, actualPeakSupply, totalStorage, startBudget, totalSpent, remaining, campusPeakDemand,
         islandTime, gridStatus, gridClass,
         demand24, supply24, renewableCredits, kwSoldBack,
         annualRenewableRevenue, renewableRevenueProjection,
@@ -1625,7 +1627,7 @@ export default function EnergyGridSimulator() {
       if (r.remaining < 0) alerts.push({ cls: 'danger', msg: '⛔ Over budget by ' + fmt$(Math.abs(r.remaining)) });
       if (r.isGrant && !r.grantCompliant) alerts.push({ cls: 'warn', msg: '⚠️ Grant Violation: Must purchase at least 1 Emerging Tech!' });
       if (r.totalPeakSupply === 0) alerts.push({ cls: 'warn', msg: '⚠️ No generation tech selected — grid has no supply.' });
-      if (r.infraCosts.utilityFee > 0) alerts.push({ cls: 'warn', msg: '⚠️ Utility Upgrade Fee triggered: supply exceeds 3,000 kW (+$500K)' });
+      if (r.infraCosts.utilityFee > 0) alerts.push({ cls: 'warn', msg: `⚠️ Utility Interconnection Fee: supply exceeds campus peak demand (${r.campusPeakDemand.toLocaleString()} kW) — grid export requires infrastructure upgrade (+$500K)` });
       if (r.isPolar) {
         const threshold = r.polarDemandThreshold ?? 7500;
         const met = r.totalPeakSupply >= threshold;
