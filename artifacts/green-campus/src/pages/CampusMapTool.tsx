@@ -418,6 +418,7 @@ function initMapTool() {
       width: 950, height: 671, scale: 3048,
       substationPx: [440, 500],
       features: [
+        { type:'ocean', points:[[0,0],[600,0],[400,50],[300,90],[260,175],[245,280],[240,381],[0,381]] },
         { type:'water', points:[[245,208],[260,285],[245,381],[252,381],[267,302],[256,218]] },
         { type:'forest', points:[[451,621],[537,566],[546,533],[517,490],[507,465],[513,449],[260,381],[267,238],[300,133],[353,70],[680,358],[598,643]] },
         { type:'building', points:[[334,432],[449,449],[440,492],[357,479],[350,494],[324,483]] },
@@ -446,7 +447,7 @@ function initMapTool() {
       ]
     },
     LCS: {
-      name: 'LCS — Coastal Forest',
+      name: 'LCS — Lakeside Forest',
       desc: 'Heavily forested campus with field and nearby pond',
       width: 950, height: 671, scale: 5213,
       substationPx: [660, 145],
@@ -462,7 +463,7 @@ function initMapTool() {
     },
   
     STG: {
-      name: 'STG — Lakeside Campus',
+      name: 'STG — Lakeside Coastal Campus',
       desc: 'Hillside campus beside a marsh and tidal zone',
       width: 900, height: 1274, scale: 3448,
       substationPx: [565, 870],
@@ -582,7 +583,7 @@ function initMapTool() {
     RLS: [{ label: 'Inland', color: '#7ee787' }, { label: 'Forest', color: '#2ea043' }, { label: 'Wind', color: '#58a6ff' }],
     EDS: [{ label: 'Coastal', color: '#39c8e8' }, { label: 'Tidal', color: '#00c8aa' }, { label: 'High Contour', color: '#d29922' }],
     CES: [{ label: 'River', color: '#39c8e8' }, { label: 'Hydro', color: '#0099cc' }, { label: 'Open Fields', color: '#7ee787' }],
-    LCS: [{ label: 'Coastal', color: '#39c8e8' }, { label: 'Forest', color: '#2ea043' }, { label: 'High Contour', color: '#d29922' }],
+    LCS: [{ label: 'Lakeside', color: '#58a6ff' }, { label: 'Forest', color: '#2ea043' }, { label: 'High Contour', color: '#d29922' }],
     STG: [{ label: 'Lakeside', color: '#58a6ff' }, { label: 'Hillside', color: '#d29922' }, { label: 'Hydro', color: '#0099cc' }],
   };
   const selGrid = getEl('mapSelGrid');
@@ -1013,10 +1014,9 @@ function initMapTool() {
       });
     }
 
-    // Property boundary fallback: only draw on schematic fallback.
-    // Satellite maps already include parcel outlines.
+    // Property boundary: only draw on schematic fallback; satellite maps show parcel outlines natively.
     const boundary = m.features.find(f => f.type === 'boundary');
-    if (!imgLoaded && boundary && boundary.points) {
+    if (!imgLoaded && boundary?.points) {
       ctx.strokeStyle = '#ff8c8c';
       ctx.lineWidth = 2;
       ctx.setLineDash([6, 3]);
@@ -1329,8 +1329,14 @@ function initMapTool() {
     if (mode === 'place' && selectedTech && mousePos.x > 0) {
       const t = TECHS[selectedTech];
       const snapped = snapToGridCell(mousePos.x, mousePos.y, selectedTech);
+      const _waterTechs = ['hydroL', 'hydroH', 'tidal'];
+      const _snappedZone = getZoneAt(snapped.x, snapped.y);
+      const _isWaterZone = _snappedZone?.type === 'water' || _snappedZone?.type === 'ocean' || _snappedZone?.type === 'tidal_zone';
+      const _boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      const isOutside = !_waterTechs.includes(selectedTech) && !(selectedTech === 'wind' && _isWaterZone) && !!_boundary?.points && !pointInPolygon(snapped.x, snapped.y, _boundary.points);
+      canvas.style.cursor = isOutside ? 'not-allowed' : 'crosshair';
       ctx.globalAlpha = 0.4;
-      ctx.fillStyle = t.color;
+      ctx.fillStyle = isOutside ? '#f85149' : t.color;
       if (selectedTech === 'wind') {
         ctx.beginPath();
         ctx.arc(snapped.x, snapped.y, Math.max(8, (t.size * GRID) / 2), 0, Math.PI * 2);
@@ -1359,6 +1365,8 @@ function initMapTool() {
         }
       }
       ctx.globalAlpha = 1;
+    } else if (mode !== 'pan') {
+      canvas.style.cursor = 'crosshair';
     }
     ctx.restore();
   }
@@ -1402,6 +1410,18 @@ function initMapTool() {
   }
 
   // Minimum distance from point (px,py) to any edge of a polygon
+  function segmentsIntersect(ax1: number, ay1: number, ax2: number, ay2: number,
+                             bx1: number, by1: number, bx2: number, by2: number): boolean {
+    const d1x = ax2 - ax1, d1y = ay2 - ay1;
+    const d2x = bx2 - bx1, d2y = by2 - by1;
+    const cross = d1x * d2y - d1y * d2x;
+    if (Math.abs(cross) < 1e-10) return false;
+    const dx = bx1 - ax1, dy = by1 - ay1;
+    const t = (dx * d2y - dy * d2x) / cross;
+    const u = (dx * d1y - dy * d1x) / cross;
+    return t > 0 && t < 1 && u > 0 && u < 1;
+  }
+
   function pointToPolygonDist(px: number, py: number, points: number[][]): number {
     let minDist = Infinity;
     for (let i = 0; i < points.length; i++) {
@@ -1418,6 +1438,14 @@ function initMapTool() {
   function checkPlacementViolations(x: number, y: number, tech: string): string[] {
     const violations: string[] = [];
     const zone = getZoneAt(x, y);
+
+    const waterTechs = ['hydroL', 'hydroH', 'tidal'];
+    if (!waterTechs.includes(tech)) {
+      const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      if (boundary?.points && !pointInPolygon(x, y, boundary.points)) {
+        violations.push('Must be placed within campus property boundary');
+      }
+    }
 
     if (tech === 'hydroL' || tech === 'hydroH') {
       if (!zone || (zone.type !== 'water' && zone.type !== 'ocean')) {
@@ -1450,15 +1478,19 @@ function initMapTool() {
       if (tooCloseToBuilding) violations.push('Biomass too close to building — exhaust and smoke hazard near windows (200 ft buffer)');
     }
     if (tech === 'wind') {
+      const bufferPx = TECHS.wind.bufferFt / (MAPS[currentMap].scale / 30.48) * GRID;
       MAPS[currentMap].features.forEach(f => {
         if (f.type === 'building' && f.rect) {
           const [rx, ry, rw, rh] = f.rect;
           const closest = [Math.max(rx, Math.min(x, rx + rw)), Math.max(ry, Math.min(y, ry + rh))];
           const d = Math.hypot(closest[0] - x, closest[1] - y);
-          const bufferPx = TECHS.wind.bufferFt / (MAPS[currentMap].scale / 30.48) * GRID;
           if (d < bufferPx) violations.push('Wind buffer touches building — $200K fee');
         }
       });
+      const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      if (boundary?.points && pointToPolygonDist(x, y, boundary.points) < bufferPx) {
+        violations.push('Wind buffer touches property line — $200K fee');
+      }
       if (zone && zone.type === 'forest') {
         violations.push('Migratory Bird Ordinance: turbines not permitted in forested areas');
       }
@@ -1469,6 +1501,13 @@ function initMapTool() {
   function placeUnit(x: number, y: number) {
     if (!selectedTech) return;
     const snapped = snapToGridCell(x, y, selectedTech);
+    const waterTechs = ['hydroL', 'hydroH', 'tidal'];
+    const snappedZone = getZoneAt(snapped.x, snapped.y);
+    const isWaterZone = snappedZone?.type === 'water' || snappedZone?.type === 'ocean' || snappedZone?.type === 'tidal_zone';
+    if (!waterTechs.includes(selectedTech) && !(selectedTech === 'wind' && isWaterZone)) {
+      const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      if (boundary?.points && !pointInPolygon(snapped.x, snapped.y, boundary.points)) return;
+    }
     const violations = checkPlacementViolations(snapped.x, snapped.y, selectedTech);
     placements[currentMap].push({
       tech: selectedTech, cx: snapped.x, cy: snapped.y,
@@ -1669,10 +1708,24 @@ function initMapTool() {
       });
     });
 
-    // Check if any placed wind turbine violates the 500ft building buffer
-    const windBufferHit = Object.values(placements).flat().some(p =>
+    // Check if any placed wind turbine violates the 500ft building/property buffer
+    const windBufferFromPlacements = Object.values(placements).flat().some(p =>
       p.tech === 'wind' && p.violations && p.violations.some((v: string) => v.includes('Wind buffer'))
     );
+    // Check if any cable crosses the property boundary (offshore wind interconnect fee)
+    const windBufferFromCables = Object.keys(cables).some(mapId => {
+      const boundary = MAPS[mapId]?.features.find(f => f.type === 'boundary' && f.points);
+      if (!boundary?.points) return false;
+      const pts = boundary.points;
+      return (cables[mapId] || []).some(seg =>
+        pts.some((_, i) => {
+          const [ax, ay] = pts[i];
+          const [bx, by] = pts[(i + 1) % pts.length];
+          return segmentsIntersect(seg.x1, seg.y1, seg.x2, seg.y2, ax, ay, bx, by);
+        })
+      );
+    });
+    const windBufferHit = windBufferFromPlacements || windBufferFromCables;
 
     // Sync to shared state so Grid Simulator can read it
     sharedState.techCounts = counts;
