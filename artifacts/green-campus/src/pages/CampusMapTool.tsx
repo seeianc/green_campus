@@ -95,12 +95,14 @@ export default function CampusMapTool() {
         gap: 12px;
       }
       .map-sidebar-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); padding: 6px 4px 4px; border-bottom: 1px solid var(--border); margin-top: 4px; }
+      .map-tech-wrap { position: relative; }
       .map-tech-btn {
-        display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 5px;
+        display: flex; align-items: center; gap: 10px; padding: 9px 10px; padding-right: 32px; border-radius: 5px;
         cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
         color: var(--text); font-family: 'Space Grotesk',sans-serif; font-size: 12px;
         font-weight: 500; transition: all .15s; text-align: left; width: 100%;
       }
+      .map-card-float { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
       .map-tech-btn:hover { border-color: var(--accent2); background: #1f2a38; }
       .map-tech-btn.active { border-color: currentColor; }
       .map-tech-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -188,6 +190,25 @@ export default function CampusMapTool() {
       .map-sel-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid; font-weight: 600; }
       .map-back-btn { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all .15s; font-family: 'Space Grotesk',sans-serif; }
       .map-back-btn:hover { color: var(--text); border-color: var(--muted); }
+
+      /* ── Light theme overrides ──────────────────────────────────── */
+      [data-theme="light"] .map-tool-root {
+        --bg: #f5f4f0;
+        --surface: #ffffff;
+        --surface2: #ede9e0;
+        --border: #d0cdc4;
+        --text: #1a1917;
+        --muted: #6b6960;
+        --accent: #2a6e4e;
+        --accent2: #1a5fb4;
+        --warn: #c45c1a;
+        --danger: #b83232;
+      }
+      [data-theme="light"] .map-tool-header { background: #ffffff; }
+      [data-theme="light"] .map-container { background: #c8d8e8; }
+      [data-theme="light"] .map-tech-btn:hover { background: #e8f2ec !important; }
+      [data-theme="light"] .map-info-panel { background: rgba(245,244,240,.95); }
+      [data-theme="light"] .map-tab.active { color: #fff; }
     `;
     document.head.appendChild(style);
 
@@ -229,52 +250,52 @@ export default function CampusMapTool() {
             </div>
 
             <div class="map-sidebar-section">Generation</div>
-            <button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
               <span class="map-tech-dot" style="background:#f0b429"></span>
               <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('solar')" title="View Solar PV card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
               <span class="map-tech-dot" style="background:#58a6ff"></span>
               <div><div>Wind</div><div class="map-tech-meta">3000kW · $2.5M · 500ft buffer</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('wind')" title="View Wind Turbine card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
               <span class="map-tech-dot" style="background:#bc8cff"></span>
               <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 3 acres</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('geo')" title="View Geothermal card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
               <div><div>Hydro (Low)</div><div class="map-tech-meta">500kW · $1M · water</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-hydroH" style="color:#0099cc">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('hydroL')" title="View Hydro Low Head card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-hydroH" style="color:#0099cc">
               <span class="map-tech-dot" style="background:#0099cc"></span>
               <div><div>Hydro (High)</div><div class="map-tech-meta">2000kW · $4M · water</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-tidal" style="color:#00c8aa">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('hydroH')" title="View Hydro High Head card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-tidal" style="color:#00c8aa">
               <span class="map-tech-dot" style="background:#00c8aa"></span>
               <div><div>Tidal</div><div class="map-tech-meta">500kW · $1.5M · coast</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('tidal')" title="View Tidal card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
               <span class="map-tech-dot" style="background:#7ee787"></span>
               <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M</div></div>
-            </button>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('biomass')" title="View Biomass card">&#x1F3B4;</button></div>
 
             <div class="map-sidebar-section">Storage</div>
-            <button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
               <span class="map-tech-dot" style="background:#ff8c8c"></span>
               <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('bess')" title="View Lithium-Ion BESS card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
               <span class="map-tech-dot" style="background:#ffb347"></span>
               <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('thermal')" title="View Thermal Storage card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
               <span class="map-tech-dot" style="background:#da8fff"></span>
               <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('flywheel')" title="View Mechanical Flywheel card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
               <span class="map-tech-dot" style="background:#84fab0"></span>
               <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M</div></div>
-            </button>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('caes')" title="View CAES card">&#x1F3B4;</button></div>
 
             <div class="map-sidebar-section">Placements</div>
             <div class="map-counts" id="countsPanel">

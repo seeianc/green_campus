@@ -43,11 +43,10 @@ export default function EnergyGridSimulator() {
         color: var(--text);
         font-size: 14px;
         line-height: 1.5;
-        height: 100%;
         overflow-y: auto;
+        overflow-x: hidden;
         display: flex;
         flex-direction: column;
-        min-height: 0;
         container-type: inline-size;
         container-name: sim;
       }
@@ -62,6 +61,7 @@ export default function EnergyGridSimulator() {
         position: sticky;
         top: 0;
         z-index: 100;
+        flex-shrink: 0;
       }
       .energy-sim-header h1 {
         font-size: 15px;
@@ -98,17 +98,18 @@ export default function EnergyGridSimulator() {
       .grid-status-badge.danger { background: #3a1f1f; color: #e87070; }
 
       .energy-sim-main {
-        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
         padding: 28px 24px;
         display: grid;
-        grid-template-columns: clamp(220px, 28%, 320px) 1fr;
-        gap: 24px;
+        grid-template-columns: clamp(180px, 28%, 300px) 1fr;
+        gap: 20px;
         align-items: start;
-        min-height: 0;
+        flex-shrink: 0;
       }
 
-      .energy-sidebar { display: flex; flex-direction: column; gap: 16px; }
-      .energy-content { display: flex; flex-direction: column; gap: 16px; }
+      .energy-sidebar { display: flex; flex-direction: column; gap: 16px; min-width: 0; overflow: hidden; }
+      .energy-content { display: flex; flex-direction: column; gap: 16px; min-width: 0; overflow: hidden; }
 
       .e-card {
         background: var(--surface);
@@ -256,7 +257,7 @@ export default function EnergyGridSimulator() {
       }
       .e-expense-item.category:first-child { margin-top: 0; }
       .e-expense-item .label { flex: 1; }
-      .e-expense-item .value { display: inline-block; text-align: right; min-width: 100px; }
+      .e-expense-item .value { display: inline-block; text-align: right; min-width: 0; }
 
       .e-alert {
         padding: 10px 14px;
@@ -352,10 +353,10 @@ export default function EnergyGridSimulator() {
         font-weight: 700;
       }
 
-      @container sim (max-width: 900px) {
+      @container sim (max-width: 820px) {
         .energy-sim-main { grid-template-columns: 1fr; }
       }
-      @container sim (max-width: 560px) {
+      @container sim (max-width: 480px) {
         .e-metrics-grid { grid-template-columns: 1fr; }
         .workforce-grid { grid-template-columns: 1fr 1fr; }
         .energy-sim-main { padding: 16px 12px; gap: 16px; }
@@ -487,6 +488,39 @@ export default function EnergyGridSimulator() {
           margin: 20px 0;
         }
       }
+
+      /* ── Light theme overrides ──────────────────────────────────── */
+      [data-theme="light"] .energy-sim {
+        --bg: #f5f4f0;
+        --surface: #ffffff;
+        --border: #e2e0d8;
+        --text: #1a1917;
+        --text-muted: #6b6960;
+        --accent: #2a6e4e;
+        --accent-light: #e8f2ec;
+        --accent-muted: #4a9e6e;
+        --warn: #c45c1a;
+        --warn-light: #fdf0e8;
+        --danger: #b83232;
+        --danger-light: #fdeaea;
+      }
+      [data-theme="light"] .energy-sim-header { background: #2a6e4e; color: #fff; }
+      [data-theme="light"] .energy-sim-header .sub { color: #c0ddd0; }
+      [data-theme="light"] .e-qty-input,
+      [data-theme="light"] .e-select,
+      [data-theme="light"] .e-hour-btn { background: #fafaf8; color: #1a1917; }
+      [data-theme="light"] .e-qty-input:focus { background: #fff; }
+      [data-theme="light"] .e-metric { background: #fafaf8; }
+      [data-theme="light"] .budget-bar-track { background: #ede9e0; }
+      [data-theme="light"] .workforce-item { background: #fafaf8; }
+      [data-theme="light"] .workforce-item input { background: #fff; color: #1a1917; }
+      [data-theme="light"] .e-btn { background: #fff; color: #1a1917; }
+      [data-theme="light"] .e-btn:hover { background: #f5f3ed; border-color: #ccc; }
+      [data-theme="light"] .e-btn.primary { background: #2a6e4e; color: #fff; border-color: #2a6e4e; }
+      [data-theme="light"] .e-btn.primary:hover { background: #235f42; }
+      [data-theme="light"] .e-alert.ok { color: #1a4a32; border-color: #b8dfc8; }
+      [data-theme="light"] .e-alert.warn { color: #7a3010; border-color: #f0c0a0; }
+      [data-theme="light"] .e-alert.danger { color: #7a1010; border-color: #f0b0b0; }
     `;
     document.head.appendChild(style);
 
@@ -511,7 +545,7 @@ export default function EnergyGridSimulator() {
               <div class="e-card-header"><div class="dot" style="background:#7c6a3a"></div>Data Cards</div>
               <div class="e-card-body">
                 <div class="e-select-row">
-                  <div class="e-select-label">Demand Pattern</div>
+                  <div class="e-select-label" style="display:flex;align-items:center;justify-content:space-between">Demand Pattern <button class="gc-card-btn" onclick="(function(){var m={'Night Owl':'night-owl','Morning Rush':'morning-rush'};var v=document.getElementById('demandPattern').value;if(m[v])window.openCardModal(m[v]);})()" title="View selected Demand Pattern card">&#x1F3B4;</button></div>
                   <select class="e-select" id="demandPattern">
                     <option value=""></option>
                     <option value="Night Owl">Night Owl</option>
@@ -519,7 +553,7 @@ export default function EnergyGridSimulator() {
                   </select>
                 </div>
                 <div class="e-select-row">
-                  <div class="e-select-label">Budget Tier</div>
+                  <div class="e-select-label" style="display:flex;align-items:center;justify-content:space-between">Budget Tier <button class="gc-card-btn" onclick="(function(){var m={'Failed Bond':'failed-bond','Federal Green Grant':'federal-grant'};var v=document.getElementById('budgetTier').value;if(m[v])window.openCardModal(m[v]);})()" title="View selected Budget Tier card">&#x1F3B4;</button></div>
                   <select class="e-select" id="budgetTier">
                     <option value=""></option>
                     <option value="Failed Bond">Failed Bond ($9M)</option>
@@ -527,7 +561,7 @@ export default function EnergyGridSimulator() {
                   </select>
                 </div>
                 <div class="e-select-row">
-                  <div class="e-select-label">Workforce Availability</div>
+                  <div class="e-select-label" style="display:flex;align-items:center;justify-content:space-between">Workforce Availability <button class="gc-card-btn" onclick="(function(){var m={'Crane Operator Shortage':'crane-shortage','Hydropower Engineering Hub':'hydro-hub'};var v=document.getElementById('workforce').value;if(m[v])window.openCardModal(m[v]);})()" title="View selected Workforce card">&#x1F3B4;</button></div>
                   <select class="e-select" id="workforce">
                     <option value=""></option>
                     <option value="Crane Operator Shortage">Crane Operator Shortage</option>
@@ -535,7 +569,7 @@ export default function EnergyGridSimulator() {
                   </select>
                 </div>
                 <div class="e-select-row" style="border-bottom:none">
-                  <div class="e-select-label">Environmental Constraints</div>
+                  <div class="e-select-label" style="display:flex;align-items:center;justify-content:space-between">Environmental Constraints <button class="gc-card-btn" onclick="(function(){var m={'Migratory Bird':'migratory-bird','Vernal Pool':'vernal-pool'};var v=document.getElementById('envConstraints').value;if(m[v])window.openCardModal(m[v]);})()" title="View selected Environmental Constraints card">&#x1F3B4;</button></div>
                   <select class="e-select" id="envConstraints">
                     <option value=""></option>
                     <option value="Migratory Bird">Migratory Bird Ordinance</option>
@@ -576,15 +610,15 @@ export default function EnergyGridSimulator() {
                   Select Federal Green Grant budget to unlock. Must purchase ≥1 to stay compliant.
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Green Hydrogen Electrolyzer</div><div class="e-input-sub">$2M each · +30% solar & wind output</div></div>
+                  <div><div class="e-input-label" style="display:flex;align-items:center;gap:6px">Green Hydrogen Electrolyzer <button class="gc-card-btn" onclick="window.openCardModal('hydrogen')" title="View Hydrogen card">&#x1F3B4;</button></div><div class="e-input-sub">$2M each · +30% solar & wind output</div></div>
                   <input class="e-qty-input" type="number" id="hydrogen" value="0" min="0" max="5" disabled>
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label">V2G Charging Hub</div><div class="e-input-sub">$100K fleet upgrade · caps peak at 4,750 kW</div></div>
+                  <div><div class="e-input-label" style="display:flex;align-items:center;gap:6px">V2G Charging Hub <button class="gc-card-btn" onclick="window.openCardModal('v2g')" title="View V2G card">&#x1F3B4;</button></div><div class="e-input-sub">$100K fleet upgrade · caps peak at 4,750 kW</div></div>
                   <input class="e-qty-input" type="number" id="v2g" value="0" min="0" max="5" disabled>
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">AI-Grid Controller (SCADA)</div><div class="e-input-sub">$500K each · −15% demand</div></div>
+                  <div><div class="e-input-label" style="display:flex;align-items:center;gap:6px">AI-Grid Controller (SCADA) <button class="gc-card-btn" onclick="window.openCardModal('scada')" title="View SCADA card">&#x1F3B4;</button></div><div class="e-input-sub">$500K each · −15% demand</div></div>
                   <input class="e-qty-input" type="number" id="scada" value="0" min="0" max="5" disabled>
                 </div>
               </div>
@@ -610,7 +644,7 @@ export default function EnergyGridSimulator() {
               <div class="e-card-header"><div class="dot" style="background:#7c6a3a"></div>Pivot Scenario Selection</div>
               <div class="e-card-body">
                 <div class="e-select-row" style="border-bottom:none">
-                  <div class="e-select-label">Pivot Card</div>
+                  <div class="e-select-label" style="display:flex;align-items:center;justify-content:space-between">Pivot Card <button class="gc-card-btn" onclick="(function(){var m={'Supply Chain Crisis':'supply-chain','AI Learning Hub':'ai-learning-hub','Polar Vortex':'polar-vortex','Maintenance Crisis':'maintenance-crisis','Grid-Down Event':'grid-down','The Carbon Tax':'carbon-tax'};var v=document.getElementById('pivotCard').value;if(m[v])window.openCardModal(m[v]);})()" title="View selected Pivot Card">&#x1F3B4;</button></div>
                   <select class="e-select" id="pivotCard">
                     <option value="None">None</option>
                     <option value="Supply Chain Crisis">Supply Chain Crisis</option>
@@ -940,8 +974,24 @@ export default function EnergyGridSimulator() {
 
     initSimulator();
 
+    // Stamp an explicit pixel height on .energy-sim so overflow-y:auto works
+    // regardless of flex/percentage height chain issues in the parent layout.
+    const energySimEl = container.querySelector('.energy-sim') as HTMLElement | null;
+    const syncHeight = () => {
+      if (!energySimEl) return;
+      const h = container.clientHeight;
+      if (h > 0) {
+        energySimEl.style.height = h + 'px';
+        energySimEl.style.maxHeight = h + 'px';
+      }
+    };
+    const heightRo = new ResizeObserver(syncHeight);
+    heightRo.observe(container);
+    syncHeight();
+
     return () => {
       style.remove();
+      heightRo.disconnect();
       if (chartRef.current) {
         chartRef.current.destroy();
         chartRef.current = null;
@@ -1978,6 +2028,11 @@ export default function EnergyGridSimulator() {
       hydroHigh:'#0099cc', tidal:'#00c8aa', biomass:'#7ee787',
       liIon:'#ff8c8c', thermal:'#ffb347', flywheel:'#da8fff', caes:'#84fab0',
     };
+    const PLACED_CARD_IDS: Record<string, string> = {
+      solar:'solar', wind:'wind', geo:'geo', hydroLow:'hydroL',
+      hydroHigh:'hydroH', tidal:'tidal', biomass:'biomass',
+      liIon:'bess', thermal:'thermal', flywheel:'flywheel', caes:'caes',
+    };
     function updatePlacedUnits() {
       const panel = getEl('placedUnitsList');
       if (!panel) return;
@@ -1994,6 +2049,7 @@ export default function EnergyGridSimulator() {
           <span style="display:flex;align-items:center;gap:6px;font-size:12px">
             <span style="width:7px;height:7px;border-radius:50%;background:${PLACED_COLORS[k]};flex-shrink:0;display:inline-block"></span>
             ${label}
+            ${PLACED_CARD_IDS[k] ? `<button class="gc-card-btn" onclick="window.openCardModal('${PLACED_CARD_IDS[k]}')" title="View ${label} card">&#x1F3B4;</button>` : ''}
           </span>
           <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)">${n}</span>
         </div>`
@@ -2117,5 +2173,5 @@ export default function EnergyGridSimulator() {
     render();
   }
 
-  return <div ref={containerRef} style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }} />;
+  return <div ref={containerRef} style={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", minHeight: 0, minWidth: 0 }} />;
 }
