@@ -93,6 +93,18 @@ export const CARDS: Record<string, CardData> = {
     ],
   },
 
+  // ── Infrastructure ───────────────────────────────────────────────────────
+  cabling: {
+    id: 'cabling', title: 'Electrical Cabling', color: '#4a7a8e',
+    image: img('Cabling.png'),
+    rows: [
+      { label: 'Cost', value: '$500 per foot' },
+      { label: 'Purpose', value: 'Connects each generation and storage unit to the campus substation. Distance is measured on the map in feet.' },
+      { label: 'Strategy', value: 'Place units close to the substation and each other to minimize total cable run. Units placed far from the substation or in remote corners of the map will significantly increase costs.' },
+      { label: 'Tip', value: 'The map tool calculates the minimum cable length automatically based on your placements — you can increase the value manually if you want to model a longer route.' },
+    ],
+  },
+
   // ── Storage ──────────────────────────────────────────────────────────────
   bess: {
     id: 'bess', title: 'Lithium-Ion BESS', color: '#7b2d8b',

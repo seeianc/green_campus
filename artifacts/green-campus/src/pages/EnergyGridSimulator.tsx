@@ -628,8 +628,8 @@ export default function EnergyGridSimulator() {
               <div class="e-card-header"><div class="dot" style="background:#8f6a3a"></div>Infrastructure & Fees</div>
               <div class="e-card-body">
                 <div class="e-input-row">
-                  <div><div class="e-input-label">Cabling Length (ft)</div><div class="e-input-sub">$500 per ft</div></div>
-                  <input class="e-qty-input" type="number" id="cabling" value="0" min="0">
+                  <div><div class="e-input-label" style="display:flex;align-items:center;gap:6px">Cabling Length (ft) <button class="gc-card-btn" onclick="window.openCardModal('cabling')" title="View Cabling card">&#x1F3B4;</button></div><div class="e-input-sub">$500 per ft · calculated from map</div></div>
+                  <input class="e-qty-input" type="number" id="cabling" value="0" readonly style="opacity:0.55;cursor:default;pointer-events:none">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
                   <div><div class="e-input-label">Wind Buffer Penalty?</div><div class="e-input-sub">$200K if touching boundary</div></div>
@@ -2068,9 +2068,7 @@ export default function EnergyGridSimulator() {
       });
       const cablingEl = getEl<HTMLInputElement>('cabling');
       if (cablingEl) {
-        const mapMin = Math.round(sharedState.totalMapCableFt);
-        cablingEl.min = String(mapMin);
-        cablingEl.value = String(mapMin);
+        cablingEl.value = String(Math.round(sharedState.totalMapCableFt));
       }
       updatePlacedUnits();
       render();
