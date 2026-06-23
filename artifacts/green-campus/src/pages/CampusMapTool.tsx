@@ -1669,12 +1669,18 @@ function initMapTool() {
       });
     });
 
+    // Check if any placed wind turbine violates the 500ft building buffer
+    const windBufferHit = Object.values(placements).flat().some(p =>
+      p.tech === 'wind' && p.violations && p.violations.some((v: string) => v.includes('Wind buffer'))
+    );
+
     // Sync to shared state so Grid Simulator can read it
     sharedState.techCounts = counts;
     sharedState.totalMapCost = totalCost;
     sharedState.totalMapKw = totalKw;
     sharedState.totalMapCableFt = cableFt;
     sharedState.windSensitiveZoneCount = windSensitive;
+    sharedState.windBufferPenalty = windBufferHit;
     emitMapUpdate();
 
     const budgetLimit = sharedState.budgetLimit;

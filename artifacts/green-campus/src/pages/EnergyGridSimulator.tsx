@@ -632,11 +632,9 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="cabling" value="0" readonly style="opacity:0.55;cursor:default;pointer-events:none">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">Wind Buffer Penalty?</div><div class="e-input-sub">$200K if touching boundary</div></div>
-                  <select class="e-select" id="windBuffer" style="width:100%;font-size:13px">
-                    <option value="No">No</option>
-                    <option value="Yes">Yes</option>
-                  </select>
+                  <div><div class="e-input-label">Wind Buffer Penalty</div><div class="e-input-sub">$200K if turbine within 500ft of building · set by map</div></div>
+                  <input type="hidden" id="windBuffer" value="No">
+                  <span id="windBufferDisplay" style="font-family:var(--mono);font-size:12px;font-weight:600;opacity:0.6;white-space:nowrap">No</span>
                 </div>
               </div>
             </div>
@@ -1953,8 +1951,10 @@ export default function EnergyGridSimulator() {
         const el = getEl<HTMLSelectElement>(id);
         if (el) el.selectedIndex = 0;
       });
-      const wb = getEl<HTMLSelectElement>('windBuffer');
+      const wb = getEl<HTMLInputElement>('windBuffer');
       if (wb) wb.value = 'No';
+      const wbDisp = getEl('windBufferDisplay');
+      if (wbDisp) { wbDisp.textContent = 'No'; (wbDisp as HTMLElement).style.color = ''; }
       // Hide content again on reset
       contentRevealed = false;
       const sidebar = getEl('additionalSidebar');
@@ -2070,6 +2070,13 @@ export default function EnergyGridSimulator() {
       if (cablingEl) {
         cablingEl.value = String(Math.round(sharedState.totalMapCableFt));
       }
+      const wbEl = getEl<HTMLInputElement>('windBuffer');
+      const wbDisplay = getEl('windBufferDisplay');
+      if (wbEl) wbEl.value = sharedState.windBufferPenalty ? 'Yes' : 'No';
+      if (wbDisplay) {
+        wbDisplay.textContent = sharedState.windBufferPenalty ? 'Yes — $200K' : 'No';
+        (wbDisplay as HTMLElement).style.color = sharedState.windBufferPenalty ? 'var(--warn)' : '';
+      }
       updatePlacedUnits();
       render();
     });
@@ -2122,7 +2129,7 @@ export default function EnergyGridSimulator() {
         const el = getEl<HTMLInputElement>(id);
         if (el && sim[id] !== undefined) el.value = String(sim[id]);
       });
-      const selectIds = ['windBuffer','demandPattern','budgetTier','workforce','envConstraints','pivotCard'];
+      const selectIds = ['demandPattern','budgetTier','workforce','envConstraints','pivotCard'];
       selectIds.forEach(id => {
         const el = getEl<HTMLSelectElement>(id);
         if (el && sim[id] !== undefined) el.value = String(sim[id]);
