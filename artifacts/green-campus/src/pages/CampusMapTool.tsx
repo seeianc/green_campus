@@ -95,14 +95,14 @@ export default function CampusMapTool() {
         gap: 12px;
       }
       .map-sidebar-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); padding: 6px 4px 4px; border-bottom: 1px solid var(--border); margin-top: 4px; }
-      .map-tech-wrap { position: relative; }
+      .map-tech-wrap { display: flex; align-items: center; gap: 4px; }
       .map-tech-btn {
-        display: flex; align-items: center; gap: 10px; padding: 9px 10px; padding-right: 32px; border-radius: 5px;
+        display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 5px;
         cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
         color: var(--text); font-family: 'Space Grotesk',sans-serif; font-size: 12px;
-        font-weight: 500; transition: all .15s; text-align: left; width: 100%;
+        font-weight: 500; transition: all .15s; text-align: left; flex: 1; min-width: 0;
       }
-      .map-card-float { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+      .map-card-float { flex-shrink: 0; }
       .map-tech-btn:hover { border-color: var(--accent2); background: #1f2a38; }
       .map-tech-btn.active { border-color: currentColor; }
       .map-tech-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
