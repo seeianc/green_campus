@@ -614,7 +614,7 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="hydrogen" value="0" min="0" max="5" disabled>
                 </div>
                 <div class="e-input-row">
-                  <div><div class="e-input-label" style="display:flex;align-items:center;gap:6px">V2G Charging Hub <button class="gc-card-btn" onclick="window.openCardModal('v2g')" title="View V2G card">&#x1F3B4;</button></div><div class="e-input-sub">$100K fleet upgrade · caps peak at 4,750 kW</div></div>
+                  <div><div class="e-input-label" style="display:flex;align-items:center;gap:6px">V2G Charging Hub <button class="gc-card-btn" onclick="window.openCardModal('v2g')" title="View V2G card">&#x1F3B4;</button></div><div class="e-input-sub">$100K fleet upgrade · caps peak at 2,700 kW</div></div>
                   <input class="e-qty-input" type="number" id="v2g" value="0" min="0" max="5" disabled>
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
@@ -1006,9 +1006,9 @@ export default function EnergyGridSimulator() {
     let contentRevealed = false;
 
     const HOURS = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
-    const STANDARD  = [2500,2400,2300,2250,2300,2800,3500,4000,4400,4500,4600,4650,4700,4700,5000,5000,4700,4900,4800,4800,4400,3800,3200,2700];
-    const NIGHT_OWL = [2500,2400,2300,2250,2300,2500,2600,2800,3000,3200,3400,3600,3800,4000,4200,4500,4800,5000,5000,5000,4800,4800,4500,3500];
-    const MORN_RUSH = [2500,2400,2300,2250,3500,4500,5000,5000,5000,4800,4500,4200,4000,3800,3800,3800,3900,4000,4200,4000,3500,3000,2800,2600];
+    const STANDARD  = [1500,1440,1380,1350,1380,1680,2100,2400,2640,2700,2760,2790,2820,2820,3000,3000,2820,2940,2880,2880,2640,2280,1920,1620];
+    const NIGHT_OWL = [1500,1440,1380,1350,1380,1500,1560,1680,1800,1920,2040,2160,2280,2400,2520,2700,2880,3000,3000,3000,2880,2880,2700,2100];
+    const MORN_RUSH = [1500,1440,1380,1350,2100,2700,3000,3000,3000,2880,2700,2520,2400,2280,2280,2280,2340,2400,2520,2400,2100,1800,1680,1560];
     const SOLAR_PER_UNIT = [0,0,0,0,0,0,50,150,250,350,450,500,500,500,500,400,250,100,0,0,0,0,0,0];
     const GEO_PER_UNIT = Array(24).fill(2000);
     const BASE_WIND = [3000,3000,3000,3000,3000,2800,2500,2200,1800,1500,1200,1200,1200,1200,1200,1200,1500,1800,2200,2500,2800,3000,3000,3000];
@@ -1024,7 +1024,7 @@ export default function EnergyGridSimulator() {
     const ANNUAL_KWH_PER_UNIT: Record<string, number> = {
       solar:     700_000,  // 500 kW @ ~16% capacity factor
       wind:    8_000_000,  // 3,000 kW @ ~30% capacity factor
-      geo:    14_000_000,  // 2,000 kW @ ~80% capacity factor
+      geo:     7_000_000,  // 1,000 kW @ ~80% capacity factor
       hydroLow: 2_000_000, // 500 kW @ ~46% capacity factor
       hydroHigh:7_500_000, // 2,000 kW @ ~43% capacity factor
       tidalStd: 2_190_000, // 500 kW peak @ ~50% capacity factor (semidiurnal tide cycle)
@@ -1092,10 +1092,10 @@ export default function EnergyGridSimulator() {
       const vernalPoolViolation = isVernalPool && s.geo > 0;
 
       // Polar Vortex demand threshold — must be declared before infraCosts
-      const polarDemandThreshold = isPolar ? (s.thermal > 0 ? 5500 : 7500) : null;
+      const polarDemandThreshold = isPolar ? (s.thermal > 0 ? 3300 : 4500) : null;
 
       const totalPeakSupply =
-        s.solar*500 + s.wind*3000 + s.geo*2000 +
+        s.solar*500 + s.wind*3000 + s.geo*1000 +
         s.hydroLow*500 + s.hydroHigh*2000 +
         s.tidalStd*500 + s.biomass*1000;
 
@@ -1106,8 +1106,8 @@ export default function EnergyGridSimulator() {
 
       const genCosts = {
         solar: s.solar * 1000000,
-        wind: s.wind * 2500000,
-        geo: s.geo * 5000000 * (isHydroHub ? 0.8 : 1),
+        wind: s.wind * 4500000,
+        geo: s.geo * 8000000 * (isHydroHub ? 0.8 : 1),
         hydro: s.hydroLow * 1000000 * (isHydroHub ? 0.8 : 1) + s.hydroHigh * 4000000 * (isHydroHub ? 0.8 : 1),
         tidal: s.tidalStd * 1500000,
         biomass: s.biomass * 3500000,
@@ -1151,21 +1151,21 @@ export default function EnergyGridSimulator() {
       const demandProfile = s.demandPattern==='Night Owl' ? NIGHT_OWL :
                             s.demandPattern==='Morning Rush' ? MORN_RUSH : STANDARD;
       
-      // Polar Vortex demand spike: peaks at 7,500 kW (or 5,500 kW with thermal storage)
+      // Polar Vortex demand spike: peaks at 4,500 kW (or 3,300 kW with thermal storage)
       const demandProfileMax = Math.max(...demandProfile);
       const polarScaleFactor = isPolar && polarDemandThreshold ? polarDemandThreshold / demandProfileMax : 1;
       
       const demand24 = HOURS.map((_h, i) => {
         let d = demandProfile[i];
-        if (isAIHub) d += 1500;
+        if (isAIHub) d += 900;
         // For Polar Vortex, scale entire demand profile to meet the threshold
         if (isPolar) {
           d = d * polarScaleFactor;
         }
         // SCADA reduces total demand by 15%
         if (isGrant && s.scada > 0) d = d * 0.85;
-        // V2G caps peak demand at 4,750 kW
-        if (isGrant && s.v2g > 0) d = Math.min(d, 4750);
+        // V2G caps peak demand at 2,700 kW
+        if (isGrant && s.v2g > 0) d = Math.min(d, 2700);
         return Math.round(d);
       });
 
@@ -1175,7 +1175,7 @@ export default function EnergyGridSimulator() {
         cabling: s.cabling * 500,
         craneLogistics: s.wind > 0 && isCrane ? 500000 : 0,
         windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
-        utilityFee: totalPeakSupply > campusPeakDemand ? 500000 : 0,
+        utilityFee: totalPeakSupply > 3500 ? 500000 : 0,
         pivotPenalty: (isMaint && (s.solar > 0 || s.wind > 0)) ? 500000 :
                       (isPolar && polarDemandThreshold && totalPeakSupply < polarDemandThreshold) ? 300000 : 0,
       };
@@ -1197,8 +1197,8 @@ export default function EnergyGridSimulator() {
       const annualCarbonTaxFee = isCarbonTax ? dailyShortfallKwh * 365 * 0.10 : 0;
 
       // Calculate cost adjustments from pivot cards and data selections
-      const baseGeoCost = s.geo * 5000000;
-      const adjustedGeoCost = s.geo * 5000000 * (isHydroHub ? 0.8 : 1);
+      const baseGeoCost = s.geo * 8000000;
+      const adjustedGeoCost = s.geo * 8000000 * (isHydroHub ? 0.8 : 1);
 
       const geoCostAdjustment = adjustedGeoCost - baseGeoCost;
 
@@ -1228,7 +1228,7 @@ export default function EnergyGridSimulator() {
         + annualCarbonTaxFee
         - annualRenewableRevenue;
 
-      const basePeakDemand = 5000;
+      const basePeakDemand = 3000;
       const islandTime = totalStorage / basePeakDemand;
       const grantCompliant = !isGrant || (s.hydrogen + s.v2g + s.scada >= 1);
 
@@ -1541,7 +1541,7 @@ export default function EnergyGridSimulator() {
       setAdjItem('costLiIonAdj', r.liIonCostAdjustment, 'costLiIonAdjDesc', r.liIonCostAdjustment !== 0 ? '(Supply Chain +100%)' : '');
       
       setAdjItem('adjPivot', r.pivotPenaltyAdjustment, 'adjPivotDesc', r.pivotPenaltyAdjustment !== 0 ? '(Pivot Card Penalty)' : '');
-      setAdjItem('adjUtility', r.utilityFeeAdjustment, 'adjUtilityDesc', r.utilityFeeAdjustment !== 0 ? '(Peak > 3,000 kW)' : '');
+      setAdjItem('adjUtility', r.utilityFeeAdjustment, 'adjUtilityDesc', r.utilityFeeAdjustment !== 0 ? '(Peak > 3,500 kW)' : '');
       setAdjItem('adjCrane', r.infraCosts.craneLogistics, 'adjCraneDesc', r.infraCosts.craneLogistics !== 0 ? '(Crane Operator Shortage)' : '');
       setAdjItem('adjCarbonTax', r.annualCarbonTaxFee, 'adjCarbonTaxDesc', r.annualCarbonTaxFee !== 0 ? '($0.10/kWh shortfall × 365 days)' : '');
       
@@ -1625,13 +1625,13 @@ export default function EnergyGridSimulator() {
       if (r.remaining < 0) alerts.push({ cls: 'danger', msg: '⛔ Over budget by ' + fmt$(Math.abs(r.remaining)) });
       if (r.isGrant && !r.grantCompliant) alerts.push({ cls: 'warn', msg: '⚠️ Grant Violation: Must purchase at least 1 Emerging Tech!' });
       if (r.totalPeakSupply === 0) alerts.push({ cls: 'warn', msg: '⚠️ No generation tech selected — grid has no supply.' });
-      if (r.infraCosts.utilityFee > 0) alerts.push({ cls: 'warn', msg: `⚠️ Utility Interconnection Fee: supply exceeds campus peak demand (${r.campusPeakDemand.toLocaleString()} kW) — grid export requires infrastructure upgrade (+$500K)` });
+      if (r.infraCosts.utilityFee > 0) alerts.push({ cls: 'warn', msg: `⚠️ Utility Interconnection Fee: supply exceeds 3,500 kW grid-export threshold — infrastructure upgrade required (+$500K)` });
       if (r.isPolar) {
-        const threshold = r.polarDemandThreshold ?? 7500;
+        const threshold = r.polarDemandThreshold ?? 4500;
         const met = r.totalPeakSupply >= threshold;
-        alerts.push({ cls: met ? 'ok' : 'danger', msg: (met ? '✅' : '⛔') + ' Polar Vortex: Campus demand spiked to ' + threshold.toLocaleString() + ' kW — your supply is ' + (met ? 'sufficient.' : 'insufficient! Add more generation.') + (r.totalStorage === 0 || !r.infraCosts ? '' : ' (Tip: add Thermal Storage to reduce threshold to 5,500 kW)') });
+        alerts.push({ cls: met ? 'ok' : 'danger', msg: (met ? '✅' : '⛔') + ' Polar Vortex: Campus demand spiked to ' + threshold.toLocaleString() + ' kW — your supply is ' + (met ? 'sufficient.' : 'insufficient! Add more generation.') + (r.totalStorage === 0 || !r.infraCosts ? '' : ' (Tip: add Thermal Storage to reduce threshold to 3,300 kW)') });
       }
-      if (r.isAIHub) alerts.push({ cls: 'warn', msg: '⚡ AI Learning Hub: Campus demand increased by 1,500 kW every hour — new peak demand is 6,500 kW.' });
+      if (r.isAIHub) alerts.push({ cls: 'warn', msg: '⚡ AI Learning Hub: Campus demand increased by 900 kW every hour — new peak demand is 3,900 kW.' });
       if (r.isMaint) alerts.push({ cls: 'warn', msg: '🔧 Maintenance Crisis: Solar and Wind output reduced to 75%.' + (r.infraCosts.pivotPenalty > 0 ? ' $500K repair fee applied.' : '') });
       if (r.isSupplyChain) alerts.push({ cls: 'warn', msg: '📦 Supply Chain Crisis: Lithium Ion BESS cost doubled to $1M/unit.' });
       if (r.isCarbonTax && r.annualCarbonTaxFee > 0) alerts.push({ cls: 'warn', msg: '🌿 Carbon Tax: ' + fmt$(r.annualCarbonTaxFee) + '/yr fee on ' + Math.round(r.annualCarbonTaxFee / 0.10 / 365).toLocaleString() + ' kWh daily shortfall.' });

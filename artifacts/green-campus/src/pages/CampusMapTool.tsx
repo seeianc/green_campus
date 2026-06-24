@@ -366,8 +366,8 @@ export default function CampusMapTool() {
 function initMapTool() {
   const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferFt: number; squareFootprint: number; placedRadiusFt: number; placedWidthFt?: number; placedHeightFt?: number; constructionWidthFt?: number; constructionHeightFt?: number }> = {
     solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000,  placedRadiusFt:75,  placedWidthFt:250, placedHeightFt:175 },
-    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000,   placedRadiusFt:50  },
-    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:40,  placedWidthFt:100, placedHeightFt:50, constructionWidthFt:400, constructionHeightFt:325 },
+    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:4500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000,   placedRadiusFt:50  },
+    geo:      { name:'Geothermal',   color:'#bc8cff', kw:1000, cost:8000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:40,  placedWidthFt:100, placedHeightFt:50, constructionWidthFt:400, constructionHeightFt:325 },
     hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
     hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:40  },
     tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:20  },
@@ -1824,12 +1824,12 @@ function initMapTool() {
 
     const budgetLimit = sharedState.budgetLimit;
     const budgetM = (budgetLimit / 1e6).toFixed(0);
-    const islandTime = totalKw > 0 ? (totalStorage / 5000).toFixed(1) : '0';
+    const islandTime = totalKw > 0 ? (totalStorage / 3000).toFixed(1) : '0';
 
     const kwEl = getEl('statPower');
     if (kwEl) {
-      kwEl.className = 'map-stat ' + (totalKw >= 5000 ? 'ok' : totalKw >= 3000 ? 'warn' : '');
-      kwEl.innerHTML = `Power: <span>${(totalKw / 1000).toFixed(1)}MW / 5MW</span>`;
+      kwEl.className = 'map-stat ' + (totalKw >= 3000 ? 'ok' : totalKw >= 1500 ? 'warn' : '');
+      kwEl.innerHTML = `Power: <span>${(totalKw / 1000).toFixed(1)}MW / 3MW</span>`;
     }
 
     const storageEl = getEl('statStorage'); if (storageEl) storageEl.innerHTML = `Storage: <span>${totalStorage.toLocaleString()} kWh</span>`;

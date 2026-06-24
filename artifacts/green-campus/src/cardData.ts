@@ -33,7 +33,7 @@ export const CARDS: Record<string, CardData> = {
     image: img('Wind_Turbine.png'),
     rows: [
       { label: 'Unit Power', value: '3,000 kW per turbine' },
-      { label: 'Installation Cost', value: '$2,500,000 per unit' },
+      { label: 'Installation Cost', value: '$4,500,000 per unit' },
       { label: 'Annual Savings', value: '~$1,760,000 (avoided utility costs)' },
       { label: 'Space Needed', value: 'Requires 500 ft noise/safety radius. Encroaching on a classroom or property adds a $200,000 mitigation fee.' },
       { label: 'Constraints', value: 'Crane Operator Shortage adds $500,000 logistics fee. Prohibited in forested areas if Migratory Bird Ordinance is active.' },
@@ -43,9 +43,9 @@ export const CARDS: Record<string, CardData> = {
     id: 'geo', title: 'Geothermal', color: '#2e7d52',
     image: img('Geothermal.png'),
     rows: [
-      { label: 'Unit Power', value: '2,000 kW (runs 24/7)' },
-      { label: 'Cost', value: '$5,000,000 per site (−20% with Hydropower Engineering Hub)' },
-      { label: 'Annual Savings', value: '~$3,080,000/unit' },
+      { label: 'Unit Power', value: '1,000 kW (runs 24/7)' },
+      { label: 'Cost', value: '$8,000,000 per site (−20% with Hydropower Engineering Hub = $6,400,000)' },
+      { label: 'Annual Savings', value: '~$1,540,000/unit' },
       { label: 'Space Needed', value: 'Construction: 3–5 acres. Permanent footprint: 5,000 sq. ft.' },
       { label: 'Constraints', value: 'Cannot be placed on water. Banned entirely if Vernal Pool Protection is active.' },
     ],
@@ -121,7 +121,7 @@ export const CARDS: Record<string, CardData> = {
     rows: [
       { label: 'Capacity', value: '2,500 kWh per unit' },
       { label: 'Cost', value: '$1,000,000 per unit' },
-      { label: 'Best Use', value: 'Adds $75,000/yr in heating oil savings when charged by excess wind, hydro, or tidal. Reduces Polar Vortex peak demand from 7,500 kW to 5,500 kW.' },
+      { label: 'Best Use', value: 'Adds $75,000/yr in heating oil savings when charged by excess wind, hydro, or tidal. Reduces Polar Vortex peak demand from 4,500 kW to 3,300 kW.' },
     ],
   },
   flywheel: {
@@ -157,7 +157,7 @@ export const CARDS: Record<string, CardData> = {
     image: img('v2g_hub.png'),
     rows: [
       { label: 'Cost', value: '$100,000' },
-      { label: 'Benefit', value: "Allows the school's electric buses to act as a battery bank, feeding power back to reduce overall peak energy need to 4,750 kW." },
+      { label: 'Benefit', value: "Allows the school's electric buses to act as a battery bank, feeding power back to reduce overall peak energy need to ~2,700 kW." },
     ],
   },
   scada: {
@@ -176,7 +176,7 @@ export const CARDS: Record<string, CardData> = {
     italic: 'Your school is a community hub hosting night classes, indoor sports leagues, and theater rehearsals until 10 PM every night.',
     rows: [
       { label: 'Challenge', value: '40% of your energy use happens after the sun goes down.' },
-      { label: 'Task', value: 'If you are using Solar, you must purchase at least 2 BESS Storage units.' },
+      { label: 'Task', value: 'If you are using Solar, you must purchase at least 2 Lithium Ion storage units.' },
     ],
   },
   'morning-rush': {
@@ -255,7 +255,7 @@ export const CARDS: Record<string, CardData> = {
     image: img('AI Learning Hub.png'),
     italic: 'Your school district has just been selected to host a regional "Sovereign AI" server farm inside your building.',
     rows: [
-      { label: 'The Impact', value: 'Base energy demand increased by 30% (+1,500 kW). New peak: 6,500 kW.' },
+      { label: 'The Impact', value: 'Base energy demand increased by 30% (+900 kW). New peak: 3,900 kW.' },
       { label: 'The Task', value: 'Add more generation units to your map or otherwise offset the energy demand increase.' },
       { label: 'The Tradeoff', value: 'If you have no Storage (BESS), peak-hour energy costs increase by $50,000/yr.' },
     ],
@@ -265,9 +265,9 @@ export const CARDS: Record<string, CardData> = {
     image: img('Polar Vortex.png'),
     italic: 'A record-breaking Polar Vortex has dropped temperatures to −20°F for two straight weeks.',
     rows: [
-      { label: 'The Impact', value: 'Peak demand spikes to 7,500 kW. Solar PV output drops by 90% (50 kW per block).' },
-      { label: 'The Task', value: "If your system can't meet 7,500 kW, pay a $300,000 emergency utility surcharge." },
-      { label: 'The Bonus', value: 'Thermal Storage reduces peak demand from 7,500 kW to 5,500 kW.' },
+      { label: 'The Impact', value: 'Peak demand spikes to 4,500 kW. Solar PV output drops by 90% (50 kW per block).' },
+      { label: 'The Task', value: "If your system can't meet 4,500 kW, pay a $300,000 emergency utility surcharge." },
+      { label: 'The Bonus', value: 'Thermal Storage reduces peak demand from 4,500 kW to 3,300 kW.' },
     ],
   },
   'supply-chain': {
@@ -275,7 +275,7 @@ export const CARDS: Record<string, CardData> = {
     image: img('Supply Chain Crisis.png'),
     italic: 'Global trade delays have caused a critical shortage of lithium-ion batteries and specialized microchips.',
     rows: [
-      { label: 'The Impact', value: 'Cost of all BESS units doubled to $1,000,000 per unit.' },
+      { label: 'The Impact', value: 'Cost of all Lithium Ion units doubled to $1,000,000 per unit.' },
       { label: 'The Task', value: 'If over budget, sell back a unit or switch to Flywheels or Thermal Storage.' },
       { label: 'The Tradeoff', value: 'Budget vs. Grid Stability.' },
     ],
