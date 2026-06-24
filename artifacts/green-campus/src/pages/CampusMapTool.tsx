@@ -249,7 +249,7 @@ export default function CampusMapTool() {
               <button class="map-mode-btn" id="modPan">Pan</button>
             </div>
             <div style="font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4">
-              Right-click to rotate buildings &amp; panels before or after placing.
+              Shift+click to rotate buildings &amp; panels before placing. Shift+click in Erase mode to rotate placed units.
             </div>
 
             <div class="map-sidebar-section">Generation</div>
@@ -1931,6 +1931,7 @@ function initMapTool() {
 
   if (overlayCanvas) {
     overlayCanvas.addEventListener('mousedown', (e: MouseEvent) => {
+      if (e.button !== 0) return; // ignore right/middle clicks
       if (mode === 'pan') {
         const container = getEl('mapContainer');
         if (!container) return;
@@ -1944,11 +1945,19 @@ function initMapTool() {
       }
       const { x, y } = getCanvasPos(e);
       if (mode === 'place') {
-        placeUnit(x, y);
+        if (e.shiftKey && TECHS[selectedTech]?.placedWidthFt) {
+          // Shift+click cycles rotation without placing
+          pendingRotation = (pendingRotation + 90) % 360;
+          drawOverlay();
+        } else {
+          placeUnit(x, y);
+        }
       } else if (mode === 'erase') {
-        eraseUnit(x, y);
-      } else if (false) {
-        // cable mode removed — cables are auto-routed via MST
+        if (e.shiftKey) {
+          rotateUnit(x, y);
+        } else {
+          eraseUnit(x, y);
+        }
       }
     });
 
@@ -1995,14 +2004,7 @@ function initMapTool() {
     });
 
     overlayCanvas.addEventListener('contextmenu', (e: MouseEvent) => {
-      e.preventDefault();
-      const { x, y } = getCanvasPos(e);
-      if (mode === 'place' && TECHS[selectedTech]?.placedWidthFt) {
-        pendingRotation = (pendingRotation + 90) % 360;
-        drawOverlay();
-      } else {
-        rotateUnit(x, y);
-      }
+      e.preventDefault(); // suppress browser context menu on canvas
     });
   }
 
