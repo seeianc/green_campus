@@ -248,6 +248,9 @@ export default function CampusMapTool() {
               <button class="map-mode-btn" id="modErase">Erase</button>
               <button class="map-mode-btn" id="modPan">Pan</button>
             </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4">
+              Right-click to rotate buildings &amp; panels before or after placing.
+            </div>
 
             <div class="map-sidebar-section">Generation</div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
