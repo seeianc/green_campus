@@ -246,10 +246,11 @@ export default function CampusMapTool() {
             <div class="map-mode-row">
               <button class="map-mode-btn active" id="modPlace">Place</button>
               <button class="map-mode-btn" id="modErase">Erase</button>
+              <button class="map-mode-btn" id="modMove">Move</button>
               <button class="map-mode-btn" id="modPan">Pan</button>
             </div>
             <div style="font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4">
-              Shift+click to rotate buildings &amp; panels before placing. Shift+click in Erase mode to rotate placed units.
+              Shift+click to rotate buildings &amp; panels. Move mode: drag any unit to reposition it.
             </div>
 
             <div class="map-sidebar-section">Generation</div>
@@ -627,7 +628,8 @@ function initMapTool() {
   // Mode buttons
   getEl('modPlace')?.addEventListener('click', () => setMode('place'));
   getEl('modErase')?.addEventListener('click', () => setMode('erase'));
-  getEl('modPan')?.addEventListener('click', () => setMode('pan'));
+  getEl('modMove')?.addEventListener('click',  () => setMode('move'));
+  getEl('modPan')?.addEventListener('click',   () => setMode('pan'));
   getEl('mapClearBtn')?.addEventListener('click', clearAll);
 
   // Tech buttons
@@ -1908,11 +1910,12 @@ function initMapTool() {
     mode = m;
     getEl('modPlace')?.classList.toggle('active', m === 'place');
     getEl('modErase')?.classList.toggle('active', m === 'erase');
-    getEl('modPan')?.classList.toggle('active', m === 'pan');
+    getEl('modMove')?.classList.toggle('active',  m === 'move');
+    getEl('modPan')?.classList.toggle('active',   m === 'pan');
     const wrap = getEl('canvasWrap');
     wrap?.classList.toggle('erase-mode', m === 'erase');
     const ov = getEl<HTMLCanvasElement>('overlayCanvas');
-    if (ov) ov.style.cursor = m === 'pan' ? 'grab' : '';
+    if (ov) ov.style.cursor = m === 'pan' ? 'grab' : m === 'move' ? 'grab' : '';
   }
 
   function clearAll() {
@@ -1928,11 +1931,18 @@ function initMapTool() {
   const overlayCanvas = getEl<HTMLCanvasElement>('overlayCanvas');
   let panDragging = false;
   let panStartX = 0, panStartY = 0, panScrollX = 0, panScrollY = 0;
+  let moveDragging = false;
+  let movingIdx = -1;
 
   if (overlayCanvas) {
     overlayCanvas.addEventListener('mousedown', (e: MouseEvent) => {
       if (e.button !== 0) return; // ignore right/middle clicks
       if (mode === 'pan') {
+        if (e.shiftKey) {
+          const { x, y } = getCanvasPos(e);
+          rotateUnit(x, y);
+          return;
+        }
         const container = getEl('mapContainer');
         if (!container) return;
         panDragging = true;
@@ -1946,7 +1956,6 @@ function initMapTool() {
       const { x, y } = getCanvasPos(e);
       if (mode === 'place') {
         if (e.shiftKey && TECHS[selectedTech]?.placedWidthFt) {
-          // Shift+click cycles rotation without placing
           pendingRotation = (pendingRotation + 90) % 360;
           drawOverlay();
         } else {
@@ -1957,6 +1966,25 @@ function initMapTool() {
           rotateUnit(x, y);
         } else {
           eraseUnit(x, y);
+        }
+      } else if (mode === 'move') {
+        const plist = placements[currentMap];
+        if (!plist?.length) return;
+        const ftPerCell = MAPS[currentMap].scale / 30.48;
+        let bestIdx = -1, bestDist = Infinity;
+        plist.forEach((p, i) => {
+          const t = TECHS[p.tech];
+          const hitR = t.placedWidthFt
+            ? Math.max(Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2,
+                       Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2) + 8
+            : Math.max(8, t.placedRadiusFt / ftPerCell * GRID) + 8;
+          const dist = Math.hypot(p.cx - x, p.cy - y);
+          if (dist < hitR && dist < bestDist) { bestDist = dist; bestIdx = i; }
+        });
+        if (bestIdx >= 0) {
+          moveDragging = true;
+          movingIdx = bestIdx;
+          if (overlayCanvas) overlayCanvas.style.cursor = 'grabbing';
         }
       }
     });
@@ -1975,6 +2003,14 @@ function initMapTool() {
       const { x, y } = getCanvasPos(e);
       mousePos = { x, y };
       updateInfoPanel(x, y);
+      if (moveDragging && movingIdx >= 0) {
+        const p = placements[currentMap][movingIdx];
+        const snapped = snapToGridCell(x, y, p.tech);
+        p.cx = snapped.x;
+        p.cy = snapped.y;
+        drawOverlay();
+        return;
+      }
       if (mode === 'place' || (mode === 'cable' && cableStart)) drawOverlay();
 
       const tooltip = getEl('mapTooltip');
@@ -1992,12 +2028,25 @@ function initMapTool() {
     overlayCanvas.addEventListener('mouseup', () => {
       if (panDragging) {
         panDragging = false;
-        overlayCanvas.style.cursor = mode === 'pan' ? 'grab' : '';
+        overlayCanvas.style.cursor = mode === 'pan' ? 'grab' : 'grab';
+      }
+      if (moveDragging) {
+        moveDragging = false;
+        movingIdx = -1;
+        overlayCanvas.style.cursor = 'grab';
+        buildOptimalCables();
+        updateUI();
       }
     });
 
     overlayCanvas.addEventListener('mouseleave', () => {
       panDragging = false;
+      if (moveDragging) {
+        moveDragging = false;
+        movingIdx = -1;
+        buildOptimalCables();
+        updateUI();
+      }
       mousePos = { x: 0, y: 0 };
       const tooltip = getEl('mapTooltip');
       if (tooltip) tooltip.className = 'map-tooltip hidden';
