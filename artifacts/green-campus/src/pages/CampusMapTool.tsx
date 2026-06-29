@@ -1728,19 +1728,36 @@ function initMapTool() {
       .filter(f => f.type === 'forest')
       .reduce((sum, f) => sum + featureArea(f), 0);
     const forestPct = campusArea > 0 ? (totalForestArea / campusArea) * 100 : 0;
-    // Use pixel footprint (size × GRID)² for clearing — removes scale dependency so all
-    // maps behave consistently regardless of their real-world scale denominator.
-    // Deduplicate by grid cell so stacked placements at the same location don't double-count.
+    const ftPerCell = m.scale / 30.48;
     let clearedAreaPx2 = 0;
-    const seenCells = new Set<string>();
-    (placements[mapId] || []).forEach(p => {
-      const key = `${p.cx},${p.cy}`;
-      if (seenCells.has(key)) return;
-      const onForest = m.features.some(f => f.type === 'forest' && pointInFeature(p.cx, p.cy, f));
-      if (onForest) {
-        seenCells.add(key);
-        const sizePx = TECHS[p.tech].size * GRID;
-        clearedAreaPx2 += sizePx * sizePx;
+    const seenIds = new Set<number>();
+    (placements[mapId] || []).forEach((p, i) => {
+      const uid = p.id ?? i;
+      if (seenIds.has(uid)) return;
+      const t = TECHS[p.tech];
+      const hw = t.placedWidthFt ? t.placedWidthFt / ftPerCell * GRID / 2 : t.placedRadiusFt / ftPerCell * GRID;
+      const hh = t.placedHeightFt ? t.placedHeightFt / ftPerCell * GRID / 2 : hw;
+      // Sample 9 points across the footprint — catches units whose center is just outside the polygon
+      const samples: [number, number][] = [
+        [p.cx,            p.cy           ],
+        [p.cx - hw * 0.6, p.cy          ], [p.cx + hw * 0.6, p.cy          ],
+        [p.cx,            p.cy - hh * 0.6], [p.cx,            p.cy + hh * 0.6],
+        [p.cx - hw * 0.8, p.cy - hh * 0.8], [p.cx + hw * 0.8, p.cy - hh * 0.8],
+        [p.cx - hw * 0.8, p.cy + hh * 0.8], [p.cx + hw * 0.8, p.cy + hh * 0.8],
+      ];
+      const forestHits = samples.filter(([sx, sy]) =>
+        m.features.some(f => f.type === 'forest' && pointInFeature(sx, sy, f))
+      ).length;
+      if (forestHits > 0) {
+        seenIds.add(uid);
+        let unitAreaPx2: number;
+        if (t.placedWidthFt && t.placedHeightFt) {
+          unitAreaPx2 = (t.placedWidthFt / ftPerCell * GRID) * (t.placedHeightFt / ftPerCell * GRID);
+        } else {
+          const r = t.placedRadiusFt / ftPerCell * GRID;
+          unitAreaPx2 = Math.PI * r * r;
+        }
+        clearedAreaPx2 += unitAreaPx2 * (forestHits / samples.length);
       }
     });
     const clearedPct = totalForestArea > 0 ? Math.min(100, (clearedAreaPx2 / totalForestArea) * 100) : 0;
