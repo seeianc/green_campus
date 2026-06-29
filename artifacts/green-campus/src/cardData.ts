@@ -204,7 +204,7 @@ export const CARDS: Record<string, CardData> = {
     image: img('Federal Green Grant.png'),
     italic: 'Your school won a national award for sustainability innovation.',
     rows: [
-      { label: 'Benefit', value: 'You have a total budget of $12,000,000.' },
+      { label: 'Benefit', value: 'You have a total budget of $11,000,000.' },
       { label: 'Task', value: 'You must purchase at least one Emerging Tech (Hydrogen, V2G, or AI-Controller) for your final plan.' },
     ],
   },

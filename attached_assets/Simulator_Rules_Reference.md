@@ -9,7 +9,7 @@
 |---|---|
 | Failed Bond | $9,000,000 |
 | Standard *(default)* | $10,000,000 |
-| Federal Green Grant | $12,000,000 |
+| Federal Green Grant | $11,000,000 |
 
 **Federal Green Grant** also unlocks the Emerging Technology section (Hydrogen Electrolyzer, V2G, SCADA) and requires purchasing at least one of those three units. Under any other budget tier, emerging tech is unavailable and its cost is $0.
 

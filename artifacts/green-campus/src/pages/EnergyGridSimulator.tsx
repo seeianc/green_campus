@@ -557,7 +557,7 @@ export default function EnergyGridSimulator() {
                   <select class="e-select" id="budgetTier">
                     <option value=""></option>
                     <option value="Failed Bond">Failed Bond ($9M)</option>
-                    <option value="Federal Green Grant">Federal Green Grant ($12M)</option>
+                    <option value="Federal Green Grant">Federal Green Grant ($11M)</option>
                   </select>
                 </div>
                 <div class="e-select-row">
@@ -1105,7 +1105,7 @@ export default function EnergyGridSimulator() {
       const totalStorage =
         s.liIon*1000 + s.thermal*2500 + s.flywheel*1000 + s.caes*5000;
 
-      const startBudget = s.budgetTier==='Failed Bond' ? 9000000 : isGrant ? 12000000 : 10000000;
+      const startBudget = s.budgetTier==='Failed Bond' ? 9000000 : isGrant ? 11000000 : 10000000;
 
       const genCosts = {
         solar: s.solar * 1000000,
