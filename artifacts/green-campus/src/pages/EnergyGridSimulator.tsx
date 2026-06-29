@@ -1299,9 +1299,15 @@ export default function EnergyGridSimulator() {
 
       const constructJobs = Math.floor((totalSpent / 2000000) * 10);
       const permRoles = Math.floor((totalSpent / 2000000) * 1);
-      const rolesAssigned = s.wSolar + s.wElec + s.wEng;
+      // Clamp assigned roles so total never exceeds available permanent roles
+      const totalAssigned = s.wSolar + s.wElec + s.wEng;
+      const clampRatio = totalAssigned > permRoles && totalAssigned > 0 ? permRoles / totalAssigned : 1;
+      const wSolar = Math.floor(s.wSolar * clampRatio);
+      const wElec  = Math.floor(s.wElec  * clampRatio);
+      const wEng   = Math.floor(s.wEng   * clampRatio);
+      const rolesAssigned = wSolar + wElec + wEng;
       const rolesLeft = Math.max(0, permRoles - rolesAssigned);
-      const payroll = s.wSolar*55000 + s.wElec*68000 + s.wEng*72000;
+      const payroll = wSolar*55000 + wElec*68000 + wEng*72000;
 
       return {
         totalPeakSupply, actualPeakSupply, totalStorage, startBudget, totalSpent, remaining, campusPeakDemand,
@@ -1796,6 +1802,16 @@ export default function EnergyGridSimulator() {
       const constJobs = getEl('wConstJobs'); if (constJobs) constJobs.textContent = r.constructJobs.toLocaleString();
       const permRolesEl = getEl('wPermRoles'); if (permRolesEl) permRolesEl.textContent = r.permRoles.toLocaleString();
       const rolesLeftEl = getEl('wRolesLeft'); if (rolesLeftEl) rolesLeftEl.textContent = String(r.rolesLeft);
+      // Clamp role inputs to permRoles and cap each input's max dynamically
+      (['wSolar','wElec','wEng'] as const).forEach(id => {
+        const el = getEl<HTMLInputElement>(id);
+        if (!el) return;
+        const clamped = Math.min(Number(el.value), r.permRoles);
+        if (Number(el.value) !== clamped) el.value = String(clamped);
+        const others = (['wSolar','wElec','wEng'] as const).filter(x => x !== id)
+          .reduce((sum, x) => sum + (Number(getEl<HTMLInputElement>(x)?.value) || 0), 0);
+        el.max = String(Math.max(0, r.permRoles - others));
+      });
       setLedger('wPayroll', r.payroll);
 
       // CO2 offset — ISO-NE marginal rate (natural gas displacement)

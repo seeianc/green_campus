@@ -1775,9 +1775,12 @@ function initMapTool() {
       const uid = p.id ?? i;
       if (seenIds.has(uid)) return;
       const t = TECHS[p.tech];
-      const hw = t.placedWidthFt ? t.placedWidthFt / ftPerCell * GRID / 2 : t.placedRadiusFt / ftPerCell * GRID;
-      const hh = t.placedHeightFt ? t.placedHeightFt / ftPerCell * GRID / 2 : hw;
-      // Sample 9 points across the footprint — catches units whose center is just outside the polygon
+      // Use construction footprint for clearing when available (e.g. geothermal drilling zone)
+      const clearW = t.constructionWidthFt ?? t.placedWidthFt;
+      const clearH = t.constructionHeightFt ?? t.placedHeightFt;
+      const hw = clearW ? clearW / ftPerCell * GRID / 2 : t.placedRadiusFt / ftPerCell * GRID;
+      const hh = clearH ? clearH / ftPerCell * GRID / 2 : hw;
+      // Sample 9 points across the clearing footprint — catches units whose center is just outside the polygon
       const samples: [number, number][] = [
         [p.cx,            p.cy           ],
         [p.cx - hw * 0.6, p.cy          ], [p.cx + hw * 0.6, p.cy          ],
@@ -1791,8 +1794,8 @@ function initMapTool() {
       if (forestHits > 0) {
         seenIds.add(uid);
         let unitAreaPx2: number;
-        if (t.placedWidthFt && t.placedHeightFt) {
-          unitAreaPx2 = (t.placedWidthFt / ftPerCell * GRID) * (t.placedHeightFt / ftPerCell * GRID);
+        if (clearW && clearH) {
+          unitAreaPx2 = (clearW / ftPerCell * GRID) * (clearH / ftPerCell * GRID);
         } else {
           const r = t.placedRadiusFt / ftPerCell * GRID;
           unitAreaPx2 = Math.PI * r * r;
