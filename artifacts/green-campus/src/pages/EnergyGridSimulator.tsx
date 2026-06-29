@@ -632,7 +632,7 @@ export default function EnergyGridSimulator() {
                   <input class="e-qty-input" type="number" id="cabling" value="0" readonly style="opacity:0.55;cursor:default;pointer-events:none">
                 </div>
                 <div class="e-input-row" style="border-bottom:none">
-                  <div><div class="e-input-label">Wind Buffer Penalty</div><div class="e-input-sub">$200K if turbine within 500ft of building · set by map</div></div>
+                  <div><div class="e-input-label">Wind Buffer Penalty</div><div class="e-input-sub">$200K if turbine within 250ft of building · set by map</div></div>
                   <input type="hidden" id="windBuffer" value="No">
                   <span id="windBufferDisplay" style="font-family:var(--mono);font-size:12px;font-weight:600;opacity:0.6;white-space:nowrap">No</span>
                 </div>
@@ -817,7 +817,7 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#8f6a3a"></div>Energy Source Mix</div>
+              <div class="e-card-header"><div class="dot" style="background:#8f6a3a"></div>Energy &amp; Storage Mix</div>
               <div class="e-chart-wrap" style="max-width:320px;margin:0 auto">
                 <canvas id="sourceChart" height="240"></canvas>
               </div>
@@ -1010,7 +1010,7 @@ export default function EnergyGridSimulator() {
     const NIGHT_OWL = [1500,1440,1380,1350,1380,1500,1560,1680,1800,1920,2040,2160,2280,2400,2520,2700,2880,3000,3000,3000,2880,2880,2700,2100];
     const MORN_RUSH = [1500,1440,1380,1350,2100,2700,3000,3000,3000,2880,2700,2520,2400,2280,2280,2280,2340,2400,2520,2400,2100,1800,1680,1560];
     const SOLAR_PER_UNIT = [0,0,0,0,0,0,50,150,250,350,450,500,500,500,500,400,250,100,0,0,0,0,0,0];
-    const GEO_PER_UNIT = Array(24).fill(2000);
+    const GEO_PER_UNIT = Array(24).fill(1000);
     const BASE_WIND = [3000,3000,3000,3000,3000,2800,2500,2200,1800,1500,1200,1200,1200,1200,1200,1200,1500,1800,2200,2500,2800,3000,3000,3000];
     const BIOMASS_PER_UNIT = Array(24).fill(1000);
     // Maine semidiurnal tides: 2 highs + 2 lows per day (~6hr cycle)
@@ -1164,8 +1164,8 @@ export default function EnergyGridSimulator() {
         }
         // SCADA reduces total demand by 15%
         if (isGrant && s.scada > 0) d = d * 0.85;
-        // V2G caps peak demand at 2,700 kW
-        if (isGrant && s.v2g > 0) d = Math.min(d, 2700);
+        // V2G caps peak demand at 2,700 kW (not effective during Polar Vortex — heating demand is inelastic)
+        if (isGrant && s.v2g > 0 && !isPolar) d = Math.min(d, 2700);
         return Math.round(d);
       });
 
@@ -1175,7 +1175,7 @@ export default function EnergyGridSimulator() {
         cabling: s.cabling * 500,
         craneLogistics: s.wind > 0 && isCrane ? 500000 : 0,
         windBuffer: s.windBuffer === 'Yes' ? 200000 : 0,
-        utilityFee: totalPeakSupply > 3500 ? 500000 : 0,
+        utilityFee: totalPeakSupply > campusPeakDemand ? 500000 : 0,
         pivotPenalty: (isMaint && (s.solar > 0 || s.wind > 0)) ? 500000 :
                       (isPolar && polarDemandThreshold && totalPeakSupply < polarDemandThreshold) ? 300000 : 0,
       };
@@ -1225,8 +1225,7 @@ export default function EnergyGridSimulator() {
         + Object.values(storageCosts).reduce((a,b)=>a+b,0)
         + Object.values(emergingCosts).reduce((a,b)=>a+b,0)
         + Object.values(infraCosts).reduce((a,b)=>a+b,0)
-        + annualCarbonTaxFee
-        - annualRenewableRevenue;
+        + annualCarbonTaxFee;
 
       const basePeakDemand = 3000;
       const islandTime = totalStorage / basePeakDemand;
@@ -1378,16 +1377,20 @@ export default function EnergyGridSimulator() {
       sourceChartRef.current = new Chart(sourceCanvas, {
         type: 'doughnut',
         data: {
-          labels: ['Solar', 'Wind', 'Geo', 'Hydro', 'Tidal', 'Biomass'],
+          labels: ['Solar', 'Wind', 'Geo', 'Hydro', 'Tidal', 'Biomass', 'Lithium Ion', 'Thermal', 'Flywheel', 'CAES'],
           datasets: [{
-            data: [0, 0, 0, 0, 0, 0],
+            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             backgroundColor: [
               '#f0b429',
               '#58a6ff',
               '#bc8cff',
               '#39c8e8',
               '#00c8aa',
-              '#7ee787'
+              '#7ee787',
+              '#ff7b72',
+              '#ffa657',
+              '#db6d28',
+              '#8b949e'
             ],
             borderColor: '#ffffff',
             borderWidth: 2
@@ -1499,6 +1502,7 @@ export default function EnergyGridSimulator() {
         sharedState.hydroHubActive = r.isHydroHub;
         emitSimUpdate();
       }
+      sharedState.campusPeakDemand = r.campusPeakDemand;
 
       const supplyEl = getEl('mTotalSupply'); if (supplyEl) supplyEl.textContent = fmtkW(r.actualPeakSupply);
       const storageEl = getEl('mTotalStorage'); if (storageEl) storageEl.textContent = fmtkWh(r.totalStorage);
@@ -1541,7 +1545,7 @@ export default function EnergyGridSimulator() {
       setAdjItem('costLiIonAdj', r.liIonCostAdjustment, 'costLiIonAdjDesc', r.liIonCostAdjustment !== 0 ? '(Supply Chain +100%)' : '');
       
       setAdjItem('adjPivot', r.pivotPenaltyAdjustment, 'adjPivotDesc', r.pivotPenaltyAdjustment !== 0 ? '(Pivot Card Penalty)' : '');
-      setAdjItem('adjUtility', r.utilityFeeAdjustment, 'adjUtilityDesc', r.utilityFeeAdjustment !== 0 ? '(Peak > 3,500 kW)' : '');
+      setAdjItem('adjUtility', r.utilityFeeAdjustment, 'adjUtilityDesc', r.utilityFeeAdjustment !== 0 ? '(Supply > Peak Demand)' : '');
       setAdjItem('adjCrane', r.infraCosts.craneLogistics, 'adjCraneDesc', r.infraCosts.craneLogistics !== 0 ? '(Crane Operator Shortage)' : '');
       setAdjItem('adjCarbonTax', r.annualCarbonTaxFee, 'adjCarbonTaxDesc', r.annualCarbonTaxFee !== 0 ? '($0.10/kWh shortfall × 365 days)' : '');
       
@@ -1625,11 +1629,12 @@ export default function EnergyGridSimulator() {
       if (r.remaining < 0) alerts.push({ cls: 'danger', msg: '⛔ Over budget by ' + fmt$(Math.abs(r.remaining)) });
       if (r.isGrant && !r.grantCompliant) alerts.push({ cls: 'warn', msg: '⚠️ Grant Violation: Must purchase at least 1 Emerging Tech!' });
       if (r.totalPeakSupply === 0) alerts.push({ cls: 'warn', msg: '⚠️ No generation tech selected — grid has no supply.' });
-      if (r.infraCosts.utilityFee > 0) alerts.push({ cls: 'warn', msg: `⚠️ Utility Interconnection Fee: supply exceeds 3,500 kW grid-export threshold — infrastructure upgrade required (+$500K)` });
+      if (r.infraCosts.utilityFee > 0) alerts.push({ cls: 'warn', msg: `⚠️ Utility Interconnection Fee: peak supply exceeds campus peak demand — grid export requires infrastructure upgrade (+$500K)` });
       if (r.isPolar) {
         const threshold = r.polarDemandThreshold ?? 4500;
         const met = r.totalPeakSupply >= threshold;
-        alerts.push({ cls: met ? 'ok' : 'danger', msg: (met ? '✅' : '⛔') + ' Polar Vortex: Campus demand spiked to ' + threshold.toLocaleString() + ' kW — your supply is ' + (met ? 'sufficient.' : 'insufficient! Add more generation.') + (r.totalStorage === 0 || !r.infraCosts ? '' : ' (Tip: add Thermal Storage to reduce threshold to 3,300 kW)') });
+        alerts.push({ cls: met ? 'ok' : 'danger', msg: (met ? '✅' : '⛔') + ' Polar Vortex: Campus demand spiked to ' + threshold.toLocaleString() + ' kW — your supply is ' + (met ? 'sufficient.' : 'insufficient! Add more generation.') + (threshold === 4500 ? ' (Tip: add Thermal Storage to reduce threshold to 3,300 kW)' : '') });
+        if (s.v2g > 0) alerts.push({ cls: 'warn', msg: '🚌 V2G inactive during Polar Vortex — extreme cold heating demand cannot be capped by bus batteries.' });
       }
       if (r.isAIHub) alerts.push({ cls: 'warn', msg: '⚡ AI Learning Hub: Campus demand increased by 900 kW every hour — new peak demand is 3,900 kW.' });
       if (r.isMaint) alerts.push({ cls: 'warn', msg: '🔧 Maintenance Crisis: Solar and Wind output reduced to 75%.' + (r.infraCosts.pivotPenalty > 0 ? ' $500K repair fee applied.' : '') });
@@ -1693,14 +1698,21 @@ export default function EnergyGridSimulator() {
 
       // Update donut chart with energy source mix
       if (sourceChartRef.current) {
-        const sourceData = [
+        const genData = [
           s.solar * 500,
           s.wind * 3000,
-          s.geo * 2000,
+          s.geo * 1000,
           (s.hydroLow * 500 + s.hydroHigh * 2000),
           (s.tidalStd * 500),
           s.biomass * 1000
         ];
+        const storageData = [
+          s.liIon * 1000,
+          s.thermal * 2500,
+          s.flywheel * 1000,
+          s.caes * 5000
+        ];
+        const sourceData = [...genData, ...storageData];
         sourceChartRef.current.data.datasets[0].data = sourceData;
         sourceChartRef.current.update('none');
 
@@ -1708,12 +1720,14 @@ export default function EnergyGridSimulator() {
         const legendEl = getEl('sourceChartLegend');
         if (legendEl) {
           const totalKw = sourceData.reduce((a, b) => a + b, 0);
-          const labels = ['Solar', 'Wind', 'Geo', 'Hydro', 'Tidal', 'Biomass'];
-          const colors = ['#f0b429', '#58a6ff', '#bc8cff', '#39c8e8', '#00c8aa', '#7ee787'];
+          const totalGenKw = genData.reduce((a, b) => a + b, 0);
+          const totalStorageKw = storageData.reduce((a, b) => a + b, 0);
+          const labels = ['Solar', 'Wind', 'Geo', 'Hydro', 'Tidal', 'Biomass', 'Lithium Ion', 'Thermal', 'Flywheel', 'CAES'];
+          const colors = ['#f0b429', '#58a6ff', '#bc8cff', '#39c8e8', '#00c8aa', '#7ee787', '#ff7b72', '#ffa657', '#db6d28', '#8b949e'];
           if (totalKw === 0) {
-            legendEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:4px 0">No generation selected</div>';
+            legendEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:4px 0">No generation or storage selected</div>';
           } else {
-            legendEl.innerHTML = labels.map((label, i) => {
+            const rows = labels.map((label, i) => {
               const kw = sourceData[i];
               if (kw === 0) return '';
               const pct = ((kw / totalKw) * 100).toFixed(1);
@@ -1721,10 +1735,16 @@ export default function EnergyGridSimulator() {
                 <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors[i]};margin-right:6px;vertical-align:middle"></span>${label}</span>
                 <span style="color:${colors[i]};font-weight:600">${kw.toLocaleString()} kW · ${pct}%</span>
               </div>`;
-            }).filter(Boolean).join('') +
-            `<div style="display:flex;justify-content:space-between;padding:4px 0;font-weight:600;border-top:1px solid var(--border);margin-top:2px">
-              <span>Total Peak</span><span>${totalKw.toLocaleString()} kW</span>
-            </div>`;
+            }).filter(Boolean).join('');
+            const summaryRows = [
+              totalGenKw > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text-muted)">Generation</span><span>${totalGenKw.toLocaleString()} kW</span></div>` : '',
+              totalStorageKw > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:var(--text-muted)">Storage Capacity</span><span>${totalStorageKw.toLocaleString()} kW</span></div>` : '',
+            ].filter(Boolean).join('');
+            legendEl.innerHTML = rows +
+            `<div style="border-top:1px solid var(--border);margin-top:2px;padding-top:4px">${summaryRows}
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-weight:600;border-top:1px solid var(--border);margin-top:2px">
+                <span>Total</span><span>${totalKw.toLocaleString()} kW</span>
+              </div></div>`;
           }
         }
       }
@@ -2021,19 +2041,19 @@ export default function EnergyGridSimulator() {
 
     // Sync map placements → simulator inputs
     const PLACED_LABELS: Record<string, string> = {
-      solar:'Solar PV', wind:'Wind', geo:'Geothermal', hydroLow:'Hydro Low',
-      hydroHigh:'Hydro High', tidal:'Tidal', biomass:'Biomass',
-      liIon:'Lithium Ion', thermal:'Thermal', flywheel:'Flywheel', caes:'CAES',
+      solar:'Solar PV', wind:'Wind', geo:'Geothermal', hydroL:'Hydro Low',
+      hydroH:'Hydro High', tidal:'Tidal', biomass:'Biomass',
+      bess:'Lithium Ion', thermal:'Thermal', flywheel:'Flywheel', caes:'CAES',
     };
     const PLACED_COLORS: Record<string, string> = {
-      solar:'#f0b429', wind:'#58a6ff', geo:'#bc8cff', hydroLow:'#39c8e8',
-      hydroHigh:'#0099cc', tidal:'#00c8aa', biomass:'#7ee787',
-      liIon:'#ff8c8c', thermal:'#ffb347', flywheel:'#da8fff', caes:'#84fab0',
+      solar:'#f0b429', wind:'#58a6ff', geo:'#bc8cff', hydroL:'#39c8e8',
+      hydroH:'#0099cc', tidal:'#00c8aa', biomass:'#7ee787',
+      bess:'#ff8c8c', thermal:'#ffb347', flywheel:'#da8fff', caes:'#84fab0',
     };
     const PLACED_CARD_IDS: Record<string, string> = {
-      solar:'solar', wind:'wind', geo:'geo', hydroLow:'hydroL',
-      hydroHigh:'hydroH', tidal:'tidal', biomass:'biomass',
-      liIon:'bess', thermal:'thermal', flywheel:'flywheel', caes:'caes',
+      solar:'solar', wind:'wind', geo:'geo', hydroL:'hydroL',
+      hydroH:'hydroH', tidal:'tidal', biomass:'biomass',
+      bess:'bess', thermal:'thermal', flywheel:'flywheel', caes:'caes',
     };
     function updatePlacedUnits() {
       const panel = getEl('placedUnitsList');

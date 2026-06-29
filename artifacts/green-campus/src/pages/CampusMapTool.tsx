@@ -260,11 +260,11 @@ export default function CampusMapTool() {
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('solar')" title="View Solar PV card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
               <span class="map-tech-dot" style="background:#58a6ff"></span>
-              <div><div>Wind</div><div class="map-tech-meta">3000kW · $2.5M · 500ft buffer</div></div>
+              <div><div>Wind</div><div class="map-tech-meta">3000kW · $4.5M · 250ft buffer</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('wind')" title="View Wind Turbine card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
               <span class="map-tech-dot" style="background:#bc8cff"></span>
-              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 3 acres</div></div>
+              <div><div>Geothermal</div><div class="map-tech-meta">1000kW · $8M</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('geo')" title="View Geothermal card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
@@ -1366,9 +1366,11 @@ function initMapTool() {
       const _isWaterZone = _snappedZone?.type === 'water' || _snappedZone?.type === 'ocean' || _snappedZone?.type === 'tidal_zone';
       const _boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
       const isOutside = !_waterTechs.includes(selectedTech) && !(selectedTech === 'wind' && _isWaterZone) && !!_boundary?.points && !pointInPolygon(snapped.x, snapped.y, _boundary.points);
-      canvas.style.cursor = isOutside ? 'not-allowed' : 'crosshair';
+      const isOverlapBlocked = wouldOverlap(snapped.x, snapped.y, selectedTech, pendingRotation);
+      const isBlocked = isOutside || isOverlapBlocked;
+      canvas.style.cursor = isBlocked ? 'not-allowed' : 'crosshair';
 
-      const ghostColor = isOutside ? '#f85149' : t.color;
+      const ghostColor = isBlocked ? '#f85149' : t.color;
       const ftPerCellG = MAPS[currentMap].scale / 30.48;
 
       const ghostRot = (pendingRotation * Math.PI) / 180;
@@ -1461,9 +1463,9 @@ function initMapTool() {
       water: '✓ Hydro/Tidal suitable',
       ocean: '✓ Tidal/Offshore suitable',
       tidal_zone: '✓ Tidal turbine zone',
-      pinch_point: '⭐ 20% tidal power bonus!',
+      pinch_point: '⭐ Tidal pinch point — strong current zone',
       building: '⚠ Restricted — no wind buffer',
-      forest: '⚠ Forested — wind turbines violate Migratory Bird Ordinance',
+      forest: (getEl<HTMLSelectElement>('envConstraints')?.value === 'Migratory Bird') ? '⚠ Forested — wind turbines violate Migratory Bird Ordinance' : '✓ Forested area',
       field: '✓ Good for Solar/Wind/Geothermal',
       parking: '✓ Good for Solar/Wind arrays',
       road: '✓ Road access — Biomass suitable',
@@ -1505,7 +1507,8 @@ function initMapTool() {
     const zone = getZoneAt(x, y);
 
     const waterTechs = ['hydroL', 'hydroH', 'tidal'];
-    if (!waterTechs.includes(tech)) {
+    const isOffshoreWind = tech === 'wind' && zone && (zone.type === 'ocean' || zone.type === 'water');
+    if (!waterTechs.includes(tech) && !isOffshoreWind) {
       const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
       if (boundary?.points && !pointInPolygon(x, y, boundary.points)) {
         violations.push('Must be placed within campus property boundary');
@@ -1556,11 +1559,59 @@ function initMapTool() {
       if (boundary?.points && pointToPolygonDist(x, y, boundary.points) < bufferPx) {
         violations.push('Wind buffer touches property line — $200K fee');
       }
-      if (zone && zone.type === 'forest') {
+      if (zone && zone.type === 'forest' && getEl<HTMLSelectElement>('envConstraints')?.value === 'Migratory Bird') {
         violations.push('Migratory Bird Ordinance: turbines not permitted in forested areas');
       }
     }
     return violations;
+  }
+
+  function getEffectiveHalfDims(tech: string, rotation: number, ftPerCell: number): { hw: number; hh: number } {
+    const t = TECHS[tech];
+    const hw = Math.max(12, t.placedWidthFt!  / ftPerCell * GRID) / 2;
+    const hh = Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2;
+    return (rotation === 90 || rotation === 270) ? { hw: hh, hh: hw } : { hw, hh };
+  }
+
+  function shapesOverlap(
+    x1: number, y1: number, tech1: string, rot1: number,
+    x2: number, y2: number, tech2: string, rot2: number,
+    ftPerCell: number
+  ): boolean {
+    const t1 = TECHS[tech1];
+    const t2 = TECHS[tech2];
+    const isRect1 = !!(t1.placedWidthFt && t1.placedHeightFt);
+    const isRect2 = !!(t2.placedWidthFt && t2.placedHeightFt);
+
+    if (!isRect1 && !isRect2) {
+      const r1 = Math.max(8, t1.placedRadiusFt / ftPerCell * GRID);
+      const r2 = Math.max(8, t2.placedRadiusFt / ftPerCell * GRID);
+      return Math.hypot(x1 - x2, y1 - y2) < r1 + r2;
+    }
+
+    if (isRect1 && isRect2) {
+      const d1 = getEffectiveHalfDims(tech1, rot1, ftPerCell);
+      const d2 = getEffectiveHalfDims(tech2, rot2, ftPerCell);
+      return Math.abs(x1 - x2) < d1.hw + d2.hw && Math.abs(y1 - y2) < d1.hh + d2.hh;
+    }
+
+    // One rect, one circle — find closest point on rect to circle center
+    const [rx, ry, rTech, rRot, cx, cy, cTech] = isRect1
+      ? [x1, y1, tech1, rot1, x2, y2, tech2]
+      : [x2, y2, tech2, rot2, x1, y1, tech1];
+    const { hw, hh } = getEffectiveHalfDims(rTech, rRot, ftPerCell);
+    const circR = Math.max(8, TECHS[cTech].placedRadiusFt / ftPerCell * GRID);
+    const nearX = Math.max(rx - hw, Math.min(cx, rx + hw));
+    const nearY = Math.max(ry - hh, Math.min(cy, ry + hh));
+    return Math.hypot(nearX - cx, nearY - cy) < circR;
+  }
+
+  function wouldOverlap(x: number, y: number, tech: string, rotation = 0, excludeIdx = -1): boolean {
+    const ftPerCell = MAPS[currentMap].scale / 30.48;
+    return (placements[currentMap] || []).some((p, i) => {
+      if (i === excludeIdx) return false;
+      return shapesOverlap(x, y, tech, rotation, p.cx, p.cy, p.tech, p.rotation || 0, ftPerCell);
+    });
   }
 
   function placeUnit(x: number, y: number) {
@@ -1573,6 +1624,7 @@ function initMapTool() {
       const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
       if (boundary?.points && !pointInPolygon(snapped.x, snapped.y, boundary.points)) return;
     }
+    if (wouldOverlap(snapped.x, snapped.y, selectedTech, pendingRotation)) return;
     const violations = checkPlacementViolations(snapped.x, snapped.y, selectedTech);
     placements[currentMap].push({
       tech: selectedTech, cx: snapped.x, cy: snapped.y,
@@ -1619,28 +1671,16 @@ function initMapTool() {
 
   function eraseUnit(x: number, y: number) {
     const plist = placements[currentMap];
+    if (!plist?.length) return;
+    const ftPerCell = MAPS[currentMap].scale / 30.48;
+    // Use real-world-scaled hit radii matching the rendered shapes
     const idx = plist.findIndex(p => {
       const t = TECHS[p.tech];
-      if (p.tech === 'wind') {
-        const r = Math.max(12, t.size * GRID / 2) + 4;
-        return Math.hypot(p.cx - x, p.cy - y) < r;
-      }
-      const cells = FOOTPRINT_CELLS[p.tech];
-      if (cells) {
-        const minX = Math.min(...cells.map(([cx]) => cx));
-        const maxX = Math.max(...cells.map(([cx]) => cx));
-        const minY = Math.min(...cells.map(([, cy]) => cy));
-        const maxY = Math.max(...cells.map(([, cy]) => cy));
-        const width = (maxX - minX + 1) * GRID;
-        const height = (maxY - minY + 1) * GRID;
-        const left = p.cx - width / 2;
-        const top = p.cy - height / 2;
-        return x >= left && x <= left + width && y >= top && y <= top + height;
-      }
-      const span = Math.max(0.5, t.size) * GRID;
-      const left = p.cx - span / 2;
-      const top = p.cy - span / 2;
-      return x >= left && x <= left + span && y >= top && y <= top + span;
+      const hitR = t.placedWidthFt
+        ? Math.max(Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2,
+                   Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2) + 6
+        : Math.max(8, t.placedRadiusFt / ftPerCell * GRID) + 6;
+      return Math.hypot(p.cx - x, p.cy - y) < hitR;
     });
     if (idx >= 0) {
       plist.splice(idx, 1);
@@ -1728,19 +1768,36 @@ function initMapTool() {
       .filter(f => f.type === 'forest')
       .reduce((sum, f) => sum + featureArea(f), 0);
     const forestPct = campusArea > 0 ? (totalForestArea / campusArea) * 100 : 0;
-    // Use pixel footprint (size × GRID)² for clearing — removes scale dependency so all
-    // maps behave consistently regardless of their real-world scale denominator.
-    // Deduplicate by grid cell so stacked placements at the same location don't double-count.
+    const ftPerCell = m.scale / 30.48;
     let clearedAreaPx2 = 0;
-    const seenCells = new Set<string>();
-    (placements[mapId] || []).forEach(p => {
-      const key = `${p.cx},${p.cy}`;
-      if (seenCells.has(key)) return;
-      const onForest = m.features.some(f => f.type === 'forest' && pointInFeature(p.cx, p.cy, f));
-      if (onForest) {
-        seenCells.add(key);
-        const sizePx = TECHS[p.tech].size * GRID;
-        clearedAreaPx2 += sizePx * sizePx;
+    const seenIds = new Set<number>();
+    (placements[mapId] || []).forEach((p, i) => {
+      const uid = p.id ?? i;
+      if (seenIds.has(uid)) return;
+      const t = TECHS[p.tech];
+      const hw = t.placedWidthFt ? t.placedWidthFt / ftPerCell * GRID / 2 : t.placedRadiusFt / ftPerCell * GRID;
+      const hh = t.placedHeightFt ? t.placedHeightFt / ftPerCell * GRID / 2 : hw;
+      // Sample 9 points across the footprint — catches units whose center is just outside the polygon
+      const samples: [number, number][] = [
+        [p.cx,            p.cy           ],
+        [p.cx - hw * 0.6, p.cy          ], [p.cx + hw * 0.6, p.cy          ],
+        [p.cx,            p.cy - hh * 0.6], [p.cx,            p.cy + hh * 0.6],
+        [p.cx - hw * 0.8, p.cy - hh * 0.8], [p.cx + hw * 0.8, p.cy - hh * 0.8],
+        [p.cx - hw * 0.8, p.cy + hh * 0.8], [p.cx + hw * 0.8, p.cy + hh * 0.8],
+      ];
+      const forestHits = samples.filter(([sx, sy]) =>
+        m.features.some(f => f.type === 'forest' && pointInFeature(sx, sy, f))
+      ).length;
+      if (forestHits > 0) {
+        seenIds.add(uid);
+        let unitAreaPx2: number;
+        if (t.placedWidthFt && t.placedHeightFt) {
+          unitAreaPx2 = (t.placedWidthFt / ftPerCell * GRID) * (t.placedHeightFt / ftPerCell * GRID);
+        } else {
+          const r = t.placedRadiusFt / ftPerCell * GRID;
+          unitAreaPx2 = Math.PI * r * r;
+        }
+        clearedAreaPx2 += unitAreaPx2 * (forestHits / samples.length);
       }
     });
     const clearedPct = totalForestArea > 0 ? Math.min(100, (clearedAreaPx2 / totalForestArea) * 100) : 0;
@@ -1781,7 +1838,7 @@ function initMapTool() {
     });
     const CABLE_COST_PER_FT = 500; // $500/ft = $50K per 100 ft
     totalCost += cableFt * CABLE_COST_PER_FT;
-    if (totalKw > 3000) totalCost += 500000;
+    if (totalKw > (sharedState.campusPeakDemand || 3000)) totalCost += 500000;
 
     // Count wind turbines in ecologically sensitive zones (forest, wetland)
     let windSensitive = 0;
@@ -2006,8 +2063,14 @@ function initMapTool() {
       if (moveDragging && movingIdx >= 0) {
         const p = placements[currentMap][movingIdx];
         const snapped = snapToGridCell(x, y, p.tech);
-        p.cx = snapped.x;
-        p.cy = snapped.y;
+        if (wouldOverlap(snapped.x, snapped.y, p.tech, p.rotation || 0, movingIdx)) {
+          overlayCanvas.style.cursor = 'not-allowed';
+        } else {
+          overlayCanvas.style.cursor = 'grabbing';
+          p.cx = snapped.x;
+          p.cy = snapped.y;
+        }
+        buildOptimalCables();
         drawOverlay();
         return;
       }

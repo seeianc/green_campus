@@ -25,7 +25,7 @@ export const CARDS: Record<string, CardData> = {
       { label: 'Installation Cost', value: '$1,000,000 per unit' },
       { label: 'Annual Savings', value: '~$154,000/unit at $0.22/kWh' },
       { label: 'Space Needed', value: '50,000 sq. ft. (1.1 acres) of flat land or rooftop' },
-      { label: 'Constraints', value: 'Prohibited in forested areas if Migratory Bird Ordinance is active. Output drops to 10% during Polar Vortex. Night Owl profile requires 1,000 kWh storage per solar unit.' },
+      { label: 'Constraints', value: 'Prohibited in forested areas if Migratory Bird Ordinance is active. Output drops to 10% during Polar Vortex. Each solar unit requires 1,000 kWh of storage (any type). Night Owl Campus additionally requires at least 2 Lithium Ion units.' },
     ],
   },
   wind: {
@@ -35,7 +35,7 @@ export const CARDS: Record<string, CardData> = {
       { label: 'Unit Power', value: '3,000 kW per turbine' },
       { label: 'Installation Cost', value: '$4,500,000 per unit' },
       { label: 'Annual Savings', value: '~$1,760,000 (avoided utility costs)' },
-      { label: 'Space Needed', value: 'Requires 500 ft noise/safety radius. Encroaching on a classroom or property adds a $200,000 mitigation fee.' },
+      { label: 'Space Needed', value: 'Requires 250 ft noise/safety radius. Encroaching on a classroom or property adds a $200,000 mitigation fee.' },
       { label: 'Constraints', value: 'Crane Operator Shortage adds $500,000 logistics fee. Prohibited in forested areas if Migratory Bird Ordinance is active.' },
     ],
   },
@@ -112,7 +112,7 @@ export const CARDS: Record<string, CardData> = {
     rows: [
       { label: 'Capacity', value: '1,000 kWh per unit' },
       { label: 'Cost', value: '$500,000 per unit (doubles to $1M during Supply Chain Crisis)' },
-      { label: 'Best Use', value: 'Pairing with Solar to provide electricity for selected hours after sunset. Satisfies Night Owl storage requirement.' },
+      { label: 'Best Use', value: 'Pairing with Solar to provide electricity for selected hours after sunset. Night Owl Campus requires at least 2 Lithium Ion units when solar is present.' },
     ],
   },
   thermal: {
@@ -185,7 +185,7 @@ export const CARDS: Record<string, CardData> = {
     italic: "The school's HVAC and kitchen systems start at 5:00 AM to prepare for students.",
     rows: [
       { label: 'Challenge', value: 'Your highest energy spike is during the early morning.' },
-      { label: 'Task', value: 'If more than 50% of your energy comes from Solar or Wind, you must increase non-solar/wind sources to be greater than 50% or find an energy storage solution.' },
+      { label: 'Task', value: 'If Solar + Wind supply more than 50% of your total generation, add any storage unit (Lithium Ion, Flywheel, Thermal, or CAES) to resolve — or diversify so Solar + Wind stay at or below 50%.' },
     ],
   },
 
