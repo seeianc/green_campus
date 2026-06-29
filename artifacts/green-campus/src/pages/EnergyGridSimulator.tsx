@@ -1094,8 +1094,11 @@ export default function EnergyGridSimulator() {
       // Polar Vortex demand threshold — must be declared before infraCosts
       const polarDemandThreshold = isPolar ? (s.thermal > 0 ? 3300 : 4500) : null;
 
+      // Hydrogen electrolyzer boosts solar & wind output by 30% — must be declared before supply calcs
+      const hydrogenBoost = isGrant && s.hydrogen > 0 ? 1.3 : 1;
+
       const totalPeakSupply =
-        s.solar*500 + s.wind*3000 + s.geo*1000 +
+        s.solar*500*hydrogenBoost + s.wind*3000*hydrogenBoost + s.geo*1000 +
         s.hydroLow*500 + s.hydroHigh*2000 +
         s.tidalStd*500 + s.biomass*1000;
 
@@ -1124,8 +1127,6 @@ export default function EnergyGridSimulator() {
         scada: s.scada * 500000,
       } : { hydrogen: 0, v2g: 0, scada: 0 };
 
-      // Hydrogen electrolyzer boosts solar & wind output by 30%
-      const hydrogenBoost = isGrant && s.hydrogen > 0 ? 1.3 : 1;
       const windMult = hydrogenBoost * (isMaint ? 0.75 : 1);
       const solarMult = hydrogenBoost * (isPolar ? 0.1 : 1) * (isMaint ? 0.75 : 1);
       const hasVarGen = s.solar > 0 || s.wind > 0;
@@ -1246,8 +1247,8 @@ export default function EnergyGridSimulator() {
       const actualPeakSupply = Math.max(...supply24);
 
       const annualKwh = {
-        solar:   s.solar    * ANNUAL_KWH_PER_UNIT.solar,
-        wind:    s.wind     * ANNUAL_KWH_PER_UNIT.wind,
+        solar:   s.solar    * ANNUAL_KWH_PER_UNIT.solar * hydrogenBoost,
+        wind:    s.wind     * ANNUAL_KWH_PER_UNIT.wind  * hydrogenBoost,
         geo:     s.geo      * ANNUAL_KWH_PER_UNIT.geo,
         hydro:   s.hydroLow * ANNUAL_KWH_PER_UNIT.hydroLow + s.hydroHigh * ANNUAL_KWH_PER_UNIT.hydroHigh,
         tidal:   s.tidalStd * ANNUAL_KWH_PER_UNIT.tidalStd,
