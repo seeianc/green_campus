@@ -1010,7 +1010,7 @@ export default function EnergyGridSimulator() {
     const NIGHT_OWL = [1500,1440,1380,1350,1380,1500,1560,1680,1800,1920,2040,2160,2280,2400,2520,2700,2880,3000,3000,3000,2880,2880,2700,2100];
     const MORN_RUSH = [1500,1440,1380,1350,2100,2700,3000,3000,3000,2880,2700,2520,2400,2280,2280,2280,2340,2400,2520,2400,2100,1800,1680,1560];
     const SOLAR_PER_UNIT = [0,0,0,0,0,0,50,150,250,350,450,500,500,500,500,400,250,100,0,0,0,0,0,0];
-    const GEO_PER_UNIT = Array(24).fill(1000);
+    const GEO_PER_UNIT = Array(24).fill(2000);
     const BASE_WIND = [3000,3000,3000,3000,3000,2800,2500,2200,1800,1500,1200,1200,1200,1200,1200,1200,1500,1800,2200,2500,2800,3000,3000,3000];
     const BIOMASS_PER_UNIT = Array(24).fill(1000);
     // Maine semidiurnal tides: 2 highs + 2 lows per day (~6hr cycle)
@@ -1024,7 +1024,7 @@ export default function EnergyGridSimulator() {
     const ANNUAL_KWH_PER_UNIT: Record<string, number> = {
       solar:     700_000,  // 500 kW @ ~16% capacity factor
       wind:    8_000_000,  // 3,000 kW @ ~30% capacity factor
-      geo:     7_000_000,  // 1,000 kW @ ~80% capacity factor
+      geo:     7_000_000,  // 2,000 kW @ ~40% capacity factor
       hydroLow: 2_000_000, // 500 kW @ ~46% capacity factor
       hydroHigh:7_500_000, // 2,000 kW @ ~43% capacity factor
       tidalStd: 2_190_000, // 500 kW peak @ ~50% capacity factor (semidiurnal tide cycle)
@@ -1098,7 +1098,7 @@ export default function EnergyGridSimulator() {
       const hydrogenBoost = isGrant && s.hydrogen > 0 ? 1.3 : 1;
 
       const totalPeakSupply =
-        s.solar*500*hydrogenBoost + s.wind*3000*hydrogenBoost + s.geo*1000 +
+        s.solar*500*hydrogenBoost + s.wind*3000*hydrogenBoost + s.geo*2000 +
         s.hydroLow*500 + s.hydroHigh*2000 +
         s.tidalStd*500 + s.biomass*1000;
 
