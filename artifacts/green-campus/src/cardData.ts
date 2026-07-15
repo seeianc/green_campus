@@ -43,11 +43,11 @@ export const CARDS: Record<string, CardData> = {
     id: 'geo', title: 'Geothermal', color: '#2e7d52',
     image: img('Geothermal.png'),
     rows: [
-      { label: 'Unit Power', value: '1,000 kW (runs 24/7)' },
-      { label: 'Cost', value: '$8,000,000 per site (−20% with Hydropower Engineering Hub = $6,400,000)' },
-      { label: 'Annual Savings', value: '~$1,540,000/unit' },
-      { label: 'Space Needed', value: 'Construction: 3–5 acres. Permanent footprint: 5,000 sq. ft.' },
-      { label: 'Constraints', value: 'Cannot be placed on water. Banned entirely if Vernal Pool Protection is active.' },
+      { label: 'Unit Power', value: '2,000 kW (runs 24/7)' },
+      { label: 'Cost', value: '$8,000,000 per site (−20% if Hydropower Engineering Hub is active)' },
+      { label: 'Annual Savings', value: '~$1,540,000/unit (Eliminates heating/cooling bills + avoided grid costs)' },
+      { label: 'Space Needed', value: 'Construction: Requires 130,000 sq. ft. for drilling machinery, unusable during 6 months of construction. Permanent: Small footprint (5,000 sq. ft.) for the heat exchange building.' },
+      { label: 'Constraints', value: 'Cannot be placed on water. Banned completely if "Vernal Pool Protection" is active.' },
     ],
   },
   hydroL: {
@@ -157,7 +157,7 @@ export const CARDS: Record<string, CardData> = {
     image: img('v2g_hub.png'),
     rows: [
       { label: 'Cost', value: '$100,000' },
-      { label: 'Benefit', value: "Allows the school's electric buses to act as a battery bank, feeding power back to reduce overall peak energy need to ~2,700 kW." },
+      { label: 'Benefit', value: 'Allows the school\'s electric buses to act as a battery bank. The buses "give" power back to the school reducing overall peak energy need to 2,700 kW.' },
     ],
   },
   scada: {
@@ -255,9 +255,9 @@ export const CARDS: Record<string, CardData> = {
     image: img('AI Learning Hub.png'),
     italic: 'Your school district has just been selected to host a regional "Sovereign AI" server farm inside your building.',
     rows: [
-      { label: 'The Impact', value: 'Base energy demand increased by 30% (+900 kW). New peak: 3,900 kW.' },
+      { label: 'The Impact', value: 'Base energy demand increased by 30% (+900 kW).' },
       { label: 'The Task', value: 'Add more generation units to your map or otherwise offset the energy demand increase.' },
-      { label: 'The Tradeoff', value: 'If you have no Storage (BESS), peak-hour energy costs increase by $50,000/yr.' },
+      { label: 'The Tradeoff', value: 'If you have no Storage (BESS), peak-hour energy costs will increase by $50,000/year, hurting your ROI.' },
     ],
   },
   'polar-vortex': {
@@ -265,9 +265,9 @@ export const CARDS: Record<string, CardData> = {
     image: img('Polar Vortex.png'),
     italic: 'A record-breaking Polar Vortex has dropped temperatures to −20°F for two straight weeks.',
     rows: [
-      { label: 'The Impact', value: 'Peak demand spikes to 4,500 kW. Solar PV output drops by 90% (50 kW per block).' },
-      { label: 'The Task', value: "If your system can't meet 4,500 kW, pay a $300,000 emergency utility surcharge." },
-      { label: 'The Bonus', value: 'Thermal Storage reduces peak demand from 4,500 kW to 3,300 kW.' },
+      { label: 'The Impact', value: 'Heating demand spikes your total peak to 4,500 kW. Solar PV output drops by 90% (each 500 kW block now only gives you 50 kW).' },
+      { label: 'The Task', value: "Evaluate if your current system can keep the school warm. If your system can't meet 4,500 kW, pay a $300,000 emergency utility surcharge." },
+      { label: 'The Bonus', value: 'If you have Thermal Storage, your demand spike is reduced to 3,300 kW.' },
     ],
   },
   'supply-chain': {
