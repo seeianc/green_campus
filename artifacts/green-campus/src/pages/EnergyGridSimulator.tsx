@@ -1708,7 +1708,7 @@ export default function EnergyGridSimulator() {
         const genData = [
           s.solar * 500,
           s.wind * 3000,
-          s.geo * 1000,
+          s.geo * 2000,
           (s.hydroLow * 500 + s.hydroHigh * 2000),
           (s.tidalStd * 500),
           s.biomass * 1000
