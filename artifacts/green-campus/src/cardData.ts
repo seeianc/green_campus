@@ -200,7 +200,7 @@ export const CARDS: Record<string, CardData> = {
     ],
   },
   'federal-grant': {
-    id: 'federal-grant', title: 'The "Federal Green Grant"', color: '#4a7a8e',
+    id: 'federal-grant', title: 'Federal Green Grant Award', color: '#4a7a8e',
     image: img('Federal Green Grant.png'),
     italic: 'Your school won a national award for sustainability innovation.',
     rows: [
