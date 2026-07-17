@@ -25,8 +25,10 @@ if (!basePath) {
   );
 }
 
+const normalizedBase = basePath.endsWith('/') ? basePath : basePath + '/';
+
 export default defineConfig({
-  base: basePath,
+  base: normalizedBase,
   plugins: [
     react(),
     // tailwindcss(),  // Disabled due to native module issue
