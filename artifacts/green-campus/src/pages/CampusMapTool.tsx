@@ -264,7 +264,7 @@ export default function CampusMapTool() {
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('wind')" title="View Wind Turbine card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
               <span class="map-tech-dot" style="background:#bc8cff"></span>
-              <div><div>Geothermal</div><div class="map-tech-meta">1000kW · $8M</div></div>
+              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $8M</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('geo')" title="View Geothermal card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
@@ -367,7 +367,7 @@ function initMapTool() {
   const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferFt: number; squareFootprint: number; placedRadiusFt: number; placedWidthFt?: number; placedHeightFt?: number; constructionWidthFt?: number; constructionHeightFt?: number }> = {
     solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000,  placedRadiusFt:75,  placedWidthFt:250, placedHeightFt:175 },
     wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:4500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000,   placedRadiusFt:50  },
-    geo:      { name:'Geothermal',   color:'#bc8cff', kw:1000, cost:8000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:40,  placedWidthFt:100, placedHeightFt:50, constructionWidthFt:400, constructionHeightFt:325 },
+    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:8000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:40,  placedWidthFt:100, placedHeightFt:50, constructionWidthFt:400, constructionHeightFt:325 },
     hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
     hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:40  },
     tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:20  },
