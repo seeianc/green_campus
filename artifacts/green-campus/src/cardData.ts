@@ -35,7 +35,7 @@ export const CARDS: Record<string, CardData> = {
       { label: 'Unit Power', value: '3,000 kW per turbine' },
       { label: 'Installation Cost', value: '$4,500,000 per unit' },
       { label: 'Annual Savings', value: '~$1,760,000 (avoided utility costs)' },
-      { label: 'Space Needed', value: 'Requires 250 ft noise/safety radius. Encroaching on a classroom or property adds a $200,000 mitigation fee.' },
+      { label: 'Space Needed', value: 'Requires 500 ft noise/safety radius. Encroaching on a classroom or property adds a $200,000 mitigation fee.' },
       { label: 'Constraints', value: 'Crane Operator Shortage adds $500,000 logistics fee. Prohibited in forested areas if Migratory Bird Ordinance is active.' },
     ],
   },
