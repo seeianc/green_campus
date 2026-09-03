@@ -353,6 +353,35 @@ export default function EnergyGridSimulator() {
         font-weight: 700;
       }
 
+      .e-help-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+        background: var(--bg); border: 1px solid var(--text-muted); color: var(--text-muted);
+        font-size: 9px; font-weight: 700; cursor: help; line-height: 1; padding: 0;
+        font-family: var(--mono); margin-left: 4px;
+      }
+      .e-help-btn:hover, .e-help-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+      .e-help-popover {
+        position: fixed; z-index: 1000; max-width: 280px;
+        background: var(--surface); border: 1px solid var(--accent); border-radius: 6px;
+        padding: 10px 26px 10px 12px; font-size: 12px; line-height: 1.5; color: var(--text);
+        box-shadow: 0 8px 24px rgba(0,0,0,.4); font-family: var(--sans);
+      }
+      .e-help-popover.hidden { display: none; }
+      .e-help-popover h4 { margin: 0 0 6px; font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+      .e-help-popover p { margin: 0 0 6px; }
+      .e-help-popover p:last-child { margin-bottom: 0; }
+      .e-help-close {
+        position: absolute; top: 6px; right: 8px; cursor: pointer; color: var(--text-muted);
+        font-size: 12px; line-height: 1;
+      }
+      .e-help-close:hover { color: var(--text); }
+
+      @media print {
+        .e-help-btn { display: none; }
+      }
+
       @container sim (max-width: 820px) {
         .energy-sim-main { grid-template-columns: 1fr; }
       }
@@ -663,7 +692,7 @@ export default function EnergyGridSimulator() {
           <div class="energy-content">
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#bf3a3a"></div>Status & Alerts</div>
+              <div class="e-card-header"><div class="dot" style="background:#bf3a3a"></div>Status & Alerts<button type="button" class="e-help-btn" data-help="statusAlerts">?</button></div>
               <div class="e-card-body">
                 <div class="e-alerts-stack" id="alertsStack">
                   <div class="e-alert ok"><span class="e-alert-icon">✅</span> Grid Stable — set your inputs to begin.</div>
@@ -676,15 +705,15 @@ export default function EnergyGridSimulator() {
               <div class="e-card-body">
                 <div class="e-metrics-grid">
                   <div class="e-metric">
-                    <div class="e-metric-label">Actual Peak Supply</div>
+                    <div class="e-metric-label">Actual Peak Supply<button type="button" class="e-help-btn" data-help="mTotalSupply">?</button></div>
                     <div class="e-metric-value" id="mTotalSupply">0 kW</div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label">Total Storage</div>
+                    <div class="e-metric-label">Total Storage<button type="button" class="e-help-btn" data-help="mTotalStorage">?</button></div>
                     <div class="e-metric-value" id="mTotalStorage">0 kWh</div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label">Starting Budget</div>
+                    <div class="e-metric-label">Starting Budget<button type="button" class="e-help-btn" data-help="mBudget">?</button></div>
                     <div class="e-metric-toggle" id="budgetToggle">
                       <span class="e-metric-toggle-arrow">▶</span>
                       <div class="e-metric-value" id="mBudget">$10M</div>
@@ -722,7 +751,7 @@ export default function EnergyGridSimulator() {
                     </div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label">Total Spent</div>
+                    <div class="e-metric-label">Total Spent<button type="button" class="e-help-btn" data-help="mSpent">?</button></div>
                     <div class="e-metric-toggle" id="spentToggle">
                       <span class="e-metric-toggle-arrow">▶</span>
                       <div class="e-metric-value" id="mSpent">$0</div>
@@ -769,7 +798,7 @@ export default function EnergyGridSimulator() {
                     </div>
                   </div>
                   <div class="e-metric full">
-                    <div class="e-metric-label">Remaining Budget</div>
+                    <div class="e-metric-label">Remaining Budget<button type="button" class="e-help-btn" data-help="mRemaining">?</button></div>
                     <div class="e-metric-value positive" id="mRemaining">$10,000,000</div>
                     <div class="budget-bar-wrap">
                       <div class="budget-bar-track"><div class="budget-bar-fill" id="budgetBar" style="width:0%"></div></div>
@@ -777,19 +806,19 @@ export default function EnergyGridSimulator() {
                     </div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label">Island Time</div>
+                    <div class="e-metric-label">Island Time<button type="button" class="e-help-btn" data-help="mIslandTime">?</button></div>
                     <div class="e-metric-value" id="mIslandTime">0.0 hrs</div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label">ROI Break-Even</div>
+                    <div class="e-metric-label">ROI Break-Even<button type="button" class="e-help-btn" data-help="mROI">?</button></div>
                     <div class="e-metric-value" id="mROI">— Years</div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label">Daily Renewable Energy Credits</div>
+                    <div class="e-metric-label">Daily Renewable Energy Credits<button type="button" class="e-help-btn" data-help="mRenewableCredits">?</button></div>
                     <div class="e-metric-value positive" id="mRenewableCredits">$0</div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label"> Daily kW Sold Back</div>
+                    <div class="e-metric-label">Daily kW Sold Back<button type="button" class="e-help-btn" data-help="mKwSoldBack">?</button></div>
                     <div class="e-metric-value positive" id="mKwSoldBack">0 kW</div>
                   </div>
                 </div>
@@ -797,7 +826,7 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#3a6ebf"></div>24-Hour Grid: Supply vs Demand</div>
+              <div class="e-card-header"><div class="dot" style="background:#3a6ebf"></div>24-Hour Grid: Supply vs Demand<button type="button" class="e-help-btn" data-help="gridChart">?</button></div>
               <div class="e-chart-wrap">
                 <canvas id="gridChart" height="220"></canvas>
               </div>
@@ -808,6 +837,7 @@ export default function EnergyGridSimulator() {
                 <div class="e-metric-toggle" id="batteryToggle" style="flex:1;cursor:pointer">
                   <span class="e-metric-toggle-arrow expanded">▼</span>
                   <span style="font-weight:600;text-transform:uppercase;letter-spacing:0.08em;flex:1">Battery Discharge Hours</span>
+                  <button type="button" class="e-help-btn" data-help="batteryDischarge">?</button>
                 </div>
               </div>
               <div class="e-card-body" id="batteryDropdownContent">
@@ -817,7 +847,7 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#8f6a3a"></div>Energy &amp; Storage Mix</div>
+              <div class="e-card-header"><div class="dot" style="background:#8f6a3a"></div>Energy &amp; Storage Mix<button type="button" class="e-help-btn" data-help="sourceChart">?</button></div>
               <div class="e-chart-wrap" style="max-width:320px;margin:0 auto">
                 <canvas id="sourceChart" height="240"></canvas>
               </div>
@@ -825,7 +855,7 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#6a3abf"></div>Finance Director: ROI Ledger</div>
+              <div class="e-card-header"><div class="dot" style="background:#6a3abf"></div>Finance Director: ROI Ledger<button type="button" class="e-help-btn" data-help="roiLedger">?</button></div>
               <div class="e-card-body">
                 <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;font-family:var(--mono)">Each technology produces a fixed amount of electricity per year. That production is valued at the grid rate ($0.22/kWh) — the cost of electricity you no longer need to purchase.</div>
                 <div class="e-ledger-row">
@@ -858,7 +888,7 @@ export default function EnergyGridSimulator() {
                 </div>
                 <div class="e-ledger-row">
                   <div>
-                    <div>Overproduction Diminishing Return</div>
+                    <div style="display:flex;align-items:center;gap:2px">Overproduction Diminishing Return<button type="button" class="e-help-btn" data-help="lCapAdj">?</button></div>
                     <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" id="lCapDesc">All production used on-site</div>
                     <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">Campus annual demand: <span id="lDemandKwh">—</span></div>
                   </div>
@@ -884,15 +914,15 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#7a5abf"></div>Workforce & Economic Impact</div>
+              <div class="e-card-header"><div class="dot" style="background:#7a5abf"></div>Workforce & Economic Impact<button type="button" class="e-help-btn" data-help="workforceImpact">?</button></div>
               <div class="e-card-body">
                 <div class="e-metrics-grid" style="margin-bottom:12px">
                   <div class="e-metric">
-                    <div class="e-metric-label">Construction Jobs</div>
+                    <div class="e-metric-label">Construction Jobs<button type="button" class="e-help-btn" data-help="wConstJobs">?</button></div>
                     <div class="e-metric-value" id="wConstJobs">0</div>
                   </div>
                   <div class="e-metric">
-                    <div class="e-metric-label">Permanent Roles</div>
+                    <div class="e-metric-label">Permanent Roles<button type="button" class="e-help-btn" data-help="wPermRoles">?</button></div>
                     <div class="e-metric-value" id="wPermRoles">0</div>
                   </div>
                 </div>
@@ -925,7 +955,7 @@ export default function EnergyGridSimulator() {
             </div>
 
             <div class="e-card">
-              <div class="e-card-header"><div class="dot" style="background:#2a6e4e"></div>CO₂ Offset · ISO-NE Marginal Rate</div>
+              <div class="e-card-header"><div class="dot" style="background:#2a6e4e"></div>CO₂ Offset · ISO-NE Marginal Rate<button type="button" class="e-help-btn" data-help="co2Offset">?</button></div>
               <div class="e-card-body">
                 <div class="e-metrics-grid">
                   <div class="e-metric full" style="grid-column:1/-1">
@@ -967,6 +997,7 @@ export default function EnergyGridSimulator() {
           </div>
           </div>
         </div>
+        <div class="e-help-popover hidden" id="eHelpPopover"></div>
       </div>
     `;
 
@@ -1034,6 +1065,151 @@ export default function EnergyGridSimulator() {
     function getEl<T extends HTMLElement>(id: string): T | null {
       return document.getElementById(id) as T | null;
     }
+
+    // "?" help badges for units/calculations/graphs that aren't already covered by a
+    // 🎴 card-link button (Generation, Storage, Data Cards, Emerging Tech, Infrastructure,
+    // and Pivot Cards all already open their real card image via openCardModal()).
+    const HELP: Record<string, { title: string; body: string[] }> = {
+      statusAlerts: {
+        title: 'Status & Alerts',
+        body: ['Flags conditions that need attention: over-budget spending, a Federal Green Grant purchased without an Emerging Tech (compliance violation), a wind/tidal-heavy mix with no Flywheels (flicker risk), or generation exceeding the campus peak-demand threshold (utility upgrade fee).'],
+      },
+      mTotalSupply: {
+        title: 'Actual Peak Supply',
+        body: ["Sum of nameplate output (kW) for everything currently placed on your campus map — this value is read directly from the Map Placer, not entered here. It's the maximum the grid could produce, not its 24-hour average; compare it to the green Supply line in the chart below."],
+      },
+      mTotalStorage: {
+        title: 'Total Storage',
+        body: ['Combined energy storage capacity (kWh) from every placed Lithium Ion, Thermal, Flywheel, and CAES unit. Feeds directly into Island Time below.'],
+      },
+      mBudget: {
+        title: 'Starting Budget',
+        body: ['Total capital set by your Budget Tier data card ($9M Failed Bond / $10M standard / $11M Federal Green Grant). Click to expand the full breakdown, including cost adjustments and the Annual Grid Sell-Back Revenue estimate.'],
+      },
+      mSpent: {
+        title: 'Total Spent',
+        body: ["Sum of every placed technology's cost (with any workforce/scenario discounts or surcharges applied) plus cabling, wind buffer, utility, and pivot-card fees. Click to expand the full line-item breakdown."],
+      },
+      mRemaining: {
+        title: 'Remaining Budget',
+        body: ['Starting Budget minus Total Spent. Turns red — and the bar turns red — once spending exceeds budget. (The Annual Grid Sell-Back Revenue shown in the Starting Budget breakdown is informational — projected yearly income from exporting surplus power — it is not subtracted from this figure.)'],
+      },
+      mIslandTime: {
+        title: 'Island Time',
+        body: ["Hours the campus could run on stored energy alone if cut off from the grid: Total Storage (kWh) ÷ the campus's actual peak hourly demand for the day (the highest point on the red Demand line in the 24-Hour Grid chart below — defaults to 3,000 kW, but shifts with the Demand Pattern data card and pivot cards like AI Learning Hub or SCADA).", 'Mirrors how real campuses and hospitals size backup power for storm outages.'],
+      },
+      mROI: {
+        title: 'ROI Break-Even',
+        body: ['Years until cumulative Net Annual Savings (see the ROI Ledger below) pay back Total Spent: Total Spent ÷ Net Annual Savings — the standard capital-budgeting metric a real facilities director would use to justify the investment.'],
+      },
+      mRenewableCredits: {
+        title: 'Daily Renewable Energy Credits',
+        body: ["Value of one day's overproduction (Supply − Demand, summed across hours where supply wins) at $0.11/kWh — a stand-in for a Renewable Energy Credit (REC) market rate.", 'This is a different, higher valuation than the $0.06/kWh wholesale sell-back rate used in the annual ROI Ledger below — the two model different real-world revenue streams (RECs vs. direct grid buyback) and intentionally don\'t match.'],
+      },
+      mKwSoldBack: {
+        title: 'Daily kW Sold Back',
+        body: ['Total kW of overproduction across the 24-hour cycle — every hour where generation exceeds demand, summed. This is the raw quantity that Renewable Energy Credits above are valued from.'],
+      },
+      gridChart: {
+        title: '24-Hour Grid: Supply vs Demand',
+        body: ["Plots your hourly generation (green) against campus demand (red) across a full day, driven by your placements and the Demand Pattern data card. Real grid operators watch exactly this kind of curve — gaps where demand outpaces supply are covered by storage discharge or purchased power."],
+      },
+      batteryDischarge: {
+        title: 'Battery Discharge Hours',
+        body: ["Choose which hours your Lithium Ion storage discharges to support demand — a simplified version of real battery dispatch strategies, where utilities time storage output to shave the most expensive peak-demand hours rather than draining evenly all day. Changing these hours reshapes the green Supply line in the 24-Hour Grid chart above."],
+      },
+      sourceChart: {
+        title: 'Energy & Storage Mix',
+        body: ['Shows generation capacity by technology as a share of the whole. A more diverse mix is generally more resilient in reality — over-relying on one source (e.g. all solar) leaves the grid exposed if that source underperforms (cloudy week, calm wind).'],
+      },
+      roiLedger: {
+        title: 'Finance Director: ROI Ledger',
+        body: [
+          'Each technology\'s annual kWh output (fixed per technology, shown under its name) is valued at the $0.22/kWh grid rate to get its annual savings — the utility cost you avoid by generating it yourself instead of buying it.',
+          'The Overproduction Diminishing Return line then claws back value for any kWh your system generates beyond what the campus actually uses in a year — that surplus is only worth the $0.06/kWh wholesale sell-back rate, not the full $0.22 retail rate, so Net Annual Savings ends up lower than the raw sum would suggest.',
+        ],
+      },
+      lCapAdj: {
+        title: 'Overproduction Diminishing Return',
+        body: [
+          "If your total annual output exceeds the campus's total annual demand, the excess (surplus kWh) only counts at the $0.06/kWh wholesale rate instead of the $0.22/kWh retail rate you avoid paying for on-site use.",
+          'Formula: −Surplus kWh × ($0.22 − $0.06). This is why massively overbuilding one source has diminishing financial returns — extra capacity beyond what the campus needs is worth much less per kWh than the first block that offsets your own bill.',
+        ],
+      },
+      workforceImpact: {
+        title: 'Workforce & Economic Impact',
+        body: ['Estimates jobs created per dollar spent — a simplified version of the job-multiplier figures used in real renewable-energy economic impact studies. Assign permanent roles below to see the payroll injection into the local economy.'],
+      },
+      wConstJobs: {
+        title: 'Construction Jobs',
+        body: ['Formula: (Total Spent ÷ $2,000,000) × 10 — modeling roughly 10 temporary construction-phase jobs per $2M of project spend, a benchmark drawn from real renewable-infrastructure economic impact studies.'],
+      },
+      wPermRoles: {
+        title: 'Permanent Roles',
+        body: ['Formula: (Total Spent ÷ $2,000,000) × 1 — roughly 1 ongoing operations/maintenance role per $2M of project spend. Assign these below across Solar Techs, Electricians, and Wind/Marine/Hydro roles; role inputs are capped so you can\'t assign more than this total.'],
+      },
+      co2Offset: {
+        title: 'CO₂ Offset · ISO-NE Marginal Rate',
+        body: [
+          'Each kWh generated by Solar, Wind, Geothermal, Hydro, or Tidal displaces 392g of CO₂ — the ISO-NE grid\'s marginal emissions rate (what the next power plant on the grid would have burned, typically natural gas). Biomass is treated as carbon-neutral and excluded.',
+          'Cars Off Road divides total metric tons by ~4.6 (average annual emissions per car). Trees Equivalent converts metric tons to kg and divides by ~22 (roughly what one mature tree absorbs per year) — both are standard EPA-style equivalency conversions used to make an abstract CO₂ number tangible.',
+        ],
+      },
+    };
+
+    let activeHelpBtn: HTMLElement | null = null;
+
+    function positionPopover(pop: HTMLElement, anchor: HTMLElement) {
+      const rect = anchor.getBoundingClientRect();
+      const popRect = pop.getBoundingClientRect();
+      let left = rect.left;
+      let top = rect.bottom + 6;
+      if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
+      if (left < 8) left = 8;
+      if (top + popRect.height > window.innerHeight - 8) top = rect.top - popRect.height - 6;
+      if (top < 8) top = 8;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    }
+
+    function showHelp(key: string, anchor: HTMLElement) {
+      const pop = getEl('eHelpPopover');
+      const info = HELP[key];
+      if (!pop || !info) return;
+      pop.innerHTML = `<span class="e-help-close">✕</span><h4>${info.title}</h4>` + info.body.map(p => `<p>${p}</p>`).join('');
+      pop.classList.remove('hidden');
+      positionPopover(pop, anchor);
+      activeHelpBtn?.classList.remove('active');
+      anchor.classList.add('active');
+      activeHelpBtn = anchor;
+    }
+
+    function hideHelp() {
+      getEl('eHelpPopover')?.classList.add('hidden');
+      activeHelpBtn?.classList.remove('active');
+      activeHelpBtn = null;
+    }
+
+    document.addEventListener('click', (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const closeBtn = target.closest('.e-help-close');
+      if (closeBtn) { e.stopPropagation(); hideHelp(); return; }
+      const helpBtn = target.closest('.e-help-btn') as HTMLElement | null;
+      const pop = getEl('eHelpPopover');
+      if (helpBtn) {
+        e.stopPropagation();
+        const key = helpBtn.dataset.help;
+        if (!key) return;
+        if (activeHelpBtn === helpBtn) hideHelp();
+        else showHelp(key, helpBtn);
+        return;
+      }
+      if (pop && !pop.classList.contains('hidden') && !pop.contains(target)) hideHelp();
+    }, true);
+
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Escape') hideHelp();
+    });
 
     function getVal(id: string): number {
       return +(getEl<HTMLInputElement>(id)?.value || 0);
@@ -1228,8 +1404,7 @@ export default function EnergyGridSimulator() {
         + Object.values(infraCosts).reduce((a,b)=>a+b,0)
         + annualCarbonTaxFee;
 
-      const basePeakDemand = 3000;
-      const islandTime = totalStorage / basePeakDemand;
+      const islandTime = totalStorage / campusPeakDemand;
       const grantCompliant = !isGrant || (s.hydrogen + s.v2g + s.scada >= 1);
 
       let gridStatus, gridClass;
@@ -1509,7 +1684,10 @@ export default function EnergyGridSimulator() {
         sharedState.hydroHubActive = r.isHydroHub;
         emitSimUpdate();
       }
-      sharedState.campusPeakDemand = r.campusPeakDemand;
+      if (sharedState.campusPeakDemand !== r.campusPeakDemand) {
+        sharedState.campusPeakDemand = r.campusPeakDemand;
+        emitSimUpdate();
+      }
 
       const supplyEl = getEl('mTotalSupply'); if (supplyEl) supplyEl.textContent = fmtkW(r.actualPeakSupply);
       const storageEl = getEl('mTotalStorage'); if (storageEl) storageEl.textContent = fmtkWh(r.totalStorage);

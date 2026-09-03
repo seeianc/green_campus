@@ -174,6 +174,31 @@ export default function CampusMapTool() {
       .map-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); padding: 1px 0; }
       .map-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 
+      .map-help-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+        background: var(--surface2); border: 1px solid var(--muted); color: var(--muted);
+        font-size: 9px; font-weight: 700; cursor: help; line-height: 1; padding: 0;
+        font-family: 'JetBrains Mono', monospace; margin-left: 4px; pointer-events: auto;
+      }
+      .map-help-btn:hover, .map-help-btn.active { background: var(--accent2); border-color: var(--accent2); color: #000; }
+
+      .map-help-popover {
+        position: fixed; z-index: 1000; max-width: 260px;
+        background: var(--surface); border: 1px solid var(--accent2); border-radius: 6px;
+        padding: 10px 26px 10px 12px; font-size: 11px; line-height: 1.5; color: var(--text);
+        box-shadow: 0 8px 24px rgba(0,0,0,.5); font-family: 'Space Grotesk', sans-serif;
+      }
+      .map-help-popover.hidden { display: none; }
+      .map-help-popover h4 { margin: 0 0 6px; font-size: 11px; color: var(--accent2); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+      .map-help-popover p { margin: 0 0 6px; }
+      .map-help-popover p:last-child { margin-bottom: 0; }
+      .map-help-close {
+        position: absolute; top: 6px; right: 8px; cursor: pointer; color: var(--muted);
+        font-size: 12px; line-height: 1;
+      }
+      .map-help-close:hover { color: var(--text); }
+
       /* Map Selection Screen */
       .map-sel-screen { height: 100%; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg); }
       .map-sel-header { padding: 36px 40px 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
@@ -230,12 +255,12 @@ export default function CampusMapTool() {
           <button class="map-back-btn" id="mapBackBtn">← Maps</button>
           <h1 id="mapToolTitle" style="margin-left:8px">⚡ Map Placer</h1>
           <div class="map-header-stats">
-            <div class="map-stat" id="statPower">Power: <span>0 kW</span></div>
-            <div class="map-stat" id="statStorage">Storage: <span>0 kWh</span></div>
-            <div class="map-stat" id="statCable">Cable: <span>0 ft</span></div>
-            <div class="map-stat" id="statBudget">Budget: <span>$0</span></div>
-            <div class="map-stat" id="statIsland">Island: <span>0 h</span></div>
-            <div class="map-stat" id="statForest">Forest: <span>—</span></div>
+            <div class="map-stat" id="statPower">Power<button type="button" class="map-help-btn" data-help="power">?</button>: <span id="valPower">0 kW</span></div>
+            <div class="map-stat" id="statStorage">Storage<button type="button" class="map-help-btn" data-help="storage">?</button>: <span id="valStorage">0 kWh</span></div>
+            <div class="map-stat" id="statCable">Cable<button type="button" class="map-help-btn" data-help="cable">?</button>: <span id="valCable">0 ft</span></div>
+            <div class="map-stat" id="statBudget">Budget<button type="button" class="map-help-btn" data-help="budget">?</button>: <span id="valBudget">$0</span></div>
+            <div class="map-stat" id="statIsland">Island<button type="button" class="map-help-btn" data-help="island">?</button>: <span id="valIsland">0 h</span></div>
+            <div class="map-stat" id="statForest">Forest<button type="button" class="map-help-btn" data-help="forest">?</button>: <span id="valForest">—</span></div>
           </div>
           <button class="map-clear-btn" id="mapClearBtn">✕ Clear Map</button>
         </div>
@@ -301,7 +326,7 @@ export default function CampusMapTool() {
               <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('caes')" title="View CAES card">&#x1F3B4;</button></div>
 
-            <div class="map-sidebar-section">Placements</div>
+            <div class="map-sidebar-section">Placements<button type="button" class="map-help-btn" data-help="placements">?</button></div>
             <div class="map-counts" id="countsPanel">
               <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px">No placements yet</div>
             </div>
@@ -335,15 +360,16 @@ export default function CampusMapTool() {
               <button id="zoomOut" style="width:28px;height:28px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#e6edf3;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:0">−</button>
             </div>
             <div class="map-pin bottom-right map-info-panel">
-              <div class="map-info-row"><span class="map-info-key">Cursor</span><span class="map-info-val" id="infoCursor">–</span></div>
-              <div class="map-info-row"><span class="map-info-key">Zone</span><span class="map-info-val" id="infoZone">–</span></div>
-              <div class="map-info-row"><span class="map-info-key">Distance to sub</span><span class="map-info-val" id="infoDist">–</span></div>
-              <div class="map-info-row"><span class="map-info-key">Cable cost</span><span class="map-info-val" id="infoCableCost">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Cursor<button type="button" class="map-help-btn" data-help="infoCursor">?</button></span><span class="map-info-val" id="infoCursor">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Zone<button type="button" class="map-help-btn" data-help="infoZone">?</button></span><span class="map-info-val" id="infoZone">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Distance to sub<button type="button" class="map-help-btn" data-help="infoDist">?</button></span><span class="map-info-val" id="infoDist">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Cable cost<button type="button" class="map-help-btn" data-help="infoCableCost">?</button></span><span class="map-info-val" id="infoCableCost">–</span></div>
             </div>
           </div>
         </div>
 
         <div class="map-tooltip hidden" id="mapTooltip"></div>
+        <div class="map-help-popover hidden" id="mapHelpPopover"></div>
         </div><!-- /mapToolScreen -->
       </div>
     `;
@@ -499,6 +525,119 @@ function initMapTool() {
         feature.rect = [minX, minY, maxX - minX, maxY - minY];
       }
     });
+  });
+
+  const HELP: Record<string, { title: string; body: string[] }> = {
+    power: {
+      title: 'Power (Actual Peak Supply)',
+      body: [
+        'Sum of output (kW) for every generation unit placed across all campus maps, compared against the campus peak-demand target.',
+        'Placing more than the campus peak demand (default 3,000 kW, or the value set by an active pivot card) triggers a $500K utility interconnection upgrade fee — shown on the Budget stat.',
+      ],
+    },
+    storage: {
+      title: 'Storage',
+      body: ["Total energy storage capacity (kWh) from every placed Lithium Ion, Thermal, Flywheel, and CAES unit. Storage doesn't add generation — it feeds directly into the Island stat's grid-down resilience calculation."],
+    },
+    cable: {
+      title: 'Cable Length & Cost',
+      body: [
+        "Total length of the cable routes connecting your placements to the substation, costed at $500/ft ($50K per 100 ft) — the same rate used in the Simulator's Infrastructure & Fees.",
+        'Routes are calculated as a minimum-spanning-tree, i.e. the shortest total wiring that connects every unit and the substation — the same optimization a real electrical designer would run before costing a job.',
+      ],
+    },
+    budget: {
+      title: 'Budget',
+      body: [
+        'Equipment cost (each technology\'s price, minus 20% on Geothermal/Hydro if the Hydropower Engineering Hub workforce card is active) plus cable cost, plus a $500K utility upgrade fee once total power exceeds the campus peak-demand threshold.',
+        'Turns red once spending exceeds the budget set by your selected Budget Tier data card.',
+      ],
+    },
+    island: {
+      title: 'Island Time (Grid-Down Resilience)',
+      body: ["Hours the campus could run on stored energy alone if cut off from the grid: Storage (kWh) ÷ the campus's actual peak hourly demand (from the Simulator's 24-hour demand curve — defaults to 3,000 kW, but rises or falls with the Demand Pattern data card and any active pivot card like AI Learning Hub or SCADA).", 'This mirrors how real campuses and hospitals size backup power to survive a storm outage or grid failure.'],
+    },
+    forest: {
+      title: 'Forest',
+      body: [
+        "Percent of the campus site that's forested, and — once you start placing equipment — what percent of that forest your placements' footprints actually clear.",
+        'Clearing more than 25% of forested land is a violation once the Vernal Pool Protection environmental card is active (turns red past 25%, amber past 10%), mirroring a real habitat-clearing permit limit.',
+      ],
+    },
+    placements: {
+      title: 'Placements',
+      body: ["Running tally of every unit placed on the currently-selected campus map, plus the combined cost across all maps (including any Hydropower Engineering Hub discount). Switch maps at the top to plan a different site — header totals always reflect every map combined."],
+    },
+    infoCursor: {
+      title: 'Cursor Position',
+      body: ["Your mouse position converted to real-world feet, using this specific campus map's calibrated scale (each map is scaled independently from its source survey, so the same pixel distance means a different number of feet on different maps)."],
+    },
+    infoZone: {
+      title: 'Zone',
+      body: ["The map feature under your cursor — water, forest, road, no-build, etc. Hover any area to see a tooltip explaining what can (or can't) be built there."],
+    },
+    infoDist: {
+      title: 'Distance to Substation',
+      body: ['Straight-line distance from the cursor (or the tech about to be placed) to the substation marker, in real feet — the same distance used to estimate cable cost below.'],
+    },
+    infoCableCost: {
+      title: 'Cable Cost (Live Estimate)',
+      body: ['What connecting a unit placed here would cost, at $500/ft of straight-line distance to the substation. Updates live as you move the cursor — actual routed cable cost may differ slightly since real routing follows a minimum-spanning tree across all your placements, not a straight line to each one.'],
+    },
+  };
+
+  let activeHelpBtn: HTMLElement | null = null;
+
+  function positionPopover(pop: HTMLElement, anchor: HTMLElement) {
+    const rect = anchor.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+    let left = rect.left;
+    let top = rect.bottom + 6;
+    if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
+    if (left < 8) left = 8;
+    if (top + popRect.height > window.innerHeight - 8) top = rect.top - popRect.height - 6;
+    if (top < 8) top = 8;
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  }
+
+  function showHelp(key: string, anchor: HTMLElement) {
+    const pop = getEl('mapHelpPopover');
+    const info = HELP[key];
+    if (!pop || !info) return;
+    pop.innerHTML = `<span class="map-help-close">✕</span><h4>${info.title}</h4>` + info.body.map(p => `<p>${p}</p>`).join('');
+    pop.classList.remove('hidden');
+    positionPopover(pop, anchor);
+    activeHelpBtn?.classList.remove('active');
+    anchor.classList.add('active');
+    activeHelpBtn = anchor;
+  }
+
+  function hideHelp() {
+    getEl('mapHelpPopover')?.classList.add('hidden');
+    activeHelpBtn?.classList.remove('active');
+    activeHelpBtn = null;
+  }
+
+  document.addEventListener('click', (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const closeBtn = target.closest('.map-help-close');
+    if (closeBtn) { e.stopPropagation(); hideHelp(); return; }
+    const helpBtn = target.closest('.map-help-btn') as HTMLElement | null;
+    const pop = getEl('mapHelpPopover');
+    if (helpBtn) {
+      e.stopPropagation();
+      const key = helpBtn.dataset.help;
+      if (!key) return;
+      if (activeHelpBtn === helpBtn) hideHelp();
+      else showHelp(key, helpBtn);
+      return;
+    }
+    if (pop && !pop.classList.contains('hidden') && !pop.contains(target)) hideHelp();
+  }, true);
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') hideHelp();
   });
 
   const GRID = 18;
@@ -1884,35 +2023,34 @@ function initMapTool() {
 
     const budgetLimit = sharedState.budgetLimit;
     const budgetM = (budgetLimit / 1e6).toFixed(0);
-    const islandTime = totalKw > 0 ? (totalStorage / 3000).toFixed(1) : '0';
+    const islandTime = totalKw > 0 ? (totalStorage / (sharedState.campusPeakDemand || 3000)).toFixed(1) : '0';
 
     const kwEl = getEl('statPower');
-    if (kwEl) {
-      kwEl.className = 'map-stat ' + (totalKw >= 3000 ? 'ok' : totalKw >= 1500 ? 'warn' : '');
-      kwEl.innerHTML = `Power: <span>${(totalKw / 1000).toFixed(1)}MW / 3MW</span>`;
-    }
+    if (kwEl) kwEl.className = 'map-stat ' + (totalKw >= 3000 ? 'ok' : totalKw >= 1500 ? 'warn' : '');
+    const kwVal = getEl('valPower'); if (kwVal) kwVal.textContent = `${(totalKw / 1000).toFixed(1)}MW / 3MW`;
 
-    const storageEl = getEl('statStorage'); if (storageEl) storageEl.innerHTML = `Storage: <span>${totalStorage.toLocaleString()} kWh</span>`;
-    const cableEl = getEl('statCable'); if (cableEl) cableEl.innerHTML = `Cable: <span>${Math.round(cableFt)} ft</span>`;
+    const storageVal = getEl('valStorage'); if (storageVal) storageVal.textContent = `${totalStorage.toLocaleString()} kWh`;
+    const cableVal = getEl('valCable'); if (cableVal) cableVal.textContent = `${Math.round(cableFt)} ft`;
     const budgetEl = getEl('statBudget');
     if (budgetEl) {
       const over = totalCost > budgetLimit;
       budgetEl.className = 'map-stat' + (over ? ' danger' : totalCost > budgetLimit * 0.85 ? ' warn' : '');
-      budgetEl.innerHTML = `Budget: <span>$${(totalCost / 1e6).toFixed(2)}M / $${budgetM}M</span>`;
     }
-    const islandEl = getEl('statIsland'); if (islandEl) islandEl.innerHTML = `Island: <span>${islandTime}h</span>`;
+    const budgetVal = getEl('valBudget'); if (budgetVal) budgetVal.textContent = `$${(totalCost / 1e6).toFixed(2)}M / $${budgetM}M`;
+    const islandVal = getEl('valIsland'); if (islandVal) islandVal.textContent = `${islandTime}h`;
     const { forestPct, clearedPct } = computeForestStats();
     const forestEl = getEl('statForest');
-    if (forestEl) {
+    const forestVal = getEl('valForest');
+    if (forestEl && forestVal) {
       if (forestPct === 0) {
         forestEl.className = 'map-stat';
-        forestEl.innerHTML = `Forest: <span>none</span>`;
+        forestVal.textContent = 'none';
       } else if (clearedPct === 0) {
         forestEl.className = 'map-stat';
-        forestEl.innerHTML = `Forest: <span>${forestPct}% of campus</span>`;
+        forestVal.textContent = `${forestPct}% of campus`;
       } else {
         forestEl.className = 'map-stat ' + (clearedPct > 25 ? 'err' : clearedPct > 10 ? 'warn' : '');
-        forestEl.innerHTML = `Forest: <span>${clearedPct}% cleared</span> <span style="opacity:0.5">(${forestPct}% of campus)</span>`;
+        forestVal.innerHTML = `${clearedPct}% cleared <span style="opacity:0.5">(${forestPct}% of campus)</span>`;
       }
     }
 
