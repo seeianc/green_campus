@@ -542,14 +542,13 @@ function initMapTool() {
     cable: {
       title: 'Cable Length & Cost',
       body: [
-        "Total length of the cable routes connecting your placements to the substation, costed at $500/ft ($50K per 100 ft) — the same rate used in the Simulator's Infrastructure & Fees.",
-        'Routes are calculated as a minimum-spanning-tree, i.e. the shortest total wiring that connects every unit and the substation — the same optimization a real electrical designer would run before costing a job.',
+        "Total length of the cable routes connecting your placements to the substation, costed at $500/ft ($50K per 100 ft).",
       ],
     },
     budget: {
       title: 'Budget',
       body: [
-        'Equipment cost (each technology\'s price, minus 20% on Geothermal/Hydro if the Hydropower Engineering Hub workforce card is active) plus cable cost, plus a $500K utility upgrade fee once total power exceeds the campus peak-demand threshold.',
+        'Equipment cost plus cable cost, plus a $500K utility upgrade fee once total power exceeds the campus peak-demand threshold.',
         'Turns red once spending exceeds the budget set by your selected Budget Tier data card.',
       ],
     },
@@ -566,7 +565,7 @@ function initMapTool() {
     },
     placements: {
       title: 'Placements',
-      body: ["Running tally of every unit placed on the currently-selected campus map, plus the combined cost across all maps (including any Hydropower Engineering Hub discount). Switch maps at the top to plan a different site — header totals always reflect every map combined."],
+      body: ["Running tally of every unit placed on the currently-selected campus map, plus the combined cost across map."],
     },
     infoCursor: {
       title: 'Cursor Position',

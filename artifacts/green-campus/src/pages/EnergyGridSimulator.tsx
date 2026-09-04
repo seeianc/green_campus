@@ -1076,7 +1076,7 @@ export default function EnergyGridSimulator() {
       },
       mTotalSupply: {
         title: 'Actual Peak Supply',
-        body: ["Sum of nameplate output (kW) for everything currently placed on your campus map — this value is read directly from the Map Placer, not entered here. It's the maximum the grid could produce, not its 24-hour average; compare it to the green Supply line in the chart below."],
+        body: ["Sum of output (kW) for everything currently placed on your campus map — this value is read directly from the Map Placer, not entered here. It's the maximum the grid could produce, not its 24-hour average; compare it to the green Supply line in the chart below."],
       },
       mTotalStorage: {
         title: 'Total Storage',
@@ -1084,7 +1084,7 @@ export default function EnergyGridSimulator() {
       },
       mBudget: {
         title: 'Starting Budget',
-        body: ['Total capital set by your Budget Tier data card ($9M Failed Bond / $10M standard / $11M Federal Green Grant). Click to expand the full breakdown, including cost adjustments and the Annual Grid Sell-Back Revenue estimate.'],
+        body: ['Total capital set by your Budget Tier data card. Click to expand the full breakdown, including cost adjustments and the Annual Grid Sell-Back Revenue estimate.'],
       },
       mSpent: {
         title: 'Total Spent',
@@ -1100,7 +1100,7 @@ export default function EnergyGridSimulator() {
       },
       mROI: {
         title: 'ROI Break-Even',
-        body: ['Years until cumulative Net Annual Savings (see the ROI Ledger below) pay back Total Spent: Total Spent ÷ Net Annual Savings — the standard capital-budgeting metric a real facilities director would use to justify the investment.'],
+        body: ['ROI = Return On Investment (ROI) -> (Net Annual Savings - Total Spent) / Total Spent', 'Years until cumulative Net Annual Savings (see the ROI Ledger below) pay back Total Spent: Total Spent ÷ Net Annual Savings — the standard capital-budgeting metric a real facilities director would use to justify the investment.'],
       },
       mRenewableCredits: {
         title: 'Daily Renewable Energy Credits',
@@ -1142,7 +1142,7 @@ export default function EnergyGridSimulator() {
       },
       wConstJobs: {
         title: 'Construction Jobs',
-        body: ['Formula: (Total Spent ÷ $2,000,000) × 10 — modeling roughly 10 temporary construction-phase jobs per $2M of project spend, a benchmark drawn from real renewable-infrastructure economic impact studies.'],
+        body: ['Formula: (Total Spent ÷ $2,000,000) × 10 — modeling roughly 10 temporary construction-phase jobs per $2M of project spend.'],
       },
       wPermRoles: {
         title: 'Permanent Roles',
