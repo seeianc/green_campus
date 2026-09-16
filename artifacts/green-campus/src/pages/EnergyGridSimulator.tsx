@@ -1494,7 +1494,7 @@ export default function EnergyGridSimulator() {
         annualKwh, totalAnnualKwh, annualDemandKwh, surplusKwh, capAdjustment,
         roiSavings, baseAnnualSavings, pivotImpact, thermalHeatingOilSavings, caesSeasonalSavings, finalSavings, roi,
         constructJobs, permRoles, rolesLeft, payroll,
-        grantCompliant, isGrant, isPolar, polarDemandThreshold, isAIHub, isMaint, isSupplyChain, isCarbonTax, isHydroHub, infraCosts, genCosts, storageCosts, emergingCosts,
+        grantCompliant, isGrant, isPolar, polarDemandThreshold, isAIHub, isMaint, isSupplyChain, isCarbonTax, isHydroHub, isCrane, infraCosts, genCosts, storageCosts, emergingCosts,
         migratoryBirdViolation, vernalPoolViolation,
         isMigratoryBird, isVernalPool,
         solarStorageViolation, requiredStorageForSolar,
@@ -1682,6 +1682,10 @@ export default function EnergyGridSimulator() {
       }
       if (sharedState.hydroHubActive !== r.isHydroHub) {
         sharedState.hydroHubActive = r.isHydroHub;
+        emitSimUpdate();
+      }
+      if (sharedState.craneShortageActive !== r.isCrane) {
+        sharedState.craneShortageActive = r.isCrane;
         emitSimUpdate();
       }
       if (sharedState.campusPeakDemand !== r.campusPeakDemand) {

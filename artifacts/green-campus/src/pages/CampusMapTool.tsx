@@ -1980,6 +1980,7 @@ function initMapTool() {
     const CABLE_COST_PER_FT = 500; // $500/ft = $50K per 100 ft
     totalCost += cableFt * CABLE_COST_PER_FT;
     if (totalKw > (sharedState.campusPeakDemand || 3000)) totalCost += 500000;
+    if (sharedState.craneShortageActive && (counts.wind || 0) > 0) totalCost += 500000;
 
     // Count wind turbines in ecologically sensitive zones (forest, wetland)
     let windSensitive = 0;

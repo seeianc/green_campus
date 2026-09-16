@@ -11,6 +11,7 @@ export interface SharedState {
   windBufferPenalty: boolean;
   mapViolations: string[];
   hydroHubActive: boolean;
+  craneShortageActive: boolean;
   campusPeakDemand: number;
 }
 
@@ -27,6 +28,7 @@ export const sharedState: SharedState = {
   windBufferPenalty: false,
   mapViolations: [],
   hydroHubActive: false,
+  craneShortageActive: false,
   campusPeakDemand: 3000,
 };
 
