@@ -1674,7 +1674,9 @@ function initMapTool() {
     if (tech === 'biomass') {
       const roads = MAPS[currentMap].features.filter(f => f.type === 'road' && (f.points || []).length >= 2);
       if (roads.length > 0) {
-        const nearRoad = roads.some(f => pointToPolygonDist(x, y, f.points!) < GRID * 5);
+        const ftPerCell = MAPS[currentMap].scale / 30.48;
+        const roadProximityPx = (100 / ftPerCell) * GRID;
+        const nearRoad = roads.some(f => pointToPolygonDist(x, y, f.points!) < roadProximityPx);
         if (!nearRoad) violations.push('Biomass must be near a road for fuel delivery trucks');
       }
       const biomassBufferPx = 200 / (MAPS[currentMap].scale / 30.48) * GRID;
