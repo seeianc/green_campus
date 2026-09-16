@@ -496,7 +496,8 @@ export default function EnergyGridSimulator() {
         #adjLiIonItem,
         #adjPivotItem,
         #adjUtilityItem,
-        #adjCraneItem {
+        #adjCraneItem,
+        #adjWindBufferItem {
           display: block !important;
           border: none !important;
           padding-left: 8px !important;
@@ -740,6 +741,9 @@ export default function EnergyGridSimulator() {
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjCraneItem">
                           <div><span class="label">Crane Logistics <span id="adjCraneDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCrane" style="font-size: 11px;">$0</span></div>
+                        </div>
+                        <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjWindBufferItem">
+                          <div><span class="label">Wind Buffer Noise Penalty <span id="adjWindBufferDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjWindBuffer" style="font-size: 11px;">$0</span></div>
                         </div>
                         <div class="e-expense-item" style="padding-left: 8px; font-size: 11px; border: none; display: none;" id="adjCarbonTaxItem">
                           <div><span class="label">Carbon Tax <span id="adjCarbonTaxDesc" style="font-size: 10px; color: var(--text-muted); font-weight: normal;"></span></span><span class="value" id="adjCarbonTax" style="font-size: 11px;">$0</span></div>
@@ -1391,7 +1395,7 @@ export default function EnergyGridSimulator() {
       const utilityFeeAdjustment = infraCosts.utilityFee;
       const craneLogisticsAdjustment = infraCosts.craneLogistics;
 
-      const totalCostAdjustments = geoCostAdjustment + hydroCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment + annualCarbonTaxFee;
+      const totalCostAdjustments = geoCostAdjustment + hydroCostAdjustment + liIonCostAdjustment + pivotPenaltyAdjustment + utilityFeeAdjustment + craneLogisticsAdjustment + infraCosts.windBuffer + annualCarbonTaxFee;
 
       // Hourly net metering: credit any hour where supply > demand at wholesale rate
       // kwSoldBack is already the sum of per-hour surplus kWh for one day
@@ -1736,7 +1740,22 @@ export default function EnergyGridSimulator() {
       setAdjItem('adjPivot', r.pivotPenaltyAdjustment, 'adjPivotDesc', r.pivotPenaltyAdjustment !== 0 ? '(Pivot Card Penalty)' : '');
       setAdjItem('adjUtility', r.utilityFeeAdjustment, 'adjUtilityDesc', r.utilityFeeAdjustment !== 0 ? '(Supply > Peak Demand)' : '');
       setAdjItem('adjCrane', r.infraCosts.craneLogistics, 'adjCraneDesc', r.infraCosts.craneLogistics !== 0 ? '(Crane Operator Shortage)' : '');
+      setAdjItem('adjWindBuffer', r.infraCosts.windBuffer, 'adjWindBufferDesc', r.infraCosts.windBuffer !== 0 ? '(Wind turbine within 250ft of building)' : '');
       setAdjItem('adjCarbonTax', r.annualCarbonTaxFee, 'adjCarbonTaxDesc', r.annualCarbonTaxFee !== 0 ? '($0.10/kWh shortfall × 365 days)' : '');
+
+      // Auto-expand adjustments breakdown whenever any active adjustment exists
+      const adjBreakdown = getEl('adjustmentsBreakdown');
+      const adjToggleEl = getEl('adjToggle');
+      if (adjBreakdown && adjToggleEl) {
+        const hasAdj = r.totalCostAdjustments !== 0;
+        if (hasAdj && adjBreakdown.style.display === 'none') {
+          adjBreakdown.style.display = 'block';
+          adjToggleEl.textContent = '▼';
+        } else if (!hasAdj) {
+          adjBreakdown.style.display = 'none';
+          adjToggleEl.textContent = '▶';
+        }
+      }
       
       setCost('costRenewableRevenue', r.annualRenewableRevenue);
       const sellBackEl = getEl('sellBackDetail');
