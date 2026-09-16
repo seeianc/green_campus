@@ -669,7 +669,7 @@ function initMapTool() {
   Object.keys(MAPS).forEach(id => {
     const img = new Image();
     img.onload = () => { if (id === currentMap) drawAll(); };
-    img.src = `${BASE_URL}maps/${id}.png`;
+    img.src = `${BASE_URL}maps/${id}.jpg`;
     mapImages[id] = img;
   });
 
@@ -745,7 +745,7 @@ function initMapTool() {
         `<span class="map-sel-tag" style="color:${t.color};border-color:${t.color}40;background:${t.color}15">${t.label}</span>`
       ).join('');
       card.innerHTML = `
-        <img src="${BASE_URL}maps/${id}.png" alt="${m.name}" />
+        <img src="${BASE_URL}maps/${id}.jpg" alt="${m.name}" />
         <div class="map-sel-card-info">
           <div class="map-sel-card-name">${m.name}</div>
           <div class="map-sel-card-desc">${m.desc}</div>
