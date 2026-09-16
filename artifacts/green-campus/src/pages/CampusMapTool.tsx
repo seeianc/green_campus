@@ -80,6 +80,12 @@ export default function CampusMapTool() {
         color: var(--danger); transition: all .15s; font-family: 'Space Grotesk',sans-serif;
       }
       .map-clear-btn:hover { background: var(--danger); color: #fff; }
+      .map-screenshot-btn {
+        padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: 600;
+        cursor: pointer; border: 1px solid var(--accent2); background: transparent;
+        color: var(--accent2); transition: all .15s; font-family: 'Space Grotesk',sans-serif;
+      }
+      .map-screenshot-btn:hover { background: var(--accent2); color: #000; }
 
       .map-main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
@@ -262,6 +268,7 @@ export default function CampusMapTool() {
             <div class="map-stat" id="statIsland">Island<button type="button" class="map-help-btn" data-help="island">?</button>: <span id="valIsland">0 h</span></div>
             <div class="map-stat" id="statForest">Forest<button type="button" class="map-help-btn" data-help="forest">?</button>: <span id="valForest">—</span></div>
           </div>
+          <button class="map-screenshot-btn" id="mapScreenshotBtn">📷 Save Map</button>
           <button class="map-clear-btn" id="mapClearBtn">✕ Clear Map</button>
         </div>
 
@@ -769,6 +776,24 @@ function initMapTool() {
   getEl('modMove')?.addEventListener('click',  () => setMode('move'));
   getEl('modPan')?.addEventListener('click',   () => setMode('pan'));
   getEl('mapClearBtn')?.addEventListener('click', clearAll);
+
+  getEl('mapScreenshotBtn')?.addEventListener('click', () => {
+    const bg = getEl<HTMLCanvasElement>('bgCanvas');
+    const ov = getEl<HTMLCanvasElement>('overlayCanvas');
+    if (!bg) return;
+    const tmp = document.createElement('canvas');
+    tmp.width = bg.width; tmp.height = bg.height;
+    const ctx = tmp.getContext('2d')!;
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, tmp.width, tmp.height);
+    ctx.drawImage(bg, 0, 0);
+    if (ov) ctx.drawImage(ov, 0, 0);
+    const name = (MAPS[currentMap]?.name || 'campus').replace(/\s+/g, '_');
+    const a = document.createElement('a');
+    a.download = `${name}_map.jpg`;
+    a.href = tmp.toDataURL('image/jpeg', 0.92);
+    a.click();
+  });
 
   // Tech buttons
   Object.keys(TECHS).forEach(tech => {

@@ -2334,7 +2334,119 @@ export default function EnergyGridSimulator() {
       el.addEventListener('input', revealContent);
     });
 
-    getEl('simPrintBtn')?.addEventListener('click', () => window.print());
+    getEl('simPrintBtn')?.addEventListener('click', () => {
+      const v  = (id: string) => document.getElementById(id)?.textContent?.trim() ?? '—';
+      const qv = (id: string) => (document.getElementById(id) as HTMLInputElement)?.value ?? '0';
+      const sv = (id: string) => (document.getElementById(id) as HTMLSelectElement)?.value || '—';
+
+      const units = [
+        ['Solar PV',       qv('solar'),    v('lSolar'),    v('lSolarKwh')],
+        ['Wind Turbine',   qv('wind'),     v('lWind'),     v('lWindKwh')],
+        ['Geothermal',     qv('geo'),      v('lGeo'),      v('lGeoKwh')],
+        ['Hydro (Low)',    qv('hydroLow'), v('lHydro'),    v('lHydroKwh')],
+        ['Hydro (High)',   qv('hydroHigh'),v('lHydro'),    v('lHydroKwh')],
+        ['Tidal',          qv('tidalStd'), v('lTidal'),    v('lTidalKwh')],
+        ['Biomass',        qv('biomass'),  v('lBiomass'),  v('lBiomassKwh')],
+      ].filter(r => r[1] !== '0');
+
+      const storage = [
+        ['Lithium-Ion BESS', qv('liIon')],
+        ['Thermal Storage',  qv('thermal')],
+        ['Flywheel',         qv('flywheel')],
+        ['CAES',             qv('caes')],
+      ].filter(r => r[1] !== '0');
+
+      const emerging = [
+        ['Green Hydrogen Electrolyzer', qv('hydrogen')],
+        ['V2G Charging Hub',            qv('v2g')],
+        ['AI-Grid Controller (SCADA)',  qv('scada')],
+      ].filter(r => r[1] !== '0');
+
+      const alertEls = document.querySelectorAll('#alertsStack .e-alert');
+      const alertRows = Array.from(alertEls).map(el => {
+        const cls = el.classList.contains('danger') ? '#c0392b' : el.classList.contains('warn') ? '#8a6200' : '#1a6b3a';
+        return `<div style="padding:6px 10px;margin:4px 0;border-left:3px solid ${cls};font-size:12px;color:${cls}">${el.textContent?.trim()}</div>`;
+      }).join('');
+
+      const row = (label: string, val: string, bold = false) =>
+        `<tr><td style="padding:5px 8px;color:#555;font-size:12px">${label}</td><td style="padding:5px 8px;text-align:right;font-weight:${bold?700:400};font-size:12px">${val}</td></tr>`;
+
+      const unitRows = units.map(([name, qty, sav, kwh]) =>
+        `<tr><td style="padding:4px 8px;font-size:12px">${name}</td><td style="padding:4px 8px;text-align:center;font-size:12px">${qty}</td><td style="padding:4px 8px;font-size:11px;color:#666">${kwh}</td><td style="padding:4px 8px;text-align:right;font-size:12px;color:#1a6b3a">${sav}</td></tr>`
+      ).join('');
+
+      const storageRows = storage.map(([name, qty]) =>
+        `<tr><td style="padding:4px 8px;font-size:12px">${name}</td><td style="padding:4px 8px;text-align:center;font-size:12px">${qty}</td></tr>`
+      ).join('');
+
+      const emergingRows = emerging.map(([name, qty]) =>
+        `<tr><td style="padding:4px 8px;font-size:12px">${name}</td><td style="padding:4px 8px;text-align:center;font-size:12px">${qty}</td></tr>`
+      ).join('');
+
+      const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>Green Campus Energy Plan</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 32px; color: #111; font-size: 13px; }
+          h1 { font-size: 20px; margin: 0 0 4px; color: #1a4a32; }
+          .sub { color: #666; font-size: 12px; margin-bottom: 20px; }
+          h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #1a4a32; margin: 20px 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+          th { text-align: left; padding: 5px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #888; background: #f5f5f5; }
+          th:last-child { text-align: right; }
+          tr:nth-child(even) td { background: #fafafa; }
+          .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin-bottom: 4px; }
+          .card-row { font-size: 12px; } .card-row span { color: #555; }
+          .fin-table td:last-child { text-align: right; font-weight: 600; }
+          @media print { body { margin: 18px; } }
+        </style>
+      </head><body>
+        <h1>Green Campus Energy Plan</h1>
+        <div class="sub">Printed ${date}</div>
+
+        <h2>Data Cards</h2>
+        <div class="cards-grid">
+          <div class="card-row"><span>Demand Pattern:</span> ${sv('demandPattern') === '—' ? 'None' : sv('demandPattern')}</div>
+          <div class="card-row"><span>Budget Tier:</span> ${sv('budgetTier') === '—' ? 'Standard ($10M)' : sv('budgetTier')}</div>
+          <div class="card-row"><span>Workforce:</span> ${sv('workforce') === '—' ? 'None' : sv('workforce')}</div>
+          <div class="card-row"><span>Environment:</span> ${sv('envConstraints') === '—' ? 'None' : sv('envConstraints')}</div>
+          <div class="card-row"><span>Pivot Card:</span> ${sv('pivotCard') === '—' ? 'None' : sv('pivotCard')}</div>
+        </div>
+
+        ${units.length > 0 ? `<h2>Generation Units</h2>
+        <table><thead><tr><th>Technology</th><th style="text-align:center">Units</th><th>Annual Output</th><th style="text-align:right">Annual Savings</th></tr></thead>
+        <tbody>${unitRows}</tbody></table>` : ''}
+
+        ${(storage.length > 0 || emerging.length > 0) ? `<h2>Storage &amp; Emerging Tech</h2>
+        <table><thead><tr><th>Technology</th><th style="text-align:center">Units</th></tr></thead>
+        <tbody>${storageRows}${emergingRows}</tbody></table>` : ''}
+
+        <h2>System Summary</h2>
+        <table class="fin-table"><tbody>
+          ${row('Peak Supply', v('mTotalSupply'))}
+          ${row('Total Storage', v('mTotalStorage'))}
+          ${row('Starting Budget', v('mBudget'))}
+          ${row('Total Spent', v('mSpent'))}
+          ${row('Budget Remaining', v('mRemaining'))}
+          ${row('Net Annual Savings', v('lFinal'), true)}
+          ${row('ROI Break-Even', v('mROI'), true)}
+          ${row('CO₂ Avoided (Mt/yr)', v('co2TotalMt'))}
+          ${row('Equivalent Cars Off Road', v('co2Cars'))}
+          ${row('Construction Jobs', v('wConstJobs'))}
+          ${row('Permanent Roles', v('wPermRoles'))}
+        </tbody></table>
+
+        ${alertRows ? `<h2>Status &amp; Alerts</h2>${alertRows}` : ''}
+      </body></html>`;
+
+      const win = window.open('', '_blank', 'width=800,height=900');
+      if (!win) return;
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => win.print(), 400);
+    });
     getEl('simExportBtn')?.addEventListener('click', exportCSV);
     getEl('simResetBtn')?.addEventListener('click', resetAll);
 
