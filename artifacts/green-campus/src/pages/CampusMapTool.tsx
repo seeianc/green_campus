@@ -1424,6 +1424,10 @@ function initMapTool() {
       const t = TECHS[p.tech];
       const ftPerCell = MAPS[currentMap].scale / 30.48;
       const r = Math.max(8, t.placedRadiusFt / ftPerCell * GRID);
+      const hasViolation = p.violations && p.violations.length > 0;
+      const fillColor = hasViolation ? '#d2992290' : t.color + '70';
+      const strokeColor = hasViolation ? '#d29922' : '#fff';
+      const labelColor = hasViolation ? '#d29922' : t.color;
 
       // Drop shadow
       ctx.save();
@@ -1434,8 +1438,8 @@ function initMapTool() {
 
       // Placed unit — real-world scaled shape
       ctx.globalAlpha = 1;
-      ctx.fillStyle = t.color + '70';
-      ctx.strokeStyle = '#fff';
+      ctx.fillStyle = fillColor;
+      ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 2;
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = 6;
@@ -1470,8 +1474,8 @@ function initMapTool() {
         }
 
         // Main rectangle
-        ctx.fillStyle = t.color + '70';
-        ctx.strokeStyle = '#fff';
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.roundRect(-hw, -hh, hw * 2, hh * 2, 3);
@@ -1495,7 +1499,7 @@ function initMapTool() {
         const labelW = ctx.measureText(t.name).width + 8;
         ctx.fillStyle = 'rgba(0,0,0,0.65)';
         ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
-        ctx.fillStyle = t.color;
+        ctx.fillStyle = labelColor;
         ctx.fillText(t.name, p.cx, labelY);
       } else {
         // Circle for all other techs
@@ -1514,7 +1518,7 @@ function initMapTool() {
         const labelW = ctx.measureText(t.name).width + 8;
         ctx.fillStyle = 'rgba(0,0,0,0.65)';
         ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
-        ctx.fillStyle = t.color;
+        ctx.fillStyle = labelColor;
         ctx.fillText(t.name, p.cx, labelY);
       }
 
