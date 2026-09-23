@@ -1338,15 +1338,15 @@ FIREBASE: `))}restoreState_(){this.tryAuth(),this.tryAppCheck();for(const t of t
             <div class="map-sidebar-section">Generation</div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
               <span class="map-tech-dot" style="background:#f0b429"></span>
-              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M</div></div>
+              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M · land</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('solar')" title="View Solar PV card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
               <span class="map-tech-dot" style="background:#58a6ff"></span>
-              <div><div>Wind</div><div class="map-tech-meta">3000kW · $4.5M · 250ft buffer</div></div>
+              <div><div>Wind</div><div class="map-tech-meta">3000kW · $4.5M · land / water · 250ft buffer</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('wind')" title="View Wind Turbine card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
               <span class="map-tech-dot" style="background:#bc8cff"></span>
-              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $8M</div></div>
+              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $8M · land</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('geo')" title="View Geothermal card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
@@ -1358,29 +1358,29 @@ FIREBASE: `))}restoreState_(){this.tryAuth(),this.tryAppCheck();for(const t of t
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('hydroH')" title="View Hydro High Head card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-tidal" style="color:#00c8aa">
               <span class="map-tech-dot" style="background:#00c8aa"></span>
-              <div><div>Tidal</div><div class="map-tech-meta">500kW · $1.5M · coast</div></div>
+              <div><div>Tidal</div><div class="map-tech-meta">500kW · $1.5M · marine</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('tidal')" title="View Tidal card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
               <span class="map-tech-dot" style="background:#7ee787"></span>
-              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M</div></div>
+              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M · land</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('biomass')" title="View Biomass card">&#x1F3B4;</button></div>
 
             <div class="map-sidebar-section">Storage</div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
               <span class="map-tech-dot" style="background:#ff8c8c"></span>
-              <div><div>Lithium Ion</div><div class="map-tech-meta">1000kWh · $500K</div></div>
+              <div><div>Lithium Ion</div><div class="map-tech-meta">1000kWh · $500K · land</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('bess')" title="View Lithium Ion card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
               <span class="map-tech-dot" style="background:#ffb347"></span>
-              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M</div></div>
+              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M · land</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('thermal')" title="View Thermal Storage card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
               <span class="map-tech-dot" style="background:#da8fff"></span>
-              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K</div></div>
+              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K · land</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('flywheel')" title="View Mechanical Flywheel card">&#x1F3B4;</button></div>
             <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
               <span class="map-tech-dot" style="background:#84fab0"></span>
-              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M</div></div>
+              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M · land</div></div>
             </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('caes')" title="View CAES card">&#x1F3B4;</button></div>
 
             <div class="map-sidebar-section">Placements<button type="button" class="map-help-btn" data-help="placements">?</button></div>
