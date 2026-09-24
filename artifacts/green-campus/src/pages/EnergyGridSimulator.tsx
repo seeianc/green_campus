@@ -407,7 +407,27 @@ export default function EnergyGridSimulator() {
           height: auto;
           overflow: visible;
           display: block;
+          /* Override dark-theme CSS vars for legible print output */
+          --bg: #ffffff;
+          --surface: #f5f5f5;
+          --border: #cccccc;
+          --text: #111111;
+          --text-muted: #444444;
+          --accent: #1a6b35;
+          --accent-light: #e8f5ec;
+          --accent-muted: #2a8f4e;
+          --warn: #8b5000;
+          --warn-light: #fff3e0;
+          --danger: #c0392b;
+          --danger-light: #fdeaea;
         }
+        .e-metric { background: #f5f5f5 !important; }
+        .budget-bar-track { background: #e0e0e0 !important; }
+        .e-alert.ok   { background: #e8f5ec !important; color: #1a6b35 !important; border-color: #aed6be !important; }
+        .e-alert.warn { background: #fff3e0 !important; color: #8b5000 !important; border-color: #f0c070 !important; }
+        .e-alert.danger { background: #fdeaea !important; color: #c0392b !important; border-color: #f0aaaa !important; }
+        .workforce-item { background: #f5f5f5 !important; border-color: #ccc !important; }
+        .workforce-item input { background: #fff !important; color: #111 !important; border-color: #ccc !important; }
         .energy-sim-header {
           position: relative;
           top: 0;
@@ -497,7 +517,8 @@ export default function EnergyGridSimulator() {
         #adjPivotItem,
         #adjUtilityItem,
         #adjCraneItem,
-        #adjWindBufferItem {
+        #adjWindBufferItem,
+        #adjCarbonTaxItem {
           display: block !important;
           border: none !important;
           padding-left: 8px !important;
