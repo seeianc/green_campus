@@ -29,7 +29,6 @@ function generateId(): string {
 const CLIENT_ID = generateId();
 
 export default function App() {
-  const [shareLabel, setShareLabel] = useState("🔗 Share Plan");
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionLabel, setSessionLabel] = useState("⚡ Start Session");
   const [splitPct, setSplitPct] = useState(50);
@@ -68,17 +67,6 @@ export default function App() {
       if (btn && btn.classList.contains("active")) bessHours.push(i);
     }
     return { v: 1, placements: sharedState.placements, sim, bessHours };
-  }
-
-  // ── Snapshot share (URL-based, no session) ──────────────────────────────
-  function sharePlan() {
-    const plan = getPlanState();
-    const encoded = LZString.compressToEncodedURIComponent(JSON.stringify(plan));
-    const url = `${window.location.origin}${window.location.pathname}?plan=${encoded}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setShareLabel("✅ Copied!");
-      setTimeout(() => setShareLabel("🔗 Share Plan"), 2500);
-    });
   }
 
   // ── Firebase: attach real-time listener ────────────────────────────────
@@ -243,25 +231,9 @@ export default function App() {
         <div style={{ marginLeft: "auto", marginRight: "12px", fontSize: "11px", color: "#7d8590", fontFamily: "monospace" }}>
           Green Campus Planning Tools
         </div>
-        <button
-          onClick={sharePlan}
-          style={{
-            marginRight: "8px",
-            padding: "5px 14px",
-            borderRadius: "4px",
-            border: "1px solid #30363d",
-            background: "transparent",
-            color: "#7d8590",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: 600,
-            fontFamily: "'Space Grotesk', sans-serif",
-            letterSpacing: "0.04em",
-            transition: "all 0.15s",
-          }}
-        >
-          {shareLabel}
-        </button>
+        <span style={{ marginRight: "8px", fontSize: "11px", color: "#7d8590", fontFamily: "'Space Grotesk', sans-serif", whiteSpace: "nowrap" }}>
+          {sessionActive ? "click Live to copy share link" : "start Live to get a share link"}
+        </span>
         {sessionActive ? (
           <>
             <button
